@@ -1,0 +1,30 @@
+<h1>{{t "teams.title"}}</h1>
+{{if .Teams}}
+<table class="table">
+  <thead>
+    <tr><th>{{t "teams.name"}}</th><th>{{t "team.members"}}</th><th>{{t "team.role"}}</th></tr>
+  </thead>
+  <tbody>
+    {{range .Teams}}
+    <tr>
+      <td><a href="{{pageURL "team" "id" .Team.ID}}">{{.Team.Name}}</a></td>
+      <td>{{tn "teams.member_count" .MemberCount}}</td>
+      <td>{{if .Role}}{{t (printf "team.roles.%s" .Role)}}{{end}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{else}}
+<p class="muted">{{t "teams.empty"}}</p>
+{{end}}
+
+{{if .CanCreate}}
+<form class="form" method="post" action="{{pageURL "teams"}}">
+  {{csrfToken}}
+  <input type="hidden" name="op" value="create">
+  <label for="team-name">{{t "teams.name"}}</label>
+  <input id="team-name" name="name" value="{{fieldValue "name"}}" required maxlength="100">
+  {{with fieldError "name"}}<p class="error">{{.}}</p>{{end}}
+  <button type="submit">{{t "teams.create"}}</button>
+</form>
+{{end}}

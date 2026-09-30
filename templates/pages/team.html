@@ -1,0 +1,60 @@
+{{$self := pageURL "team" "id" .Team.ID}}
+<h1>{{.Team.Name}}</h1>
+
+<h2>{{t "team.members"}}</h2>
+<table class="table">
+  <thead>
+    <tr><th>{{t "users.name"}}</th><th>{{t "users.email"}}</th><th>{{t "team.role"}}</th>{{if .CanManage}}<th></th>{{end}}</tr>
+  </thead>
+  <tbody>
+    {{range .Members}}
+    <tr>
+      <td>{{.User.Name}}</td>
+      <td>{{.User.Email}}</td>
+      <td>
+        {{if $.CanManage}}
+        <form class="inline" method="post" action="{{$self}}">
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_role">
+          <input type="hidden" name="user_id" value="{{.User.ID}}">
+          {{$current := .Role}}
+          <select name="role" aria-label="{{t "team.role"}}">
+            {{range $.Roles}}<option value="{{.}}" {{if eq . $current}}selected{{end}}>{{t (printf "team.roles.%s" .)}}</option>{{end}}
+          </select>
+          <button type="submit">{{t "team.save"}}</button>
+        </form>
+        {{else}}
+        {{t (printf "team.roles.%s" .Role)}}
+        {{end}}
+      </td>
+      {{if $.CanManage}}
+      <td>
+        <form class="inline" method="post" action="{{$self}}">
+          {{csrfToken}}
+          <input type="hidden" name="op" value="remove_member">
+          <input type="hidden" name="user_id" value="{{.User.ID}}">
+          <button type="submit">{{t "team.remove"}}</button>
+        </form>
+      </td>
+      {{end}}
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+
+{{if .CanManage}}
+<h2>{{t "team.add"}}</h2>
+<form class="form" method="post" action="{{$self}}">
+  {{csrfToken}}
+  <input type="hidden" name="op" value="add_member">
+  <label for="new-email">{{t "team.email"}}</label>
+  <input id="new-email" name="new_email" type="email" value="{{fieldValue "new_email"}}" required>
+  {{with fieldError "new_email"}}<p class="error">{{.}}</p>{{end}}
+  <label for="new-role">{{t "team.role"}}</label>
+  <select id="new-role" name="new_role">
+    {{range .Roles}}<option value="{{.}}" {{if eq . "member"}}selected{{end}}>{{t (printf "team.roles.%s" .)}}</option>{{end}}
+  </select>
+  {{with fieldError "new_role"}}<p class="error">{{.}}</p>{{end}}
+  <button type="submit">{{t "team.add"}}</button>
+</form>
+{{end}}

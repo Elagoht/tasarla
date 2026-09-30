@@ -49,7 +49,7 @@ func build(t *testing.T, s *store.Store, adminEmails string) *harness {
 			"BASE_URL": webtest.Origin, "DATABASE_URL": "unused", "DEFAULT_LOCALE": "tr",
 			"OIDC_ISSUER": issuer.URL, "OIDC_CLIENT_ID": issuer.ClientID, "OIDC_CLIENT_SECRET": issuer.ClientSecret,
 			"OIDC_REDIRECT_URL": callback,
-			"ADMIN_EMAILS": adminEmails, "SESSION_KEY": key, "CSRF_KEY": key, "FLASH_KEY": key,
+			"ADMIN_EMAILS":      adminEmails, "SESSION_KEY": key, "CSRF_KEY": key, "FLASH_KEY": key,
 		}[k]
 	})
 	if err != nil {

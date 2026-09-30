@@ -1,6 +1,7 @@
 <header class="topbar">
   <a class="topbar__home" href="{{pageURL "home"}}">{{t "app.name"}}</a>
   <nav class="topbar__nav">
+    <a href="{{pageURL "teams"}}">{{t "nav.teams"}}</a>
   </nav>
   <span class="topbar__user">{{.User.Name}}</span>
   <form class="topbar__logout" method="post" action="{{actionURL "logout"}}">
