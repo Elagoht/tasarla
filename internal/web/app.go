@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/url"
+	"strings"
 	"time"
 
 	flash "github.com/Elagoht/collage-flash"
@@ -55,7 +56,11 @@ func New(d Deps) (*collage.App, error) {
 		// Every plugin here wraps the middleware added with app.Use below
 		// (collage v0.38.0), so auth.Middleware can read the session.
 		Plugins: []collage.Plugin{
-			session.New(session.Options{Key: d.Config.SessionKey, Encrypt: true, MaxAge: 7 * 24 * 60 * 60}),
+			session.New(session.Options{
+				Key: d.Config.SessionKey, Encrypt: true, MaxAge: 7 * 24 * 60 * 60,
+				// A proxy that terminates TLS may not say so; the site's own origin does.
+				Secure: strings.HasPrefix(d.Config.BaseURL, "https://"),
+			}),
 			i18n.New(i18n.Options{FS: d.Files, Dir: "locales", Strict: true}),
 			validate.New(validate.Options{LocaleMessages: validationMessages}),
 			flash.New(flash.Options{Key: d.Config.FlashKey}),

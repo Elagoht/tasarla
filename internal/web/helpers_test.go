@@ -41,12 +41,18 @@ func newHarnessWithoutDB(t *testing.T) *harness {
 
 func build(t *testing.T, s *store.Store, adminEmails string) *harness {
 	t.Helper()
-	callback := webtest.Origin + "/auth/openid/authentik"
+	return buildAt(t, s, adminEmails, webtest.Origin)
+}
+
+// buildAt builds the application with BASE_URL set to base.
+func buildAt(t *testing.T, s *store.Store, adminEmails, base string) *harness {
+	t.Helper()
+	callback := base + "/auth/openid/authentik"
 	issuer := authtest.NewIssuer(t, authtest.Options{RedirectURL: callback})
 	key := strings.Repeat("ab", 32)
 	cfg, err := config.Load(func(k string) string {
 		return map[string]string{
-			"BASE_URL": webtest.Origin, "DATABASE_URL": "unused", "DEFAULT_LOCALE": "tr",
+			"BASE_URL": base, "DATABASE_URL": "unused", "DEFAULT_LOCALE": "tr",
 			"OIDC_ISSUER": issuer.URL, "OIDC_CLIENT_ID": issuer.ClientID, "OIDC_CLIENT_SECRET": issuer.ClientSecret,
 			"OIDC_REDIRECT_URL": callback,
 			"ADMIN_EMAILS":      adminEmails, "SESSION_KEY": key, "CSRF_KEY": key, "FLASH_KEY": key,

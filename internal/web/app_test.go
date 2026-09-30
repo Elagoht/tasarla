@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/Elagoht/collage/pkg/collage"
+
+	"kanban/internal/store"
 )
 
 // Spec §2.1: a guarded page must render per request, never from a shared cache.
@@ -82,4 +84,15 @@ func TestAuthFailedPageIsTranslated(t *testing.T) {
 		t.Fatalf("status = %d, want 400", res.Status)
 	}
 	mustContain(t, res.Body, "Giriş yapılamadı")
+}
+
+// Behind a proxy that terminates TLS without saying so, the session cookie must
+// still be Secure when the site's own origin is https.
+func TestCookiesAreSecureWhenTheSiteIsHTTPS(t *testing.T) {
+	h := buildAt(t, store.New(nil), "", "https://kanban.test")
+	res := h.browser().Get("/login")
+	cookie := res.Header.Get("Set-Cookie")
+	if !strings.Contains(cookie, "collage_session=") || !strings.Contains(cookie, "Secure") {
+		t.Fatalf("Set-Cookie = %q, want a Secure session cookie", cookie)
+	}
 }

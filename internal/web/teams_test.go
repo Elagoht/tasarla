@@ -161,3 +161,14 @@ func TestEnglishPagesLinkInEnglish(t *testing.T) {
 	mustContain(t, b.Get("/en").Body, `href="/en/teams"`)
 	mustContain(t, b.Get("/").Body, `href="/teams"`)
 }
+
+func TestAddingAMemberWithoutARoleIsRefused(t *testing.T) {
+	h := newHarness(t, "admin@example.com")
+	admin := h.signedIn("admin", "admin@example.com")
+	h.signedIn("carol", "carol@example.com")
+	path := teamWith(t, h, "", "")
+	res := admin.Submit(path, path, url.Values{"op": {"add_member"}, "new_email": {"carol@example.com"}})
+	if res.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("add without a role = %d, want 422", res.Status)
+	}
+}

@@ -156,7 +156,7 @@ func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*co
 
 func (h *handlers) addMember(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, team store.Team) (*collage.ActionResult, error) {
 	v.Field("new_email").Required().Email()
-	v.Field("new_role").OneOf(string(store.RoleLead), string(store.RoleMember))
+	v.Field("new_role").Required().OneOf(string(store.RoleLead), string(store.RoleMember))
 	var user store.User
 	if v.Valid() {
 		var err error

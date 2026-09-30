@@ -16,7 +16,9 @@ func TestSafeNext(t *testing.T) {
 		"/\\evil.com":            "/",
 		"https://evil.com/x":     "/",
 		"evil.com":               "/",
-		"/%2F%2Fevil.com":        "/%2F%2Fevil.com", // a path on this site, not a host
+		"/%2F%2Fevil.com":        "/",
+		"/%5Cevil.com":           "/",
+		"/teams%2F3":             "/teams%2F3",
 		"/ok\r\nSet-Cookie: x=1": "/",
 		"javascript:alert(1)":    "/",
 	}
