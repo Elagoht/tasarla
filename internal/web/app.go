@@ -109,7 +109,7 @@ func New(d Deps) (*collage.App, error) {
 
 // pages is every page for signed-in readers.
 func (h *handlers) pages() []*collage.Page {
-	return []*collage.Page{h.homePage(), h.teamsPage(), h.teamPage()}
+	return []*collage.Page{h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage()}
 }
 
 // contentSecurityPolicy allows scripts only from this origin, and form posts

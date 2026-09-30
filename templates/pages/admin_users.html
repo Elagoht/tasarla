@@ -1,0 +1,40 @@
+{{$self := pageURL "admin-users"}}
+<h1>{{t "users.title"}}</h1>
+<table class="table">
+  <thead>
+    <tr><th>{{t "users.name"}}</th><th>{{t "users.email"}}</th><th>{{t "users.admin"}}</th><th>{{t "users.status"}}</th></tr>
+  </thead>
+  <tbody>
+    {{range .Users}}
+    <tr>
+      <td>{{.Name}} {{if eq .ID $.Me}}<span class="muted">{{t "users.you"}}</span>{{end}}</td>
+      <td>{{.Email}}</td>
+      <td>
+        <form class="inline" method="post" action="{{$self}}">
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_admin">
+          <input type="hidden" name="user_id" value="{{.ID}}">
+          {{if .IsAdmin}}
+          <input type="hidden" name="value" value="0"><button type="submit">{{t "users.revoke_admin"}}</button>
+          {{else}}
+          <input type="hidden" name="value" value="1"><button type="submit">{{t "users.make_admin"}}</button>
+          {{end}}
+        </form>
+      </td>
+      <td>
+        {{if .Disabled}}{{t "users.disabled"}}{{else}}{{t "users.active"}}{{end}}
+        <form class="inline" method="post" action="{{$self}}">
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_disabled">
+          <input type="hidden" name="user_id" value="{{.ID}}">
+          {{if .Disabled}}
+          <input type="hidden" name="value" value="0"><button type="submit">{{t "users.enable"}}</button>
+          {{else}}
+          <input type="hidden" name="value" value="1"><button type="submit">{{t "users.disable"}}</button>
+          {{end}}
+        </form>
+      </td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
