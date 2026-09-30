@@ -34,3 +34,16 @@ adding early:
 `go get` one, add it to `Plugins` in `main.go`, and its settings go in
 `plugins-config.json`. All of them:
 https://collage.furkanbaytekin.dev/en/docs/plugins/.
+
+## Geliştirme
+
+```bash
+docker compose up -d                 # PostgreSQL, localhost:55432
+cp .env.example .env.development      # OIDC ve anahtarları doldur
+collage dev                           # http://localhost:6060
+
+export KANBAN_TEST_DATABASE_URL='postgres://kanban:kanban@localhost:55432/kanban?sslmode=disable'
+go test ./... -race                   # veritabanı testleri bu değişken yoksa atlanır
+```
+
+Callback adresi IdP'de kayıtlı redirect URI'dir ve `OIDC_REDIRECT_URL` ile verilir; `BASE_URL` ile aynı origin'de olmalıdır. Çıkış sonrası dönüş adresi: `<BASE_URL>/login`. Kayıtlı adres `localhost` değilse gerçek giriş yerelde denenemez; testler sahte issuer kullanır.

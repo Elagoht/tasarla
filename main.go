@@ -1,221 +1,106 @@
-// Command kanban serves this collage application, or — when invoked with
-// -collage-build — renders it to static files instead of serving it.
+// Command kanban serves the kanban application.
 //
-// # The collage CLI contract
-//
-// "collage dev" builds this program and runs it with COLLAGE_DEV=1 set, the
-// variables of .env.development (or .env) added, and HOST and PORT set to the
-// address it passes the browser's requests on to, rebuilding and restarting it
-// when its Go code changes; "collage export" runs
-// `go run . -collage-build -out <dir>`. This file honours both by reading that
-// variable and those flags below. Development mode reads templates and static
-// files from disk on every request, so editing those needs no restart at all.
-//
-// "collage build" needs nothing from this file: it compiles the program, which
-// is something go build does without being told anything.
-//
-// If you rewrite this file, keep both halves working, or "collage dev" and
-// "collage export" stop doing anything useful here.
+// "collage dev" builds this program and runs it with COLLAGE_DEV=1, the
+// variables in .env.development, and HOST and PORT set; this file honours all
+// three. Every page is private, so "collage export" has nothing to write and
+// this program does not implement -collage-build.
 package main
 
 import (
 	"context"
 	"embed"
-	"flag"
 	"fmt"
 	"io/fs"
 	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/Elagoht/collage/pkg/collage"
+	"kanban/internal/auth"
+	"kanban/internal/config"
+	"kanban/internal/db"
+	"kanban/internal/store"
+	"kanban/internal/web"
 )
 
-// Templates and static files are embedded, so this binary runs from anywhere:
-// a container with a different WORKDIR, a systemd unit, a copy on a server.
+// The binary carries its templates, static files and catalogs.
 //
-// It costs nothing in development. With DevMode on, collage prefers the
-// directory on disk whenever it is there — which it is while you are working
-// in this project — so editing a template is still visible on the next
-// request, embedded copy or not.
-//
-//go:embed all:templates
-var templatesFS embed.FS
-
-//go:embed all:static
-var staticFS embed.FS
-
-// cacheDir is where rendered pages are kept between restarts. A variable so the
-// tests can point it at a directory of their own: a disk cache is shared by
-// everything that uses the same directory and build, so a test would otherwise
-// read what the previous test, or the previous run, rendered.
-var cacheDir = ".cache"
+//go:embed all:templates all:static locales
+var embedded embed.FS
 
 func main() {
-	buildFlag := flag.Bool("collage-build", false, "render the app to static files instead of serving it")
-	outFlag := flag.String("out", "dist", "output directory for -collage-build")
-	cleanFlag := flag.Bool("clean", false, "remove -out's existing contents before building")
-	portFlag := flag.Int("port", envInt("PORT", 6060), "port to listen on (env PORT)")
-	flag.Parse()
+	if err := run(); err != nil {
+		log.Fatalf("kanban: %v", err)
+	}
+}
 
+func run() error {
 	devMode := os.Getenv("COLLAGE_DEV") == "1"
+	logger := slog.Default()
 
-	app, err := newApp(devMode, *portFlag)
+	cfg, err := config.Load(os.Getenv)
 	if err != nil {
-		log.Fatalf("kanban: %v", err)
+		return fmt.Errorf("configuration:\n%w", err)
 	}
 
-	// A word after the flags is a plugin's command: `go run . <command>`. The
-	// collage binary cannot run them itself — it never loads this program's
-	// plugins — so this program does. With no plugins there is nothing to
-	// dispatch, and a word nobody claims is a usage error rather than a server
-	// started by accident.
-	if args := flag.Args(); len(args) > 0 {
-		code, err := collage.DispatchCommands(context.Background(), app, args)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "kanban: %v\n", err)
-		}
-		os.Exit(code)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	if *buildFlag {
-		if err := staticBuild(app, *outFlag, *cleanFlag); err != nil {
-			log.Fatalf("kanban: static build: %v", err)
-		}
-		return
-	}
-
-	if err := app.ListenAndServe(); err != nil {
-		log.Fatalf("kanban: %v", err)
-	}
-}
-
-// newApp builds the application: its configuration, its routes — registered in
-// routes.go — and its static mount.
-//
-// It is separate from main so that the tests can build the same application
-// and drive it through app.Handler(), with no server listening and no port to
-// pick. What they exercise is then the site that actually runs, rather than a
-// second wiring that can drift from it.
-func newApp(devMode bool, port int) (*collage.App, error) {
-	// Plugin configuration, keyed by plugin name. A missing file is not an
-	// error: every plugin then runs on its defaults.
-	pluginConfig, err := collage.LoadPluginConfig("plugins-config.json")
+	pool, err := db.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("plugin configuration: %w", err)
+		return err
+	}
+	defer pool.Close()
+	if err := db.Migrate(ctx, pool); err != nil {
+		return err
 	}
 
-	app, err := collage.New(&collage.Config{
-		DevMode: devMode,
-		Server: collage.ServerConfig{
-			Host: envString("HOST", "localhost"),
-			Port: port,
-		},
-		Template: collage.TemplateConfig{
-			FS:        templatesFS,
-			Root:      "templates",
-			Extension: ".html",
-		},
-		Cache: collage.CacheConfig{
-			// In development collage never reads from the cache — a cached
-			// page would hide the template you just edited — and uses memory
-			// instead of disk. In production rendered pages are kept under
-			// .cache, namespaced by a hash of this binary.
-			Enabled:    true,
-			Type:       "disk",
-			Dir:        cacheDir,
-			DefaultTTL: 5 * time.Minute,
-		},
-		PluginConfig: pluginConfig,
-		// Plugins go here, and their settings in plugins-config.json — a
-		// checker for the HTML you render, a sitemap, a feed, translations:
-		//
-		//	Plugins: []collage.Plugin{
-		//		htmlcheck.New(htmlcheck.Options{}),
-		//		sitemap.New(sitemap.Options{BaseURL: "https://example.com"}),
-		//	},
-		//
-		// Each is its own module, github.com/Elagoht/collage-<name>; the list is
-		// at https://collage.furkanbaytekin.dev/en/docs/plugins/. A plugin that
-		// contributes to the document head reaches it through {{hoist "head"}}
-		// in the layout.
-		Security: collage.SecurityConfig{
-			// Signs the forgery tokens forms carry. Unset, one is generated
-			// per process: fine in development, wrong to deploy, because every
-			// form submitted before a restart is refused after it. Make one
-			// with `openssl rand -hex 32`.
-			CSRFKey: []byte(os.Getenv("COLLAGE_CSRF_KEY")),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Every page, document and action this project has — see routes.go.
-
-	assets, err := staticFiles(devMode)
-	if err != nil {
-		return nil, err
-	}
-	if err := app.Mount("/static/", assets); err != nil {
-		return nil, fmt.Errorf("mount static files: %w", err)
-	}
-
-	return app, nil
-}
-
-// staticFiles returns the filesystem "/static/" is served from: the embedded
-// copy, except in development, where the directory on disk wins so an edited
-// stylesheet shows up without a rebuild.
-//
-// os.OpenRoot rather than os.DirFS: os.DirFS follows a symlink out of the
-// directory, and an os.Root does not.
-func staticFiles(devMode bool) (fs.FS, error) {
-	if devMode {
-		if root, err := os.OpenRoot("static"); err == nil {
-			return root.FS(), nil
-		}
-	}
-
-	// fs.Sub, because the embedded tree contains the "static" directory
-	// itself: mounting it whole would serve "/static/static/app.css".
-	return fs.Sub(staticFS, "static")
-}
-
-// envString returns the environment variable named key, or fallback.
-func envString(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
-}
-
-// envInt is envString for a number. An unparseable value falls back rather than
-// failing: a port is not worth refusing to start over.
-func envInt(key string, fallback int) int {
-	value, err := strconv.Atoi(os.Getenv(key))
-	if err != nil {
-		return fallback
-	}
-	return value
-}
-
-// staticBuild renders every statically-buildable page to files under outDir
-// through collage's own builder, and prints what was written, skipped and
-// failed.
-func staticBuild(app *collage.App, outDir string, clean bool) error {
-	builder, err := collage.NewBuilder(app, collage.BuildOptions{
-		OutDir: outDir,
-		Clean:  clean,
+	client, err := auth.NewClient(ctx, auth.ClientConfig{
+		Issuer: cfg.OIDC.Issuer, ClientID: cfg.OIDC.ClientID, ClientSecret: cfg.OIDC.ClientSecret,
+		RedirectURL: cfg.OIDC.RedirectURL, Scopes: cfg.OIDC.Scopes,
 	})
 	if err != nil {
 		return err
 	}
 
-	report, buildErr := builder.Build(context.Background())
+	files, err := appFiles(devMode)
+	if err != nil {
+		return err
+	}
+	app, err := web.New(web.Deps{
+		Files: files, DevMode: devMode,
+		Host: envString("HOST", "localhost"), Port: envInt("PORT", 6060),
+		Config: cfg, Store: store.New(pool), OIDC: client, Logger: logger,
+	})
+	if err != nil {
+		return err
+	}
+	return app.ListenAndServe()
+}
 
-	collage.PrintBuildReport(os.Stdout, report, buildErr)
+// appFiles is the embedded copy, or in development the working directory, so
+// an edited template or catalog shows on the next request.
+func appFiles(devMode bool) (fs.FS, error) {
+	if devMode {
+		if root, err := os.OpenRoot("."); err == nil {
+			return root.FS(), nil
+		}
+	}
+	return embedded, nil
+}
 
-	return buildErr
+func envString(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func envInt(key string, fallback int) int {
+	v, err := strconv.Atoi(os.Getenv(key))
+	if err != nil {
+		return fallback
+	}
+	return v
 }
