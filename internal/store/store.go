@@ -3,6 +3,7 @@ package store
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -34,4 +35,13 @@ func exactlyOne(tag pgconn.CommandTag, err error) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// prefixed qualifies each of a comma-separated column list with alias.
+func prefixed(alias, columns string) string {
+	parts := strings.Split(columns, ",")
+	for i, p := range parts {
+		parts[i] = alias + "." + strings.TrimSpace(p)
+	}
+	return strings.Join(parts, ", ")
 }
