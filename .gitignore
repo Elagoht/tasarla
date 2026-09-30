@@ -1,0 +1,22 @@
+# The compiled binary "collage build" writes, by name rather than the whole
+# directory: "collage build -i" writes a Dockerfile and a systemd unit in there
+# too, and those are files you edit and commit.
+/bin/kanban
+/bin/kanban.exe
+
+# "collage export" output.
+/dist/
+
+# Rendered pages, kept between restarts. Namespaced by a hash of the binary, so
+# nothing here outlives the build that wrote it.
+/.cache/
+
+*.exe
+
+# Local environment, read by "collage dev". .env.example is the one to commit.
+/.env
+/.env.*
+!/.env.example
+
+# Superpowers plan workspaces.
+/.superpowers/
