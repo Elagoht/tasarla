@@ -138,13 +138,6 @@ func (s *Store) ArchiveCard(ctx context.Context, boardID, cardID int64) error {
 	return tx.Commit(ctx)
 }
 
-// touchCard marks a change to what hangs off a card: its labels, checklist,
-// dependencies.
-func (s *Store) touchCard(ctx context.Context, boardID, cardID int64) error {
-	return exactlyOne(s.pool.Exec(ctx,
-		`UPDATE cards SET version = version + 1 WHERE id = $2 AND board_id = $1`, boardID, cardID))
-}
-
 // CardSummary is a card as the board shows it.
 type CardSummary struct {
 	Card           Card
