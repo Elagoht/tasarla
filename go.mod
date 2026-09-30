@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/Elagoht/collage v0.38.0
+	github.com/Elagoht/collage-session v0.2.1
 	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/jackc/pgx/v5 v5.11.0
