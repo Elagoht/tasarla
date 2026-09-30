@@ -1,0 +1,57 @@
+{
+  "app": { "name": "Kanban" },
+  "locale": { "switcher": "Dil" },
+  "nav": { "home": "Ana sayfa", "teams": "Takımlar", "users": "Kullanıcılar" },
+  "auth": {
+    "logout": "Çıkış yap",
+    "failed": {
+      "title": "Giriş yapılamadı",
+      "body": "Giriş işlemi tamamlanamadı. Lütfen yeniden deneyin.",
+      "retry": "Yeniden dene"
+    }
+  },
+  "errors": {
+    "not_found": { "title": "Sayfa bulunamadı", "body": "Aradığınız sayfa yok ya da görme izniniz yok." },
+    "server": { "title": "Bir şeyler ters gitti", "body": "İsteğiniz tamamlanamadı. Lütfen biraz sonra yeniden deneyin." }
+  },
+  "home": { "title": "Takımlarım", "empty": "Henüz bir takımda değilsiniz." },
+  "teams": {
+    "title": "Takımlar",
+    "empty": "Henüz takım yok.",
+    "name": "Takım adı",
+    "create": "Takım oluştur",
+    "created": "{name} oluşturuldu.",
+    "member_count": { "one": "{count} üye", "other": "{count} üye" }
+  },
+  "team": {
+    "members": "Üyeler",
+    "role": "Rol",
+    "roles": { "lead": "Lider", "member": "Üye" },
+    "add": "Üye ekle",
+    "email": "E-posta",
+    "save": "Kaydet",
+    "remove": "Çıkar",
+    "added": "{name} takıma eklendi.",
+    "removed": "{name} takımdan çıkarıldı.",
+    "role_changed": "{name} için rol güncellendi.",
+    "user_not_found": "Bu e-postayla kayıtlı bir kullanıcı yok. Kullanıcının önce bir kez giriş yapması gerekir.",
+    "user_ambiguous": "Bu e-posta birden fazla kullanıcıya ait."
+  },
+  "users": {
+    "title": "Kullanıcılar",
+    "name": "Ad",
+    "email": "E-posta",
+    "admin": "Admin",
+    "status": "Durum",
+    "active": "Aktif",
+    "disabled": "Devre dışı",
+    "you": "(siz)",
+    "make_admin": "Admin yap",
+    "revoke_admin": "Adminliği kaldır",
+    "disable": "Devre dışı bırak",
+    "enable": "Etkinleştir",
+    "saved": "Kaydedildi.",
+    "last_admin": "En az bir aktif admin kalmalı.",
+    "self_disable": "Kendi hesabınızı devre dışı bırakamazsınız."
+  }
+}

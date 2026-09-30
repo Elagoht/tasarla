@@ -1,0 +1,12 @@
+<header class="topbar">
+  <a class="topbar__home" href="{{pageURL "home"}}">{{t "app.name"}}</a>
+  <nav class="topbar__nav">
+  </nav>
+  <span class="topbar__user">{{.User.Name}}</span>
+  <form class="topbar__logout" method="post" action="{{actionURL "logout"}}">
+    {{csrfToken}}
+    <button type="submit">{{t "auth.logout"}}</button>
+  </form>
+</header>
+{{range flashes}}<p class="flash flash--{{.Kind}}" role="status">{{.Text}}</p>{{end}}
+<main class="page">{{slot "content"}}</main>

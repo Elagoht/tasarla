@@ -1,1 +1,10 @@
-<h1>Hello from {{.Name}}</h1>
+<h1>{{t "home.title"}}</h1>
+{{if .Teams}}
+<ul class="list">
+  {{range .Teams}}
+  <li><a href="{{pageURL "team" "id" .Team.ID}}">{{.Team.Name}}</a> <span class="muted">{{tn "teams.member_count" .MemberCount}}</span></li>
+  {{end}}
+</ul>
+{{else}}
+<p class="muted">{{t "home.empty"}}</p>
+{{end}}

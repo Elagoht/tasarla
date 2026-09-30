@@ -1,0 +1,85 @@
+package web_test
+
+import (
+	"net/http"
+	"strings"
+	"testing"
+
+	"github.com/Elagoht/collage/pkg/collage"
+)
+
+// Spec §2.1: a guarded page must render per request, never from a shared cache.
+func TestEveryGuardedPageIsDynamic(t *testing.T) {
+	h := newHarnessWithoutDB(t)
+	guarded := 0
+	for _, p := range h.app.Pages() {
+		if !p.Guarded() {
+			continue
+		}
+		guarded++
+		if p.Strategy != collage.StrategyDynamic {
+			t.Errorf("guarded page %q has strategy %v, want Dynamic", p.Name, p.Strategy)
+		}
+	}
+	if guarded == 0 {
+		t.Fatal("no guarded pages were registered; the check above checked nothing")
+	}
+}
+
+func TestAnonymousReadersAreSentToLogin(t *testing.T) {
+	h := newHarnessWithoutDB(t)
+	b := h.browser()
+	for path, want := range map[string]string{"/": "/login?next=%2F", "/en": "/login?next=%2Fen"} {
+		res := b.Get(path)
+		if res.Status != http.StatusSeeOther || res.Location() != want {
+			t.Errorf("GET %s = %d %q, want 303 %q", path, res.Status, res.Location(), want)
+		}
+	}
+}
+
+func TestSecurityHeaders(t *testing.T) {
+	h := newHarnessWithoutDB(t)
+	res := h.browser().Get("/no-such-page")
+	if res.Status != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", res.Status)
+	}
+	csp := res.Header.Get("Content-Security-Policy")
+	for _, want := range []string{"default-src 'self'", "script-src 'self' 'nonce-", "form-action 'self' " + h.issuer.URL, "frame-ancestors 'none'"} {
+		if !strings.Contains(csp, want) {
+			t.Errorf("CSP %q lacks %q", csp, want)
+		}
+	}
+	if res.Header.Get("X-Content-Type-Options") != "nosniff" {
+		t.Error("nosniff missing")
+	}
+	mustContain(t, res.Body, "Sayfa bulunamadı", `lang="tr"`)
+}
+
+func TestNotFoundInEnglish(t *testing.T) {
+	h := newHarnessWithoutDB(t)
+	res := h.browser().Get("/en/no-such-page")
+	mustContain(t, res.Body, "Page not found", `lang="en"`)
+}
+
+func TestHomeInBothLanguages(t *testing.T) {
+	h := newHarness(t, "")
+	b := h.signedIn("ada", "ada@example.com")
+
+	tr := b.Get("/")
+	if tr.Status != http.StatusOK {
+		t.Fatalf("GET / = %d:\n%s", tr.Status, tr.Body)
+	}
+	mustContain(t, tr.Body, "Takımlarım", "Henüz bir takımda değilsiniz.", `hreflang="en" lang="en" href="/en`, "Çıkış yap", "Ada")
+
+	en := b.Get("/en")
+	mustContain(t, en.Body, "My teams", "Sign out", `hreflang="tr" lang="tr" href="/"`)
+}
+
+func TestAuthFailedPageIsTranslated(t *testing.T) {
+	h := newHarnessWithoutDB(t)
+	res := h.browser().Get("/auth/openid/authentik?state=x&code=y")
+	if res.Status != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", res.Status)
+	}
+	mustContain(t, res.Body, "Giriş yapılamadı")
+}

@@ -1,0 +1,57 @@
+{
+  "app": { "name": "Kanban" },
+  "locale": { "switcher": "Language" },
+  "nav": { "home": "Home", "teams": "Teams", "users": "Users" },
+  "auth": {
+    "logout": "Sign out",
+    "failed": {
+      "title": "Sign-in failed",
+      "body": "Signing in could not be completed. Please try again.",
+      "retry": "Try again"
+    }
+  },
+  "errors": {
+    "not_found": { "title": "Page not found", "body": "The page does not exist, or you may not see it." },
+    "server": { "title": "Something went wrong", "body": "Your request could not be completed. Please try again shortly." }
+  },
+  "home": { "title": "My teams", "empty": "You are not in a team yet." },
+  "teams": {
+    "title": "Teams",
+    "empty": "There are no teams yet.",
+    "name": "Team name",
+    "create": "Create team",
+    "created": "{name} was created.",
+    "member_count": { "one": "{count} member", "other": "{count} members" }
+  },
+  "team": {
+    "members": "Members",
+    "role": "Role",
+    "roles": { "lead": "Lead", "member": "Member" },
+    "add": "Add member",
+    "email": "Email",
+    "save": "Save",
+    "remove": "Remove",
+    "added": "{name} was added to the team.",
+    "removed": "{name} was removed from the team.",
+    "role_changed": "Role updated for {name}.",
+    "user_not_found": "No user has this email. They need to sign in once first.",
+    "user_ambiguous": "More than one user has this email."
+  },
+  "users": {
+    "title": "Users",
+    "name": "Name",
+    "email": "Email",
+    "admin": "Admin",
+    "status": "Status",
+    "active": "Active",
+    "disabled": "Disabled",
+    "you": "(you)",
+    "make_admin": "Make admin",
+    "revoke_admin": "Revoke admin",
+    "disable": "Disable",
+    "enable": "Enable",
+    "saved": "Saved.",
+    "last_admin": "At least one active admin must remain.",
+    "self_disable": "You cannot disable your own account."
+  }
+}

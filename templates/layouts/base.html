@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{.Locale}}">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {{hoist "head"}}
+  <link rel="stylesheet" href="{{asset "/static/app.css"}}">
+  {{liveClient}}
+</head>
+
+<body>
+  <nav class="locale-switcher" aria-label="{{t "locale.switcher"}}">
+    {{with localeURL "tr"}}<a hreflang="tr" lang="tr" href="{{.}}">Türkçe</a>{{end}}
+    {{with localeURL "en"}}<a hreflang="en" lang="en" href="{{.}}">English</a>{{end}}
+  </nav>
+  {{slot "content"}}
+</body>
+
+</html>
