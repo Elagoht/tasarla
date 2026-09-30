@@ -3,9 +3,9 @@ module kanban
 go 1.26.0
 
 require (
-	github.com/Elagoht/collage v0.38.0
+	github.com/Elagoht/collage v0.39.0
 	github.com/Elagoht/collage-flash v0.1.2
-	github.com/Elagoht/collage-i18n v0.2.0
+	github.com/Elagoht/collage-i18n v0.2.1
 	github.com/Elagoht/collage-live v0.3.0
 	github.com/Elagoht/collage-secure v0.1.3
 	github.com/Elagoht/collage-session v0.2.1

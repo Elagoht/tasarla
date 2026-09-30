@@ -1,6 +1,6 @@
 # Kanban — tasarım spec'i
 
-Tarih: 2026-09-30 · Collage sürümü: v0.38.0 · Durum: taslak, gözden geçirilecek
+Tarih: 2026-09-30 · Collage sürümü: v0.39.0 · Durum: taslak, gözden geçirilecek
 
 Birkaç takımın günlük iş takibi için kullanacağı, kuralları board başına yapılandırılabilen
 bir kanban uygulaması. Collage ile sunucu tarafında render edilir; istemcide yalnızca
