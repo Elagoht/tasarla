@@ -142,10 +142,11 @@ func setMentions(ctx context.Context, tx pgx.Tx, commentID int64, userIDs []int6
 	return err
 }
 
-// cardOfBoard reports ErrNotFound unless cardID is a card of boardID.
+// cardOfBoard reports ErrNotFound unless cardID is a card of boardID, not archived.
 func cardOfBoard(ctx context.Context, tx pgx.Tx, boardID, cardID int64) error {
 	var id int64
-	err := tx.QueryRow(ctx, `SELECT id FROM cards WHERE id = $1 AND board_id = $2`, cardID, boardID).Scan(&id)
+	// FOR SHARE: an archive of the card waits for this write, or this finds it archived.
+	err := tx.QueryRow(ctx, `SELECT id FROM cards WHERE id = $1 AND board_id = $2 AND archived_at IS NULL FOR SHARE`, cardID, boardID).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	}

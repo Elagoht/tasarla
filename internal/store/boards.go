@@ -91,6 +91,17 @@ func (s *Store) RenameBoard(ctx context.Context, id int64, name string) error {
 
 // ArchiveBoard hides a board from lists.
 func (s *Store) ArchiveBoard(ctx context.Context, id int64) error {
-	return exactlyOne(s.pool.Exec(ctx,
-		`UPDATE boards SET archived_at = coalesce(archived_at, now()) WHERE id = $1`, id))
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	// The board's lock, so that no write to it is half done when it goes.
+	if err := lockBoard(ctx, tx, id); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `UPDATE boards SET archived_at = now() WHERE id = $1`, id); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }

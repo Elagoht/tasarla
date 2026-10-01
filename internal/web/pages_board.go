@@ -37,7 +37,7 @@ func (h *handlers) boardFor(ctx context.Context, rc *collage.RenderContext) (boa
 		if err != nil {
 			return boardContext{}, err
 		}
-		id, err := strconv.ParseInt(rc.Param("id"), 10, 64)
+		id, err := parseID(rc.Param("id"))
 		if err != nil {
 			return boardContext{}, fmt.Errorf("board %q: %w", rc.Param("id"), collage.ErrNotFound)
 		}
@@ -216,6 +216,9 @@ func (h *handlers) boardPost(ctx context.Context, rc *collage.RenderContext) (*c
 		return collage.NoContent(http.StatusForbidden), nil
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	switch v.Value("op") {
 	case "create_card":
 		return h.createCard(ctx, rc, v, bc)

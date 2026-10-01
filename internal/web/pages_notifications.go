@@ -100,6 +100,9 @@ func (h *handlers) notificationsPost(ctx context.Context, rc *collage.RenderCont
 		return nil, err
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	switch v.Value("op") {
 	case "read":
 		id, ok := formInt64(v, "notification_id")
@@ -170,6 +173,9 @@ func (h *handlers) meSettingsPost(ctx context.Context, rc *collage.RenderContext
 		return nil, err
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	if v.Value("op") != "save" || !slices.Contains(config.Locales, v.Value("locale")) {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}

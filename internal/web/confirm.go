@@ -9,6 +9,8 @@ import (
 	i18n "github.com/Elagoht/collage-i18n"
 	validate "github.com/Elagoht/collage-validate"
 	"github.com/Elagoht/collage/pkg/collage"
+
+	"kanban/internal/auth"
 )
 
 // destructive lists the operations that ask before they act (spec §2.6).
@@ -42,7 +44,8 @@ func (h *handlers) confirmFirst(rc *collage.RenderContext, v *validate.Validator
 		return nil
 	}
 	view := confirmView{Question: i18n.T(rc, "confirm."+op), Action: rc.Request.URL.RequestURI(), Back: rc.Request.URL.Path}
-	if ref := rc.Request.Referer(); strings.HasPrefix(ref, "/") || sameOrigin(rc.Request, ref) {
+	// A local path goes through the login's own check, which refuses "//host".
+	if ref := rc.Request.Referer(); (strings.HasPrefix(ref, "/") && auth.SafeNext(ref) == ref) || sameOrigin(rc.Request, ref) {
 		view.Back = ref
 	}
 	keys := make([]string, 0, len(rc.Request.PostForm))

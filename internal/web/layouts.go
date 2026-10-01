@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 
 	flash "github.com/Elagoht/collage-flash"
@@ -150,7 +149,7 @@ func (h *handlers) loadApp(ctx context.Context, rc *collage.RenderContext) (appV
 		v.Page = rc.Page.Name
 	}
 	v.Wide = v.Page == "board"
-	if id, err := strconv.ParseInt(rc.Param("id"), 10, 64); err == nil && (strings.HasPrefix(v.Page, "board") || v.Page == "card") {
+	if id, err := parseID(rc.Param("id")); err == nil && (strings.HasPrefix(v.Page, "board") || v.Page == "card") {
 		v.BoardID = id
 	}
 	teams, err := h.store.TeamsOf(ctx, u.ID)

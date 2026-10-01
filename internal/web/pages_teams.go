@@ -58,6 +58,9 @@ func (h *handlers) teamsPost(ctx context.Context, rc *collage.RenderContext) (*c
 		return nil, err
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	if v.Value("op") != "create" {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
@@ -103,7 +106,7 @@ func (h *handlers) teamFor(ctx context.Context, rc *collage.RenderContext) (stor
 	if err != nil {
 		return store.Team{}, authz.TeamAccess{}, err
 	}
-	id, err := strconv.ParseInt(rc.Param("id"), 10, 64)
+	id, err := parseID(rc.Param("id"))
 	if err != nil {
 		return store.Team{}, authz.TeamAccess{}, fmt.Errorf("team %q: %w", rc.Param("id"), collage.ErrNotFound)
 	}
@@ -152,6 +155,9 @@ func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return collage.NoContent(http.StatusForbidden), nil
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	if res := h.confirmFirst(rc, v); res != nil {
 		return res, nil
 	}

@@ -88,7 +88,9 @@ func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, title s
 // lockBoard serialises the moves and creations of one board (spec §5.3).
 func lockBoard(ctx context.Context, tx pgx.Tx, boardID int64) error {
 	var id int64
-	err := tx.QueryRow(ctx, `SELECT id FROM boards WHERE id = $1 FOR UPDATE`, boardID).Scan(&id)
+	// An archived board takes no more writes: one racing the archive either
+	// commits before it, or finds the board gone.
+	err := tx.QueryRow(ctx, `SELECT id FROM boards WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, boardID).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	}

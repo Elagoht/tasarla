@@ -63,6 +63,9 @@ func (h *handlers) adminUsersPost(ctx context.Context, rc *collage.RenderContext
 		return nil, err
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	if res := h.confirmFirst(rc, v); res != nil {
 		return res, nil
 	}

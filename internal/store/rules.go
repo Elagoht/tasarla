@@ -173,6 +173,12 @@ func (s *Store) AddMovePermission(ctx context.Context, boardID int64, p MovePerm
 		return err
 	}
 	defer tx.Rollback(ctx)
+	// Under the board's lock, so the column or role checked below is still
+	// there when the permission is written (a role deleted meanwhile would
+	// take the permission with it).
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return err
+	}
 	ids := []int64{p.ToColumnID}
 	if p.FromColumnID != nil {
 		ids = append(ids, *p.FromColumnID)
@@ -244,14 +250,27 @@ func (s *Store) CreateBoardRole(ctx context.Context, boardID int64, name string)
 // DeleteBoardRole removes a role. A role a permission names is ErrInUse:
 // deleting it would drop the permission and, with it, the restriction.
 func (s *Store) DeleteBoardRole(ctx context.Context, boardID, id int64) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	// The check and the delete under the board's lock, which a permission
+	// being added holds too.
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return err
+	}
 	var used bool
-	if err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM move_permissions WHERE board_role_id = $1 AND board_id = $2)`, id, boardID).Scan(&used); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM move_permissions WHERE board_role_id = $1 AND board_id = $2)`, id, boardID).Scan(&used); err != nil {
 		return err
 	}
 	if used {
 		return ErrInUse
 	}
-	return exactlyOne(s.pool.Exec(ctx, `DELETE FROM board_roles WHERE id = $2 AND board_id = $1`, boardID, id))
+	if err := exactlyOne(tx.Exec(ctx, `DELETE FROM board_roles WHERE id = $2 AND board_id = $1`, boardID, id)); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 // SetBoardRoleMembers makes userIDs the role's members; users outside the

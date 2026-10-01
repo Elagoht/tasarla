@@ -35,7 +35,7 @@ func (h *handlers) cardFor(ctx context.Context, rc *collage.RenderContext) (card
 	if err != nil {
 		return cardContext{}, err
 	}
-	id, err := strconv.ParseInt(rc.Param("card"), 10, 64)
+	id, err := parseID(rc.Param("card"))
 	if err != nil {
 		return cardContext{}, fmt.Errorf("card %q: %w", rc.Param("card"), collage.ErrNotFound)
 	}
@@ -304,6 +304,9 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return collage.NoContent(http.StatusForbidden), nil
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	if res := h.confirmFirst(rc, v); res != nil {
 		return res, nil
 	}
@@ -642,8 +645,8 @@ func (h *handlers) setField(ctx context.Context, rc *collage.RenderContext, v *v
 		}
 	case store.FieldEstimate:
 		if value != "" {
-			e, err := strconv.ParseFloat(strings.ReplaceAll(value, ",", "."), 64)
-			if err != nil || e < 0 {
+			e, ok := parseEstimate(value)
+			if !ok {
 				problem = i18n.T(rc, "card.estimate_invalid")
 			}
 			f.Estimate = &e

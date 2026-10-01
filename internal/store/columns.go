@@ -292,6 +292,14 @@ func (s *Store) SaveColumns(ctx context.Context, boardID int64, rows []ColumnRow
 			position++
 		}
 	}
+	// A form loaded before another save may not name every column; the order
+	// it gives is kept, and the columns it left out follow, numbered 0..n-1.
+	if _, err := tx.Exec(ctx, `
+		UPDATE columns c SET position = o.n - 1
+		FROM (SELECT id, row_number() OVER (ORDER BY position, id) AS n FROM columns WHERE board_id = $1) o
+		WHERE c.id = o.id AND c.position <> o.n - 1`, boardID); err != nil {
+		return err
+	}
 	if mode == rules.ModeRestricted {
 		for _, n := range added {
 			if _, err := tx.Exec(ctx, `

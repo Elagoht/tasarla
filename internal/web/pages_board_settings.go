@@ -32,8 +32,10 @@ type settingsView struct {
 	Board   store.Board
 	Team    store.Team
 	Columns []columnRowView
-	Labels  []store.Label
-	Palette []string
+	// ColumnsProblem is what is wrong with a refused table as a whole.
+	ColumnsProblem string
+	Labels         []store.Label
+	Palette        []string
 
 	Members   []store.Member
 	Roles     []settingsRole
@@ -142,7 +144,8 @@ func (h *handlers) boardSettingsPage() *collage.Page {
 const draftKey = "columns_draft"
 
 type columnsDraft struct {
-	Rows []columnRowView
+	Rows    []columnRowView
+	Problem string
 }
 
 func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderContext) (settingsView, error) {
@@ -165,7 +168,7 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 		return view, err
 	}
 	if draft, ok := collage.Get[columnsDraft](rc, draftKey); ok {
-		view.Columns, view.Tab = draft.Rows, "columns"
+		view.Columns, view.ColumnsProblem, view.Tab = draft.Rows, draft.Problem, "columns"
 	} else {
 		cards, err := h.store.BoardCards(ctx, bc.Board.ID)
 		if err != nil {
@@ -293,6 +296,9 @@ func (h *handlers) boardSettingsPost(ctx context.Context, rc *collage.RenderCont
 		return nil, err
 	}
 	v := validate.Form(rc)
+	if badText(rc) {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
 	if res := h.confirmFirst(rc, v); res != nil {
 		return res, nil
 	}
@@ -381,6 +387,7 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 		row   store.ColumnRow
 	}
 	var items []indexed
+	seen := map[string]bool{}
 	for i := range n {
 		p := "col_" + strconv.Itoa(i) + "_"
 		view := columnRowView{
@@ -395,6 +402,10 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 			AllowCreate: view.Create, IsDone: view.Done}
 		if view.ID != "" {
 			id, err := strconv.ParseInt(view.ID, 10, 64)
+			if err != nil || seen[view.ID] {
+				return collage.NoContent(http.StatusBadRequest), nil // the table names each column once
+			}
+			seen[view.ID] = true
 			if err != nil {
 				return collage.NoContent(http.StatusBadRequest), nil
 			}
@@ -405,8 +416,8 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 			case view.Name == "" || len([]rune(view.Name)) > 60:
 				view.Problem = i18n.T(rc, "settings.name_required")
 			case view.WIP != "":
-				limit, err := strconv.Atoi(view.WIP)
-				if err != nil || limit <= 0 {
+				limit, ok := boundedCount(view.WIP)
+				if !ok {
 					view.Problem = i18n.T(rc, "settings.wip_invalid")
 				}
 				row.WIPLimit = &limit
@@ -444,7 +455,7 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 				if p.Index >= 0 {
 					draft.Rows[p.Index].Problem = msg
 				} else {
-					flash.Add(rc, flash.Error, msg)
+					draft.Problem = msg // the table as a whole: shown above it
 				}
 			}
 		case errors.Is(err, store.ErrNotFound):
@@ -532,8 +543,8 @@ func (h *handlers) addRule(ctx context.Context, rc *collage.RenderContext, v *va
 		return h.settingsDone(rc, bc, "rules", flash.Error, i18n.T(rc, "settings.rule_invalid"))
 	}
 	positive := func(name string) (*int, bool) {
-		n, err := strconv.Atoi(strings.TrimSpace(v.Value(name)))
-		if err != nil || n <= 0 {
+		n, ok := boundedCount(v.Value(name))
+		if !ok {
 			return nil, false
 		}
 		return &n, true
@@ -549,6 +560,9 @@ func (h *handlers) addRule(ctx context.Context, rc *collage.RenderContext, v *va
 		}
 		var from *int64
 		if f, ok := formInt64(v, "from_column"); ok {
+			if f == column {
+				return invalid() // from a column into itself is no move
+			}
 			from = &f
 		}
 		for _, sub := range subjects {

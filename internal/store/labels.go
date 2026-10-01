@@ -82,7 +82,7 @@ func (s *Store) SetCardLabels(ctx context.Context, boardID, cardID int64, labelI
 	}
 	var id int64
 	err = tx.QueryRow(ctx, `
-		UPDATE cards SET version = version + 1 WHERE id = $2 AND board_id = $1 RETURNING id`, boardID, cardID).Scan(&id)
+		UPDATE cards SET version = version + 1 WHERE id = $2 AND board_id = $1 AND archived_at IS NULL RETURNING id`, boardID, cardID).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	}

@@ -39,7 +39,7 @@ func (s *Store) AddDependency(ctx context.Context, boardID, blockerID, blockedID
 	}
 	var n int
 	if err := tx.QueryRow(ctx,
-		`SELECT count(*) FROM cards WHERE board_id = $1 AND id IN ($2, $3)`, boardID, blockerID, blockedID).Scan(&n); err != nil {
+		`SELECT count(*) FROM cards WHERE board_id = $1 AND id IN ($2, $3) AND archived_at IS NULL`, boardID, blockerID, blockedID).Scan(&n); err != nil {
 		return err
 	}
 	if n != 2 {

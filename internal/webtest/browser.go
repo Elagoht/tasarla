@@ -66,6 +66,19 @@ func (b *Browser) Submit(page, action string, form url.Values) Response {
 	return b.Post(action, form)
 }
 
+// PostWith is Post with extra request headers, such as a Referer.
+func (b *Browser) PostWith(path string, form url.Values, header http.Header) Response {
+	req := httptest.NewRequest(http.MethodPost, Origin+path, strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", Origin)
+	for k, vs := range header {
+		for _, v := range vs {
+			req.Header.Add(k, v)
+		}
+	}
+	return b.do(req)
+}
+
 // Fetch posts form to path the way board.js and collage-live do: with fetch,
 // marked with collage.FetchHeader.
 func (b *Browser) Fetch(path string, form url.Values) Response {

@@ -44,6 +44,7 @@
   <input type="hidden" name="op" value="columns_save">
   <input type="hidden" name="col_count" value="{{len .Columns | inc}}" data-col-count>
   <p class="muted">{{t "settings.columns_hint"}}</p>
+  {{with .ColumnsProblem}}<div class="alert" role="alert">{{template "icon" "flag"}}<span>{{.}}</span></div>{{end}}
   <div class="table-wrap">
     <table class="table table--columns">
       <thead>
