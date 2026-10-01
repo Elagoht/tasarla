@@ -28,11 +28,22 @@ function withQuery(url, q) {
   return q ? base + "?" + q : base;
 }
 
+// The bar sits outside the live fragment, so the server's rendering of it is
+// that of the page load: the Clear link and the pickers' marks follow the form.
+const clear = bar?.querySelector("[data-filter-clear]");
+function syncBar(q) {
+  if (clear) clear.hidden = q === "";
+  for (const pick of bar.querySelectorAll(".filter-pick")) {
+    pick.classList.toggle("is-on", pick.querySelector("input:checked") !== null);
+  }
+}
+
 let timer = 0;
 function apply() {
   clearTimeout(timer);
   const q = query();
   history.replaceState(history.state, "", withQuery(location.pathname, q));
+  syncBar(q);
   target.dataset.collageFragment = withQuery(target.dataset.collageFragment, q);
   if (target.dataset.moveUrl) target.dataset.moveUrl = withQuery(target.dataset.moveUrl, q);
   const live = window.collageLive;

@@ -37,6 +37,12 @@ func TestBoardFilterDimsCards(t *testing.T) {
 	if strings.Contains(unfiltered, "card--dimmed") || strings.Contains(unfiltered, `class="filter-count"`) {
 		t.Error("an unfiltered board dims cards")
 	}
+	// The bar is outside the live fragment, so the Clear link is always there
+	// for filter.js to show: hidden while the filter is off, shown while on.
+	mustContain(t, unfiltered, `data-filter-clear hidden>`)
+	if strings.Contains(page.Body, `data-filter-clear hidden`) {
+		t.Error("a filtered board hides the Clear link")
+	}
 }
 
 // Nonsense in the URL is dropped, not refused, and not echoed back.

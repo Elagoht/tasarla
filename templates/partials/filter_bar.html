@@ -32,6 +32,6 @@
     {{range dueChoices}}<option value="{{.}}"{{if eq (printf "%s" .) (printf "%s" $.Filter.Due)}} selected{{end}}>{{t (printf "filter.due_%s" .)}}</option>{{end}}
   </select>
   <noscript><button type="submit" class="btn btn--secondary btn--sm">{{t "filter.apply"}}</button></noscript>
-  {{if .Filter.Active}}<a class="btn btn--quiet btn--sm" href="{{withQuery .Action (extraQuery .Extra)}}" data-filter-clear>{{t "filter.clear"}}</a>{{end}}
+  <a class="btn btn--quiet btn--sm" href="{{withQuery .Action (extraQuery .Extra)}}" data-filter-clear{{if not .Filter.Active}} hidden{{end}}>{{t "filter.clear"}}</a>
 </form>
 {{end}}
