@@ -26,6 +26,8 @@ func (w Worker) Tick(ctx context.Context) error {
 			w.Log.Warn("notify: send failed", "outbox", m.ID, "err", err)
 		}
 		return err
+	}, func(m store.OutboxMessage, err error) {
+		w.Log.Error("notify: e-mail given up", "outbox", m.ID, "to", m.To, "err", err)
 	})
 	if sent+failed > 0 {
 		w.Log.Info("notify: outbox", "sent", sent, "failed", failed)
@@ -64,7 +66,9 @@ func (s Scheduler) Tick(ctx context.Context) error {
 	for _, c := range candidates {
 		events = append(events, Event{
 			Kind: c.Kind, To: *c.Card.AssigneeID, Card: c.Card, BoardName: c.BoardName,
-			DedupeKey: c.Kind + ":" + strconv.FormatInt(c.Card.ID, 10) + ":" + c.Card.DueDate.Format(time.DateOnly),
+			// Per person: a card handed to someone else reminds them as well.
+			DedupeKey: c.Kind + ":" + strconv.FormatInt(*c.Card.AssigneeID, 10) + ":" +
+				strconv.FormatInt(c.Card.ID, 10) + ":" + c.Card.DueDate.Format(time.DateOnly),
 		})
 	}
 	return s.Notifier.Emit(ctx, events...)

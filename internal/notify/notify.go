@@ -80,6 +80,14 @@ func (n *Notifier) emit(ctx context.Context, e Event) error {
 	if err != nil || user.Disabled() {
 		return err
 	}
+	// Someone who left the team, or never was in it, hears nothing about its
+	// cards: a notification carries the card's title and text (spec §6).
+	if e.Card.BoardID != 0 {
+		ok, err := n.Store.CanSeeBoard(ctx, user.ID, e.Card.BoardID)
+		if err != nil || !ok {
+			return err
+		}
+	}
 	prefs, err := n.Store.NotificationPrefs(ctx, user.ID)
 	if err != nil {
 		return err

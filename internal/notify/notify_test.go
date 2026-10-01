@@ -75,7 +75,7 @@ func (f *fixture) outbox(t *testing.T) []store.OutboxMessage {
 	if _, _, err := f.s.ProcessOutbox(context.Background(), time.Now().Add(time.Minute), 100, func(m store.OutboxMessage) error {
 		got = append(got, m)
 		return nil
-	}); err != nil {
+	}, nil); err != nil {
 		t.Fatal(err)
 	}
 	return got
@@ -184,3 +184,36 @@ func TestWorkerSendsTheOutbox(t *testing.T) {
 }
 
 func itoa(n int64) string { return strconv.FormatInt(n, 10) }
+
+// A user who left the team hears nothing more about its cards (spec §6).
+func TestNoNotificationsAcrossTheTeamBoundary(t *testing.T) {
+	f := newFixture(t)
+	ctx := context.Background()
+	card, _ := f.s.CreateCard(ctx, f.board.ID, f.cols[0].ID, "Secret plan", f.ada.ID)
+	board, _ := f.s.Board(ctx, f.board.ID)
+	f.s.RemoveMember(ctx, board.TeamID, f.bob.ID)
+	f.n.Emit(ctx, notify.Event{Kind: store.NotifyAssigned, To: f.bob.ID, Actor: f.ada.ID, ActorName: "Ada", Card: card, BoardName: "Sprint"})
+	if n, _ := f.s.UnreadCount(ctx, f.bob.ID); n != 0 {
+		t.Fatalf("a former member was notified: %d", n)
+	}
+	if mails := f.outbox(t); len(mails) != 0 {
+		t.Fatalf("a former member was mailed: %+v", mails)
+	}
+}
+
+// The reminder is per person: a card handed to someone else reminds them too.
+func TestDueSoonReachesANewAssignee(t *testing.T) {
+	f := newFixture(t)
+	ctx := context.Background()
+	card, _ := f.s.CreateCard(ctx, f.board.ID, f.cols[0].ID, "Report", f.ada.ID)
+	due, _ := time.ParseInLocation(time.DateOnly, "2026-10-02", time.Local)
+	card, _ = f.s.UpdateCard(ctx, f.board.ID, card.ID, card.Version, store.CardFields{Title: "Report", AssigneeID: &f.ada.ID, DueDate: &due}, 0)
+	now, _ := time.ParseInLocation("2006-01-02 15:04", "2026-10-01 09:00", time.Local)
+	s := notify.Scheduler{Store: f.s, Notifier: f.n, Now: func() time.Time { return now }}
+	s.Tick(ctx)
+	f.s.UpdateCard(ctx, f.board.ID, card.ID, card.Version, store.CardFields{Title: "Report", AssigneeID: &f.bob.ID, DueDate: &due}, 0)
+	s.Tick(ctx)
+	if n, _ := f.s.UnreadCount(ctx, f.bob.ID); n != 1 {
+		t.Fatalf("the new assignee got %d reminders, want 1", n)
+	}
+}
