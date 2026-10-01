@@ -23,9 +23,9 @@ type teamsView struct {
 }
 
 type teamView struct {
-	Me        int64
-	Team      store.Team
-	Boards    []store.Board
+	Me     int64
+	Team   store.Team
+	Boards []store.Board
 	// Archived are the team's archived boards, shown to who may restore them.
 	Archived  []store.Board
 	Members   []store.Member
