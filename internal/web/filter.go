@@ -15,6 +15,7 @@ import (
 // checked against the board: a value naming no member, label or choice is
 // dropped, never refused, so an old link keeps working.
 type boardFilter struct {
+	Lane       string
 	Text       string
 	Me         bool // assignee=me: whoever is reading
 	None       bool // assignee=none: unassigned
@@ -24,10 +25,16 @@ type boardFilter struct {
 	Due        store.DueFilter
 }
 
-var dueFilters = []store.DueFilter{store.DueOverdue, store.DueToday, store.DueWeek, store.DueNone}
+var (
+	laneChoices = []string{"assignee", "priority"}
+	dueFilters  = []store.DueFilter{store.DueOverdue, store.DueToday, store.DueWeek, store.DueNone}
+)
 
 func parseBoardFilter(q url.Values, members []store.Member, labels []store.Label) boardFilter {
 	var f boardFilter
+	if l := q.Get("lane"); slices.Contains(laneChoices, l) {
+		f.Lane = l
+	}
 	if text := strings.TrimSpace(q.Get("q")); utf8.RuneCountInString(text) >= 2 {
 		f.Text = text
 	}
@@ -70,12 +77,22 @@ func parseBoardFilter(q url.Values, members []store.Member, labels []store.Label
 	return f
 }
 
-// Active reports whether the filter dims anything.
-func (f boardFilter) Active() bool { return len(f.Values()) > 0 }
+// Active reports whether the filter dims anything; the lane is a view, not a filter.
+func (f boardFilter) Active() bool {
+	g := f
+	g.Lane = ""
+	return len(g.Values()) > 0
+}
+
+// ClearQuery is the query of the board with the filter cleared: the lane kept.
+func (f boardFilter) ClearQuery() string { return boardFilter{Lane: f.Lane}.Query() }
 
 // Values is the filter as a canonical query: one filter, one URL.
 func (f boardFilter) Values() url.Values {
 	v := url.Values{}
+	if f.Lane != "" {
+		v.Set("lane", f.Lane)
+	}
 	if f.Text != "" {
 		v.Set("q", f.Text)
 	}

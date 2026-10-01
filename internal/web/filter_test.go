@@ -50,3 +50,19 @@ func TestWithQuery(t *testing.T) {
 		t.Error("withQuery")
 	}
 }
+
+func TestBoardFilterLaneIsASettingNotAFilter(t *testing.T) {
+	q, _ := url.ParseQuery("lane=assignee&priority=4")
+	f := parseBoardFilter(q, nil, nil)
+	if f.Lane != "assignee" || f.Query() != "lane=assignee&priority=4" || f.ClearQuery() != "lane=assignee" {
+		t.Errorf("lane %q, query %q, clear %q", f.Lane, f.Query(), f.ClearQuery())
+	}
+	only, _ := url.ParseQuery("lane=priority")
+	if g := parseBoardFilter(only, nil, nil); g.Active() || g.Query() != "lane=priority" {
+		t.Errorf("a lane alone is active (%v) or lost (%q)", g.Active(), g.Query())
+	}
+	bad, _ := url.ParseQuery("lane=label")
+	if g := parseBoardFilter(bad, nil, nil); g.Lane != "" || g.Query() != "" || g.ClearQuery() != "" {
+		t.Errorf("an unknown lane is kept: %+v", g)
+	}
+}
