@@ -120,7 +120,7 @@ func New(d Deps) (*collage.App, error) {
 func (h *handlers) pages() []*collage.Page {
 	return []*collage.Page{
 		h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
-		h.boardPage(), h.cardPage(), h.tasksPage(),
+		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(),
 	}
 }
 

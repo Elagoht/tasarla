@@ -1,0 +1,86 @@
+{{$self := pageURL "board-settings" "id" .Board.ID}}
+<p><a href="{{pageURL "board" "id" .Board.ID}}">← {{t "card.back"}}: {{.Board.Name}}</a></p>
+<h1>{{t "settings.title"}}</h1>
+
+<section>
+  <h2>{{t "settings.board"}}</h2>
+  <form class="inline" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="rename">
+    <input name="board_name" value="{{fieldValue "board_name" .Board.Name}}" aria-label="{{t "board.name"}}" required maxlength="100">
+    <button type="submit">{{t "settings.rename"}}</button>
+    {{with fieldError "board_name"}}<p class="error">{{.}}</p>{{end}}
+  </form>
+</section>
+
+<section>
+  <h2>{{t "settings.columns"}}</h2>
+  <table class="table">
+    <thead>
+      <tr><th>{{t "settings.column_name"}}</th><th>{{t "settings.wip_limit"}}</th><th>{{t "settings.allow_create"}}</th><th>{{t "settings.is_done"}}</th><th>{{t "settings.counts_person_wip"}}</th><th></th></tr>
+    </thead>
+    <tbody>
+      {{range .Columns}}
+      <tr>
+        <td colspan="5">
+          <form class="inline" method="post" action="{{$self}}">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="column_update">
+            <input type="hidden" name="column_id" value="{{.Column.ID}}">
+            <input name="name" value="{{.Column.Name}}" aria-label="{{t "settings.column_name"}}" required maxlength="60">
+            <input name="wip_limit" value="{{.Limit}}" inputmode="numeric" size="3" aria-label="{{t "settings.wip_limit"}}">
+            <label><input type="checkbox" name="allow_create" value="1" {{if .Column.AllowCreate}}checked{{end}}> {{t "settings.allow_create"}}</label>
+            <label><input type="checkbox" name="is_done" value="1" {{if .Column.IsDone}}checked{{end}}> {{t "settings.is_done"}}</label>
+            <label><input type="checkbox" name="counts_person_wip" value="1" {{if .Column.CountsPersonWIP}}checked{{end}}> {{t "settings.counts_person_wip"}}</label>
+            <button type="submit">{{t "card.save"}}</button>
+          </form>
+        </td>
+        <td>
+          {{if not .First}}<form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="column_move"><input type="hidden" name="column_id" value="{{.Column.ID}}"><input type="hidden" name="dir" value="-1"><button type="submit">{{t "settings.left"}}</button></form>{{end}}
+          {{if not .Last}}<form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="column_move"><input type="hidden" name="column_id" value="{{.Column.ID}}"><input type="hidden" name="dir" value="1"><button type="submit">{{t "settings.right"}}</button></form>{{end}}
+          <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="column_delete"><input type="hidden" name="column_id" value="{{.Column.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  <form class="inline" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="column_add">
+    <input name="new_column" value="{{fieldValue "new_column"}}" placeholder="{{t "settings.new_column"}}" aria-label="{{t "settings.new_column"}}" required maxlength="60">
+    <button type="submit">{{t "settings.add_column"}}</button>
+    {{with fieldError "new_column"}}<p class="error">{{.}}</p>{{end}}
+  </form>
+</section>
+
+<section>
+  <h2>{{t "settings.labels"}}</h2>
+  <ul class="list">
+    {{range .Labels}}
+    <li>
+      <span class="label" data-color="{{.Color}}">{{.Name}}</span>
+      <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="label_delete"><input type="hidden" name="label_id" value="{{.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
+    </li>
+    {{end}}
+  </ul>
+  <form class="inline" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="label_add">
+    <input name="label_name" value="{{fieldValue "label_name"}}" placeholder="{{t "settings.label_name"}}" aria-label="{{t "settings.label_name"}}" required maxlength="40">
+    {{$color := fieldValue "label_color"}}
+    <select name="label_color" aria-label="{{t "settings.label_color"}}">
+      {{range .Palette}}<option value="{{.}}" {{if eq . $color}}selected{{end}}>{{t (printf "settings.colors.%s" (slice . 1))}}</option>{{end}}
+    </select>
+    <button type="submit">{{t "settings.add_label"}}</button>
+    {{with fieldError "label_name"}}<p class="error">{{.}}</p>{{end}}
+    {{with fieldError "label_color"}}<p class="error">{{.}}</p>{{end}}
+  </form>
+</section>
+
+<section class="danger">
+  <form method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="archive_board">
+    <button type="submit">{{t "settings.archive"}}</button>
+  </form>
+</section>

@@ -145,5 +145,42 @@
   "tasks": {
     "title": "Bana atananlar",
     "empty": "Size atanmış kart yok."
+  },
+  "settings": {
+    "title": "Board ayarları",
+    "board": "Board",
+    "rename": "Yeniden adlandır",
+    "archive": "Board'u arşivle",
+    "archived": "Board arşivlendi.",
+    "saved": "Kaydedildi.",
+    "columns": "Kolonlar",
+    "column_name": "Kolon adı",
+    "wip_limit": "WIP limiti",
+    "is_done": "Bitti kolonu",
+    "allow_create": "Kart burada oluşturulur",
+    "counts_person_wip": "Kişi WIP'ine sayılır",
+    "left": "Sola",
+    "right": "Sağa",
+    "delete": "Sil",
+    "add_column": "Kolon ekle",
+    "new_column": "Yeni kolon",
+    "column_not_empty": "Kartı olan bir kolon silinemez.",
+    "wip_invalid": "WIP limiti pozitif bir tam sayı olmalı.",
+    "name_required": "Ad boş olamaz.",
+    "labels": "Etiketler",
+    "label_name": "Etiket adı",
+    "label_color": "Renk",
+    "add_label": "Etiket ekle",
+    "label_exists": "Bu adla bir etiket zaten var.",
+    "colors": {
+      "e03131": "Kırmızı",
+      "f08c00": "Turuncu",
+      "2f9e44": "Yeşil",
+      "1971c2": "Mavi",
+      "7048e8": "Mor",
+      "c2255c": "Pembe",
+      "0c8599": "Camgöbeği",
+      "495057": "Gri"
+    }
   }
 }

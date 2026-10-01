@@ -145,5 +145,42 @@
   "tasks": {
     "title": "My tasks",
     "empty": "No cards are assigned to you."
+  },
+  "settings": {
+    "title": "Board settings",
+    "board": "Board",
+    "rename": "Rename",
+    "archive": "Archive board",
+    "archived": "Board archived.",
+    "saved": "Saved.",
+    "columns": "Columns",
+    "column_name": "Column name",
+    "wip_limit": "WIP limit",
+    "is_done": "Done column",
+    "allow_create": "Cards are created here",
+    "counts_person_wip": "Counts toward personal WIP",
+    "left": "Left",
+    "right": "Right",
+    "delete": "Delete",
+    "add_column": "Add column",
+    "new_column": "New column",
+    "column_not_empty": "A column with cards cannot be deleted.",
+    "wip_invalid": "The WIP limit must be a positive whole number.",
+    "name_required": "The name cannot be empty.",
+    "labels": "Labels",
+    "label_name": "Label name",
+    "label_color": "Colour",
+    "add_label": "Add label",
+    "label_exists": "A label with this name already exists.",
+    "colors": {
+      "e03131": "Red",
+      "f08c00": "Orange",
+      "2f9e44": "Green",
+      "1971c2": "Blue",
+      "7048e8": "Purple",
+      "c2255c": "Pink",
+      "0c8599": "Cyan",
+      "495057": "Grey"
+    }
   }
 }

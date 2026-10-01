@@ -103,7 +103,7 @@ func TestOutsidersGetNotFoundForBoardsAndCards(t *testing.T) {
 	b := newBoardSetup(t)
 	c := b.card(t, 0, "Secret")
 	out := b.h.signedIn("out", "out@example.com")
-	for _, p := range []string{b.path, b.cardPath(c), "/boards/abc", "/boards/99999"} {
+	for _, p := range []string{b.path, b.cardPath(c), b.path + "/settings", "/boards/abc", "/boards/99999"} {
 		if res := out.Get(p); res.Status != http.StatusNotFound {
 			t.Errorf("GET %s = %d, want 404", p, res.Status)
 		}
