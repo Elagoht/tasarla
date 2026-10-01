@@ -85,6 +85,15 @@ func (b *Browser) SubmitFetch(page, action string, form url.Values) Response {
 	return b.Fetch(action, form)
 }
 
+// Cookies returns what the browser holds, for a request made outside it.
+func (b *Browser) Cookies() []*http.Cookie {
+	var out []*http.Cookie
+	for name, value := range b.cookies {
+		out = append(out, &http.Cookie{Name: name, Value: value})
+	}
+	return out
+}
+
 // HasCookie reports whether the browser holds a cookie named name.
 func (b *Browser) HasCookie(name string) bool {
 	_, ok := b.cookies[name]
