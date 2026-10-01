@@ -66,3 +66,7 @@ a.notification__text:hover { color: var(--accent-strong); }
 @media (max-width: 640px) {
   .list-rows__row { flex-wrap: wrap; }
 }
+
+/* A search beside a page's title. */
+.search { display: flex; gap: var(--s2); align-items: center; }
+.search .input { width: min(320px, 60vw); }

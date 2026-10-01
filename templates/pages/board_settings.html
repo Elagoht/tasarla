@@ -29,7 +29,7 @@
     <h2 class="h3">{{t "settings.danger_zone"}}</h2>
     <p class="muted small">{{t "settings.archive_hint"}}</p>
   </div>
-  <form method="post" action="{{$self}}?tab=general" data-confirm="{{t "confirm.archive_board"}}">
+  <form method="post" action="{{$self}}?tab=general" data-confirm="{{t "confirm.archive_board"}}" data-confirm-hint="{{t "confirm.archive_hint"}}">
     {{csrfToken}}
     <input type="hidden" name="op" value="archive_board">
     <button type="submit" class="btn btn--danger">{{template "icon" "archive"}} {{t "settings.archive"}}</button>

@@ -4,6 +4,8 @@
     <h1>{{.Board.Name}}</h1>
   </div>
   <div class="actions">
+    <button type="button" class="btn btn--quiet hide-done" data-hide-done aria-pressed="false" hidden>{{template "icon" "check"}} {{t "board.hide_done"}}</button>
+    <a class="btn btn--quiet" href="{{pageURL "board-archive" "id" .Board.ID}}">{{template "icon" "archive"}} {{t "archive.title"}}</a>
     <a class="btn btn--quiet" href="{{pageURL "board-activity" "id" .Board.ID}}">{{template "icon" "activity"}} {{t "activity.title"}}</a>
     {{if .Access.CanManage}}<a class="btn btn--secondary" href="{{pageURL "board-settings" "id" .Board.ID}}">{{template "icon" "settings"}} {{t "board.settings"}}</a>{{end}}
   </div>

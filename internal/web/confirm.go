@@ -22,9 +22,11 @@ var destructive = []string{
 
 type confirmView struct {
 	Question string
-	Action   string
-	Fields   []confirmField
-	Back     string
+	// Hint says what follows: undone only from the archive, or not at all.
+	Hint   string
+	Action string
+	Fields []confirmField
+	Back   string
 }
 
 type confirmField struct {
@@ -43,7 +45,11 @@ func (h *handlers) confirmFirst(rc *collage.RenderContext, v *validate.Validator
 	if !slices.Contains(destructive, op) || v.Value("confirm") == "1" || (op == "set_disabled" && v.Value("value") != "1") {
 		return nil
 	}
-	view := confirmView{Question: i18n.T(rc, "confirm."+op), Action: rc.Request.URL.RequestURI(), Back: rc.Request.URL.Path}
+	hint := i18n.T(rc, "confirm.irreversible")
+	if op == "archive" || op == "archive_board" {
+		hint = i18n.T(rc, "confirm.archive_hint")
+	}
+	view := confirmView{Question: i18n.T(rc, "confirm."+op), Hint: hint, Action: rc.Request.URL.RequestURI(), Back: rc.Request.URL.Path}
 	// A local path goes through the login's own check, which refuses "//host".
 	if ref := rc.Request.Referer(); (strings.HasPrefix(ref, "/") && auth.SafeNext(ref) == ref) || sameOrigin(rc.Request, ref) {
 		view.Back = ref

@@ -108,7 +108,12 @@
     "open_card": "Open card",
     "no_cards": "No cards",
     "wip_limit": "Cards / WIP limit",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "hide_done": "Hide done",
+    "hidden_count": {
+      "one": "{count} done card hidden",
+      "other": "{count} done cards hidden"
+    }
   },
   "card": {
     "title": "Title",
@@ -417,7 +422,8 @@
       "priority": "priority"
     },
     "card_updated_short": "{actor} edited the card",
-    "none": "—"
+    "none": "—",
+    "card_restored": "{actor} restored the card from the archive"
   },
   "notify": {
     "assigned": "{actor} assigned you to a card: {card}",
@@ -472,6 +478,22 @@
     "rule_delete": "Delete this rule?",
     "archive_board": "Archive this board?",
     "remove_member": "Remove this member from the team?",
-    "set_disabled": "Disable this user?"
+    "set_disabled": "Disable this user?",
+    "archive_hint": "You can restore it from the archive."
+  },
+  "archive": {
+    "title": "Archive",
+    "subtitle": "Archived cards stay here; a restored card goes back to the bottom of its column.",
+    "search": "Search the archive",
+    "search_button": "Search",
+    "empty": "No archived cards.",
+    "no_results": "No card matches.",
+    "restore": "Restore",
+    "restored": "The card is back from the archive.",
+    "board_restored": "The board is back from the archive.",
+    "archived_by": "archived by {name}",
+    "from_column": "from {column}",
+    "boards": "Archived boards",
+    "see_all": "Go to the archive"
   }
 }

@@ -302,12 +302,29 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 	if err != nil {
 		return nil, err
 	}
-	if !cc.Access.CanEdit || cc.Card.ArchivedAt != nil {
+	if !cc.Access.CanEdit {
 		return collage.NoContent(http.StatusForbidden), nil
 	}
 	v := validate.Form(rc)
 	if badText(rc) {
 		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	// An archived card can only be restored.
+	if cc.Card.ArchivedAt != nil {
+		if v.Value("op") != "restore" {
+			return collage.NoContent(http.StatusForbidden), nil
+		}
+		if found, err := h.restoreCard(ctx, rc, cc.boardContext, cc.Card.ID); err != nil || !found {
+			if err != nil {
+				return nil, err
+			}
+			return collage.NoContent(http.StatusNotFound), nil
+		}
+		res, err := h.redirectTo(rc, "card", "id", strconv.FormatInt(cc.Board.ID, 10), "card", strconv.FormatInt(cc.Card.ID, 10))
+		if res != nil {
+			res.InvalidateTags = []string{boardTag(cc.Board.ID), cardTag(cc.Card.ID)}
+		}
+		return res, err
 	}
 	if res := h.confirmFirst(rc, v); res != nil {
 		return res, nil

@@ -78,6 +78,28 @@
     </ul>
   </section>
 
+  {{if and .CanManage .Archived}}
+  <section class="stack stack--sm">
+    <h2 class="h3">{{t "archive.boards"}}</h2>
+    <ul class="list-rows">
+      {{range .Archived}}
+      <li class="list-rows__row is-muted">
+        <div class="list-rows__main">
+          <span class="tile__mark tile__mark--sm" aria-hidden="true">{{template "icon" "archive"}}</span>
+          <span class="list-rows__title">{{.Name}}</span>
+        </div>
+        <form method="post" action="{{$self}}">
+          {{csrfToken}}
+          <input type="hidden" name="op" value="restore_board">
+          <input type="hidden" name="board_id" value="{{.ID}}">
+          <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "arrow-left"}} {{t "archive.restore"}}</button>
+        </form>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+
   {{if .CanManage}}
   <section class="panel stack">
     <h2 class="h3">{{t "team.add"}}</h2>

@@ -26,6 +26,8 @@ type teamView struct {
 	Me        int64
 	Team      store.Team
 	Boards    []store.Board
+	// Archived are the team's archived boards, shown to who may restore them.
+	Archived  []store.Board
 	Members   []store.Member
 	Roles     []store.Role
 	CanManage bool
@@ -139,8 +141,15 @@ func (h *handlers) loadTeam(ctx context.Context, rc *collage.RenderContext) (tea
 		return teamView{}, err
 	}
 	members, err := h.store.Members(ctx, team.ID)
+	if err != nil {
+		return teamView{}, err
+	}
 	user, _ := currentUser(ctx)
-	return teamView{Me: user.ID, Team: team, Boards: boards, Members: members, Roles: store.Roles, CanManage: access.CanManage}, err
+	v := teamView{Me: user.ID, Team: team, Boards: boards, Members: members, Roles: store.Roles, CanManage: access.CanManage}
+	if access.CanManage {
+		v.Archived, err = h.store.ArchivedBoards(ctx, team.ID)
+	}
+	return v, err
 }
 
 func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*collage.ActionResult, error) {
@@ -168,6 +177,24 @@ func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return h.changeMember(ctx, rc, v, team)
 	case "create_board":
 		return h.createBoard(ctx, rc, v, team)
+	case "restore_board":
+		id, ok := formInt64(v, "board_id")
+		if !ok {
+			return collage.NoContent(http.StatusBadRequest), nil
+		}
+		err := h.store.RestoreBoard(ctx, team.ID, id)
+		if errors.Is(err, store.ErrNotFound) {
+			return collage.NoContent(http.StatusNotFound), nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		flash.Add(rc, flash.Success, i18n.T(rc, "archive.board_restored"))
+		res, err := h.redirectToTeam(rc, team.ID)
+		if res != nil {
+			res.InvalidateTags = []string{boardTag(id)}
+		}
+		return res, err
 	}
 	return collage.NoContent(http.StatusBadRequest), nil
 }

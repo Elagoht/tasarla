@@ -115,7 +115,39 @@ function dismissAlerts() {
   }
 }
 
+// "Hide done" is the reader's own view of this board, kept in this browser.
+// The setting is on the board element, which collage-live leaves alone.
+function setupHideDone() {
+  const toggle = document.querySelector("[data-hide-done]");
+  const id = board.dataset.moveUrl.match(/\/boards\/(\d+)/)?.[1];
+  if (!toggle || !id) return;
+  const key = "hide-done:" + id;
+  const apply = (on) => {
+    if (on) board.dataset.hideDone = "";
+    else delete board.dataset.hideDone;
+    toggle.setAttribute("aria-pressed", String(on));
+  };
+  let on = false;
+  try {
+    on = localStorage.getItem(key) === "1";
+  } catch {
+    // Storage can be off; the done cards then show each time.
+  }
+  apply(on);
+  toggle.hidden = false;
+  toggle.addEventListener("click", () => {
+    on = !on;
+    apply(on);
+    try {
+      localStorage.setItem(key, on ? "1" : "0");
+    } catch {
+      // As above: the choice lasts for this page only.
+    }
+  });
+}
+
 if (board) {
+  setupHideDone();
   board.addEventListener("submit", (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || !form.matches(".add-card__form")) return;

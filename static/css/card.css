@@ -134,6 +134,10 @@ textarea.cardp__title:focus { outline: none; border-color: var(--accent); box-sh
 .input--file { padding: 4px; }
 .input--file::file-selector-button { margin-right: var(--s2); padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--shelf); font: inherit; font-weight: 700; font-size: var(--text-xs); color: var(--ink); cursor: pointer; }
 
+/* An archived card: what it is, and the way back. */
+.archived-note { align-items: center; }
+.archived-note > span { flex: 1; }
+
 /* Blocked: said at the top of the panel, and the dependencies in a box. */
 .blocked-banner {
   display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);

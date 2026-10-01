@@ -164,7 +164,7 @@ func (h *handlers) pages() []*collage.Page {
 	h.confirm = h.confirmPage()
 	return []*collage.Page{
 		h.confirm, h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
-		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(),
+		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(), h.boardArchivePage(),
 		h.notificationsPage(), h.meSettingsPage(),
 	}
 }

@@ -1,0 +1,41 @@
+{{$self := pageURL "board-archive" "id" .Board.ID}}
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{pageURL "board" "id" .Board.ID}}">{{template "icon" "arrow-left"}} {{.Board.Name}}</a>
+    <h1>{{t "archive.title"}}</h1>
+    <p class="page-head__meta">{{t "archive.subtitle"}}</p>
+  </div>
+  <form class="search" method="get" action="{{$self}}" role="search">
+    <label class="sr-only" for="archive-q">{{t "archive.search"}}</label>
+    <input class="input" id="archive-q" name="q" type="search" value="{{.Query}}" placeholder="{{t "archive.search"}}">
+    <button type="submit" class="btn btn--secondary">{{t "archive.search_button"}}</button>
+  </form>
+</header>
+{{if .Cards}}
+<ul class="list-rows">
+  {{range .Cards}}
+  <li class="list-rows__row">
+    <div class="list-rows__main">
+      <span class="tile__mark tile__mark--sm" aria-hidden="true">{{template "icon" "archive"}}</span>
+      <div class="person">
+        <a class="list-rows__title" href="{{pageURL "card" "id" $.Board.ID "card" .Card.ID}}">{{.Card.Title}}</a>
+        <span class="person__mail">{{t "archive.from_column" "column" .ColumnName}} · {{if .ArchivedBy}}{{t "archive.archived_by" "name" .ArchivedBy}} · {{end}}<time datetime="{{.ISO}}">{{.When}}</time></span>
+      </div>
+    </div>
+    {{if $.CanEdit}}
+    <form method="post" action="{{$self}}">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="restore">
+      <input type="hidden" name="card" value="{{.Card.ID}}">
+      <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "arrow-left"}} {{t "archive.restore"}}</button>
+    </form>
+    {{end}}
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<div class="empty">
+  <span class="empty__icon">{{template "icon" "archive"}}</span>
+  <p>{{if .Query}}{{t "archive.no_results"}}{{else}}{{t "archive.empty"}}{{end}}</p>
+</div>
+{{end}}

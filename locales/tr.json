@@ -108,7 +108,12 @@
     "open_card": "Kartı aç",
     "no_cards": "Kart yok",
     "wip_limit": "Kart sayısı / WIP limiti",
-    "dismiss": "Kapat"
+    "dismiss": "Kapat",
+    "hide_done": "Bitenleri gizle",
+    "hidden_count": {
+      "one": "{count} bitmiş kart gizli",
+      "other": "{count} bitmiş kart gizli"
+    }
   },
   "card": {
     "title": "Başlık",
@@ -417,7 +422,8 @@
       "priority": "öncelik"
     },
     "card_updated_short": "{actor} kartı düzenledi",
-    "none": "—"
+    "none": "—",
+    "card_restored": "{actor} kartı arşivden geri yükledi"
   },
   "notify": {
     "assigned": "{actor} sizi bir karta atadı: {card}",
@@ -472,6 +478,22 @@
     "rule_delete": "Kural silinsin mi?",
     "archive_board": "Board arşivlensin mi?",
     "remove_member": "Üye takımdan çıkarılsın mı?",
-    "set_disabled": "Kullanıcı devre dışı bırakılsın mı?"
+    "set_disabled": "Kullanıcı devre dışı bırakılsın mı?",
+    "archive_hint": "Arşivden geri yükleyebilirsiniz."
+  },
+  "archive": {
+    "title": "Arşiv",
+    "subtitle": "Arşivlenen kartlar burada durur; geri yüklenen kart eski kolonunun sonuna döner.",
+    "search": "Arşivde ara",
+    "search_button": "Ara",
+    "empty": "Arşivde kart yok.",
+    "no_results": "Aramaya uyan kart yok.",
+    "restore": "Geri yükle",
+    "restored": "Kart arşivden geri yüklendi.",
+    "board_restored": "Board arşivden geri yüklendi.",
+    "archived_by": "{name} arşivledi",
+    "from_column": "{column} kolonundan",
+    "boards": "Arşivlenmiş board'lar",
+    "see_all": "Arşive git"
   }
 }

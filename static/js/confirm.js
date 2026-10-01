@@ -35,6 +35,8 @@ document.addEventListener("submit", (e) => {
   e.stopImmediatePropagation();
   const d = ensureDialog();
   d.querySelector("[data-confirm-question]").textContent = form.dataset.confirm;
+  const hint = d.querySelector("[data-confirm-hint]");
+  hint.textContent = form.dataset.confirmHint || hint.dataset.default;
   pending = form;
   d.returnValue = "";
   d.showModal();
