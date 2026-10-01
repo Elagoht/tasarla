@@ -25,6 +25,7 @@ type boardContext struct {
 	User   store.User
 	Board  store.Board
 	Team   store.Team
+	Role   store.Role
 	Access authz.BoardAccess
 }
 
@@ -59,7 +60,7 @@ func (h *handlers) boardFor(ctx context.Context, rc *collage.RenderContext) (boa
 		if !access.CanView {
 			return boardContext{}, fmt.Errorf("board %d for user %d: %w", id, user.ID, collage.ErrNotFound)
 		}
-		return boardContext{User: user, Board: board, Team: team, Access: access}, nil
+		return boardContext{User: user, Board: board, Team: team, Role: role, Access: access}, nil
 	})
 }
 
@@ -69,17 +70,19 @@ func cardTag(id int64) string  { return "card:" + strconv.FormatInt(id, 10) }
 // isFetch reports whether a script sent the request (board.js, collage-live).
 func isFetch(rc *collage.RenderContext) bool { return rc.Request.Header.Get(collage.FetchHeader) != "" }
 
-// notice is a message for the fragment an action answers with.
-const noticeKey = "notice"
+// noticeKey holds the messages ([]string) for the fragment or page an action
+// answers with.
+const noticeKey = "notices"
 
 type boardView struct {
-	Board  store.Board
-	Team   store.Team
-	Access authz.BoardAccess
+	Notices []string
+	Board   store.Board
+	Team    store.Team
+	Access  authz.BoardAccess
 }
 
 type columnsView struct {
-	Notice  string
+	Notices []string
 	CanEdit bool
 	Columns []columnView
 }
@@ -121,7 +124,8 @@ func (h *handlers) loadBoard(ctx context.Context, rc *collage.RenderContext) (bo
 		return boardView{}, err
 	}
 	rc.HoistTitle(bc.Board.Name)
-	return boardView{Board: bc.Board, Team: bc.Team, Access: bc.Access}, nil
+	notices, _ := collage.Get[[]string](rc, noticeKey)
+	return boardView{Notices: notices, Board: bc.Board, Team: bc.Team, Access: bc.Access}, nil
 }
 
 func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (columnsView, []string, error) {
@@ -139,7 +143,7 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 		return columnsView{}, tags, err
 	}
 	view := columnsView{CanEdit: bc.Access.CanEdit}
-	view.Notice, _ = collage.Get[string](rc, noticeKey)
+	view.Notices, _ = collage.Get[[]string](rc, noticeKey)
 	byColumn := map[int64]int{}
 	for _, c := range cols {
 		cv := columnView{Column: c}
@@ -212,7 +216,14 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 			break
 		}
 	}
-	if _, err := h.store.CreateCard(ctx, bc.Board.ID, target.ID, strings.TrimSpace(v.Value("title")), bc.User.ID); err != nil {
+	_, err = h.store.CreateCard(ctx, bc.Board.ID, target.ID, strings.TrimSpace(v.Value("title")), bc.User.ID)
+	if msgs := violationMessages(rc, err); msgs != nil {
+		rc.Set(noticeKey, msgs)
+		res := collage.RenderPage(rc.Page)
+		res.Status = http.StatusUnprocessableEntity
+		return res, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 	res, err := h.redirectTo(rc, "board", "id", strconv.FormatInt(bc.Board.ID, 10))
@@ -243,12 +254,14 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 	}
 	_, err = h.store.MoveCard(ctx, store.Move{
 		BoardID: bc.Board.ID, CardID: cardID, ToColumnID: to, ToIndex: index,
-		ExpectedFrom: from, ExpectedVersion: int(version),
+		ExpectedFrom: from, ExpectedVersion: int(version), Actor: bc.actor(),
 	})
-	status, notice := http.StatusOK, ""
+	status, notices := http.StatusOK, violationMessages(rc, err)
 	switch {
+	case notices != nil:
+		status = http.StatusUnprocessableEntity
 	case errors.Is(err, store.ErrConflict):
-		status, notice = http.StatusConflict, i18n.T(rc, "board.conflict")
+		status, notices = http.StatusConflict, []string{i18n.T(rc, "board.conflict")}
 	case errors.Is(err, store.ErrNotFound):
 		return collage.NoContent(http.StatusNotFound), nil
 	case err != nil:
@@ -256,7 +269,7 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 	}
 	tags := []string{boardTag(bc.Board.ID), cardTag(cardID)}
 	if isFetch(rc) {
-		rc.Set(noticeKey, notice)
+		rc.Set(noticeKey, notices)
 		res := collage.RenderFragment(h.columns)
 		res.Status = status
 		if status == http.StatusOK {
@@ -264,8 +277,10 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 		}
 		return res, nil
 	}
-	if notice != "" {
-		flash.Add(rc, flash.Error, notice)
+	if len(notices) > 0 {
+		for _, n := range notices {
+			flash.Add(rc, flash.Error, n)
+		}
 	} else {
 		flash.Add(rc, flash.Success, i18n.T(rc, "board.moved"))
 	}

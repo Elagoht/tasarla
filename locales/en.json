@@ -181,6 +181,84 @@
       "c2255c": "Pink",
       "0c8599": "Cyan",
       "495057": "Grey"
+    },
+    "rules": "Rules",
+    "policy": "General rules",
+    "transitions_mode": "Transitions",
+    "modes": {
+      "open": "From any column to any column",
+      "restricted": "Only the transitions in the table"
+    },
+    "person_wip_limit": "Personal WIP limit",
+    "matrix": "Transition table",
+    "from": "From",
+    "to": "To",
+    "permissions": "Move permissions",
+    "permissions_hint": "With no record for a column, every team member may move cards into it. Several records combine with \"or\".",
+    "any_column": "From any column",
+    "subject": "Who",
+    "subjects": {
+      "any_member": "Any team member",
+      "assignee": "The card's assignee",
+      "team_lead": "Team lead",
+      "board_role": "Board role"
+    },
+    "board_role": "Board role",
+    "add_permission": "Add permission",
+    "conditions": "Conditions",
+    "phase": "When",
+    "phases": {
+      "enter": "Entering",
+      "exit": "Leaving"
+    },
+    "kind": "Condition",
+    "count": "Count",
+    "labels_hint": "With no label chosen, any label will do.",
+    "kinds": {
+      "has_assignee": "Has an assignee",
+      "has_estimate": "Has an estimate",
+      "has_due_date": "Has a due date",
+      "has_description": "Description is not empty",
+      "has_label": "Has one of the labels",
+      "checklist_complete": "Checklist complete",
+      "blockers_done": "Blocking cards are done",
+      "min_attachments": "At least {count} attachments"
+    },
+    "add_condition": "Add condition",
+    "count_invalid": "The number of attachments must be a positive whole number.",
+    "roles": "Board roles",
+    "role_name": "Role name",
+    "add_role": "Add role",
+    "save_members": "Save members",
+    "role_exists": "A role with this name already exists.",
+    "none": "None yet."
+  },
+  "rules": {
+    "transition": "Moving from {from} to {to} is not allowed.",
+    "permission": "You may not move cards into {column}.",
+    "wip_column": "{column} is at its WIP limit ({limit}).",
+    "wip_person": "The assignee is at their WIP limit ({limit}).",
+    "enter": {
+      "has_assignee": "A card needs an assignee to enter {column}.",
+      "has_estimate": "A card needs an estimate to enter {column}.",
+      "has_due_date": "A card needs a due date to enter {column}.",
+      "has_description": "A card needs a description to enter {column}.",
+      "has_label": "A card needs one of these labels to enter {column}: {labels}.",
+      "has_any_label": "A card needs a label to enter {column}.",
+      "checklist_complete": "A card's checklist must be complete to enter {column}.",
+      "blockers_done": "Every card blocking it must be done for a card to enter {column}.",
+      "min_attachments": "A card needs at least {count} attachments to enter {column}."
+    },
+    "exit": {
+      "has_assignee": "A card needs an assignee to leave {column}.",
+      "has_estimate": "A card needs an estimate to leave {column}.",
+      "has_due_date": "A card needs a due date to leave {column}.",
+      "has_description": "A card needs a description to leave {column}.",
+      "has_label": "A card needs one of these labels to leave {column}: {labels}.",
+      "has_any_label": "A card needs a label to leave {column}.",
+      "checklist_complete": "A card's checklist must be complete to leave {column}.",
+      "blockers_done": "Every card blocking it must be done for a card to leave {column}.",
+      "min_attachments": "A card needs at least {count} attachments to leave {column}."
     }
   }
 }

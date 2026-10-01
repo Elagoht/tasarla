@@ -58,3 +58,4 @@ a { color: var(--accent); }
 .danger { margin-top: 1.5rem; }
 .task-group { margin: 1rem 0; }
 [data-collage-stale] { opacity: .6; }
+.matrix td { text-align: center; }

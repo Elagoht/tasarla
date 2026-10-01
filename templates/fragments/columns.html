@@ -1,4 +1,4 @@
-{{with .Notice}}<p class="board-notice" role="alert">{{.}}</p>{{end}}
+{{if .Notices}}<ul class="board-notice" role="alert">{{range .Notices}}<li>{{.}}</li>{{end}}</ul>{{end}}
 <div class="columns">
   {{range .Columns}}
   <section class="column{{if .OverLimit}} column--over{{end}}{{if .Column.IsDone}} column--done{{end}}" aria-labelledby="column-{{.Column.ID}}">

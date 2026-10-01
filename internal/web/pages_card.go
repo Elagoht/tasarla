@@ -52,7 +52,7 @@ type cardPageView struct {
 }
 
 type panelView struct {
-	Notice     string
+	Notices    []string
 	Board      store.Board
 	Card       store.Card
 	Access     authz.BoardAccess
@@ -114,7 +114,7 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 		Board: cc.Board, Card: card, Access: cc.Access, Archived: card.ArchivedAt != nil,
 		Priorities: []string{"1", "2", "3", "4"},
 	}
-	v.Notice, _ = collage.Get[string](rc, noticeKey)
+	v.Notices, _ = collage.Get[[]string](rc, noticeKey)
 	if card.Estimate != nil {
 		v.Estimate = strconv.FormatFloat(*card.Estimate, 'f', -1, 64)
 	}
@@ -250,7 +250,7 @@ func (h *handlers) cardChanged(rc *collage.RenderContext, cc cardContext, err er
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.cardNotice(rc, cc, http.StatusOK, "")
+	res, err := h.cardNotice(rc, cc, http.StatusOK)
 	if res != nil {
 		res.InvalidateTags = []string{boardTag(cc.Board.ID), cardTag(cc.Card.ID)}
 	}
@@ -259,18 +259,21 @@ func (h *handlers) cardChanged(rc *collage.RenderContext, cc cardContext, err er
 
 // cardNotice answers with the panel carrying notice, or redirects to the card
 // with notice as a flash message.
-func (h *handlers) cardNotice(rc *collage.RenderContext, cc cardContext, status int, notice string) (*collage.ActionResult, error) {
+func (h *handlers) cardNotice(rc *collage.RenderContext, cc cardContext, status int, notices ...string) (*collage.ActionResult, error) {
 	if isFetch(rc) {
-		rc.Set(noticeKey, notice)
+		rc.Set(noticeKey, notices)
 		res := collage.RenderFragment(h.panel)
 		res.Status = status
 		return res, nil
 	}
-	switch {
-	case notice != "" && status >= 400:
-		flash.Add(rc, flash.Error, notice)
-	case notice != "":
-		flash.Add(rc, flash.Success, notice)
+	kind := flash.Success
+	if status >= 400 {
+		kind = flash.Error
+	}
+	for _, n := range notices {
+		if n != "" {
+			flash.Add(rc, kind, n)
+		}
 	}
 	return h.redirectTo(rc, "card", "id", strconv.FormatInt(cc.Board.ID, 10), "card", strconv.FormatInt(cc.Card.ID, 10))
 }
@@ -345,6 +348,9 @@ func (h *handlers) updateCard(ctx context.Context, rc *collage.RenderContext, v 
 		fields.Priority = &prio
 	}
 	_, err = h.store.UpdateCard(ctx, cc.Board.ID, cc.Card.ID, int(version), fields)
+	if msgs := violationMessages(rc, err); msgs != nil {
+		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, msgs...)
+	}
 	if errors.Is(err, store.ErrConflict) {
 		// The panel shows the card as it now is; what the reader typed is lost,
 		// which the notice says. collage-live puts a form's answer in only on

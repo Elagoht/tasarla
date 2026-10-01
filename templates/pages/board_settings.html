@@ -77,6 +77,141 @@
   </form>
 </section>
 
+<h2>{{t "settings.rules"}}</h2>
+
+<section>
+  <h3>{{t "settings.policy"}}</h3>
+  <form class="form" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="policy">
+    <label for="transitions-mode">{{t "settings.transitions_mode"}}</label>
+    <select id="transitions-mode" name="transitions_mode">
+      <option value="open" {{if eq .Board.TransitionsMode "open"}}selected{{end}}>{{t "settings.modes.open"}}</option>
+      <option value="restricted" {{if eq .Board.TransitionsMode "restricted"}}selected{{end}}>{{t "settings.modes.restricted"}}</option>
+    </select>
+    <label for="person-wip">{{t "settings.person_wip_limit"}}</label>
+    <input id="person-wip" name="person_wip_limit" value="{{.PersonLimit}}" inputmode="numeric">
+    <button type="submit">{{t "card.save"}}</button>
+  </form>
+</section>
+
+<section>
+  <h3>{{t "settings.matrix"}}</h3>
+  <form method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="transitions">
+    <table class="table matrix">
+      <thead><tr><th>{{t "settings.from"}} \ {{t "settings.to"}}</th>{{range .Columns}}<th>{{.Column.Name}}</th>{{end}}</tr></thead>
+      <tbody>
+        {{range .Matrix}}
+        <tr>
+          <th>{{.From.Name}}</th>
+          {{range .Cells}}<td>{{if not .Self}}<input type="checkbox" name="t" value="{{.Value}}" aria-label="{{$.Board.Name}}: {{.To.Name}}" {{if .Allowed}}checked{{end}}>{{end}}</td>{{end}}
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    <button type="submit">{{t "card.save"}}</button>
+  </form>
+</section>
+
+<section>
+  <h3>{{t "settings.roles"}}</h3>
+  {{range .Roles}}
+  <form class="inline" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="role_members">
+    <input type="hidden" name="role_id" value="{{.Role.ID}}">
+    <strong>{{.Role.Name}}</strong>
+    {{range .Members}}<label><input type="checkbox" name="member" value="{{.User.ID}}" {{if .Member}}checked{{end}}> {{.User.Name}}</label>{{end}}
+    <button type="submit">{{t "settings.save_members"}}</button>
+  </form>
+  <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="role_delete"><input type="hidden" name="role_id" value="{{.Role.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
+  {{else}}
+  <p class="muted">{{t "settings.none"}}</p>
+  {{end}}
+  <form class="inline" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="role_add">
+    <input name="role_name" value="{{fieldValue "role_name"}}" placeholder="{{t "settings.role_name"}}" aria-label="{{t "settings.role_name"}}" required maxlength="40">
+    <button type="submit">{{t "settings.add_role"}}</button>
+    {{with fieldError "role_name"}}<p class="error">{{.}}</p>{{end}}
+  </form>
+</section>
+
+<section>
+  <h3>{{t "settings.permissions"}}</h3>
+  <p class="muted">{{t "settings.permissions_hint"}}</p>
+  <ul class="list">
+    {{range .Permissions}}
+    <li>
+      {{if .From}}{{.From}}{{else}}{{t "settings.any_column"}}{{end}} → {{.To}}:
+      {{t (printf "settings.subjects.%s" .Subject)}}{{with .Role}} ({{.}}){{end}}
+      <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="permission_delete"><input type="hidden" name="permission_id" value="{{.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
+    </li>
+    {{else}}
+    <li class="muted">{{t "settings.none"}}</li>
+    {{end}}
+  </ul>
+  <form class="inline" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="permission_add">
+    <select name="from_column" aria-label="{{t "settings.from"}}">
+      <option value="">{{t "settings.any_column"}}</option>
+      {{range .Columns}}<option value="{{.Column.ID}}">{{.Column.Name}}</option>{{end}}
+    </select>
+    →
+    <select name="to_column" aria-label="{{t "settings.to"}}">
+      {{range .Columns}}<option value="{{.Column.ID}}">{{.Column.Name}}</option>{{end}}
+    </select>
+    <select name="subject" aria-label="{{t "settings.subject"}}">
+      {{range .Subjects}}<option value="{{.}}">{{t (printf "settings.subjects.%s" .)}}</option>{{end}}
+    </select>
+    {{if .Roles}}
+    <select name="board_role" aria-label="{{t "settings.board_role"}}">
+      {{range .Roles}}<option value="{{.Role.ID}}">{{.Role.Name}}</option>{{end}}
+    </select>
+    {{end}}
+    <button type="submit">{{t "settings.add_permission"}}</button>
+  </form>
+</section>
+
+<section>
+  <h3>{{t "settings.conditions"}}</h3>
+  <ul class="list">
+    {{range .Conditions}}
+    <li>
+      {{.Column}} · {{t (printf "settings.phases.%s" .Phase)}} · {{t (printf "settings.kinds.%s" .Kind) "count" .Count}}{{with .Labels}}: {{.}}{{end}}
+      <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="condition_delete"><input type="hidden" name="condition_id" value="{{.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
+    </li>
+    {{else}}
+    <li class="muted">{{t "settings.none"}}</li>
+    {{end}}
+  </ul>
+  <form class="inline" method="post" action="{{$self}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="condition_add">
+    <select name="column_id" aria-label="{{t "settings.column_name"}}">
+      {{range .Columns}}<option value="{{.Column.ID}}">{{.Column.Name}}</option>{{end}}
+    </select>
+    <select name="phase" aria-label="{{t "settings.phase"}}">
+      <option value="enter">{{t "settings.phases.enter"}}</option>
+      <option value="exit">{{t "settings.phases.exit"}}</option>
+    </select>
+    <select name="kind" aria-label="{{t "settings.kind"}}">
+      {{range .Kinds}}<option value="{{.}}">{{t (printf "settings.kinds.%s" .) "count" "n"}}</option>{{end}}
+    </select>
+    <input name="count" inputmode="numeric" size="3" placeholder="{{t "settings.count"}}" aria-label="{{t "settings.count"}}">
+    {{if .Labels}}
+    <select name="label" multiple aria-label="{{t "settings.labels"}}">
+      {{range .Labels}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+    </select>
+    <span class="muted">{{t "settings.labels_hint"}}</span>
+    {{end}}
+    <button type="submit">{{t "settings.add_condition"}}</button>
+  </form>
+</section>
+
 <section class="danger">
   <form method="post" action="{{$self}}">
     {{csrfToken}}

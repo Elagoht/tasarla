@@ -181,6 +181,84 @@
       "c2255c": "Pembe",
       "0c8599": "Camgöbeği",
       "495057": "Gri"
+    },
+    "rules": "Kurallar",
+    "policy": "Genel kurallar",
+    "transitions_mode": "Geçişler",
+    "modes": {
+      "open": "Her kolondan her kolona",
+      "restricted": "Yalnızca tablodaki geçişler"
+    },
+    "person_wip_limit": "Kişi WIP limiti",
+    "matrix": "Geçiş tablosu",
+    "from": "Nereden",
+    "to": "Nereye",
+    "permissions": "Taşıma yetkileri",
+    "permissions_hint": "Bir kolon için hiç kayıt yoksa takımın her üyesi taşıyabilir. Birden fazla kayıt \"veya\" ile birleşir.",
+    "any_column": "Her kolondan",
+    "subject": "Kim",
+    "subjects": {
+      "any_member": "Takımın her üyesi",
+      "assignee": "Kartın atanan kişisi",
+      "team_lead": "Takım lideri",
+      "board_role": "Board rolü"
+    },
+    "board_role": "Board rolü",
+    "add_permission": "Yetki ekle",
+    "conditions": "Koşullar",
+    "phase": "Ne zaman",
+    "phases": {
+      "enter": "Girerken",
+      "exit": "Çıkarken"
+    },
+    "kind": "Koşul",
+    "count": "Sayı",
+    "labels_hint": "Etiket seçilmezse herhangi bir etiket yeter.",
+    "kinds": {
+      "has_assignee": "Atanan kişi var",
+      "has_estimate": "Tahmin girilmiş",
+      "has_due_date": "Son tarih var",
+      "has_description": "Açıklama boş değil",
+      "has_label": "Etiketlerden biri var",
+      "checklist_complete": "Kontrol listesi tamam",
+      "blockers_done": "Bloklayan kartlar bitti",
+      "min_attachments": "En az {count} dosya eki"
+    },
+    "add_condition": "Koşul ekle",
+    "count_invalid": "Dosya sayısı pozitif bir tam sayı olmalı.",
+    "roles": "Board rolleri",
+    "role_name": "Rol adı",
+    "add_role": "Rol ekle",
+    "save_members": "Üyeleri kaydet",
+    "role_exists": "Bu adla bir rol zaten var.",
+    "none": "Henüz yok."
+  },
+  "rules": {
+    "transition": "{from} kolonundan {to} kolonuna geçiş tanımlı değil.",
+    "permission": "{column} kolonuna kart taşıma yetkiniz yok.",
+    "wip_column": "{column} kolonunun WIP limiti ({limit}) dolu.",
+    "wip_person": "Atanan kişinin WIP limiti ({limit}) dolu.",
+    "enter": {
+      "has_assignee": "{column} kolonuna girmek için kartın atanan bir kişisi olmalı.",
+      "has_estimate": "{column} kolonuna girmek için kartın bir tahmini olmalı.",
+      "has_due_date": "{column} kolonuna girmek için kartın bir son tarihi olmalı.",
+      "has_description": "{column} kolonuna girmek için kartın bir açıklaması olmalı.",
+      "has_label": "{column} kolonuna girmek için kartta şu etiketlerden biri olmalı: {labels}.",
+      "has_any_label": "{column} kolonuna girmek için kartın bir etiketi olmalı.",
+      "checklist_complete": "{column} kolonuna girmek için kontrol listesi tamamlanmış olmalı.",
+      "blockers_done": "{column} kolonuna girmek için bloklayan kartların hepsi bitmiş olmalı.",
+      "min_attachments": "{column} kolonuna girmek için kartın en az {count} dosya eki olmalı."
+    },
+    "exit": {
+      "has_assignee": "{column} kolonundan çıkmak için kartın atanan bir kişisi olmalı.",
+      "has_estimate": "{column} kolonundan çıkmak için kartın bir tahmini olmalı.",
+      "has_due_date": "{column} kolonundan çıkmak için kartın bir son tarihi olmalı.",
+      "has_description": "{column} kolonundan çıkmak için kartın bir açıklaması olmalı.",
+      "has_label": "{column} kolonundan çıkmak için kartta şu etiketlerden biri olmalı: {labels}.",
+      "has_any_label": "{column} kolonundan çıkmak için kartın bir etiketi olmalı.",
+      "checklist_complete": "{column} kolonundan çıkmak için kontrol listesi tamamlanmış olmalı.",
+      "blockers_done": "{column} kolonundan çıkmak için bloklayan kartların hepsi bitmiş olmalı.",
+      "min_attachments": "{column} kolonundan çıkmak için kartın en az {count} dosya eki olmalı."
     }
   }
 }
