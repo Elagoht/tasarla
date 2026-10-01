@@ -2,6 +2,8 @@
 package web
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -172,12 +174,23 @@ func (h *handlers) pages() []*collage.Page {
 
 // contentSecurityPolicy allows scripts only from this origin, and form posts
 // to this origin and the provider: signing out redirects a form's post there.
+// ViewTransitionStyle opts pages into view transitions between them. It is the
+// one inline style, in base.html's head, allowed by its hash: the browser
+// reads the opt-in before the stylesheets arrive, and an opt-in in one of them
+// is often not there yet (seen: most transitions skipped, "opt-in disabled").
+const ViewTransitionStyle = "@view-transition{navigation:auto}"
+
+func styleHash(css string) string {
+	sum := sha256.Sum256([]byte(css))
+	return "'sha256-" + base64.StdEncoding.EncodeToString(sum[:]) + "'"
+}
+
 func contentSecurityPolicy(issuer string) string {
 	provider := ""
 	if u, err := url.Parse(issuer); err == nil {
 		provider = " " + u.Scheme + "://" + u.Host
 	}
-	return "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self'; img-src 'self' data:; " +
+	return "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' " + styleHash(ViewTransitionStyle) + "; img-src 'self' data:; " +
 		"object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'" + provider
 }
 

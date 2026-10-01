@@ -70,8 +70,8 @@ time { font-variant-numeric: tabular-nums; }
 
 /* Moving between pages: the page crossfades while the sidebar stays put, and
    the board tile or card that was clicked grows into the title it opens
-   (app.js names it "target" as the page goes). */
-@view-transition { navigation: auto; }
+   (app.js names it "target" as the page goes). The opt-in itself is inline in
+   base.html's head, where the browser finds it in time. */
 ::view-transition-group(*) { animation-duration: 280ms; animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1); }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; }
 @media (prefers-reduced-motion: reduce) {
