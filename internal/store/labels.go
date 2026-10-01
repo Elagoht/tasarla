@@ -36,9 +36,37 @@ func (s *Store) CreateLabel(ctx context.Context, boardID int64, name, color stri
 	return l, err
 }
 
-// DeleteLabel removes a label from the board and its cards.
+// DeleteLabel removes a label from the board, its cards and the conditions
+// that name it; a has_label condition left with no label is removed, rather
+// than turned into "any label".
 func (s *Store) DeleteLabel(ctx context.Context, boardID, labelID int64) error {
-	return exactlyOne(s.pool.Exec(ctx, `DELETE FROM labels WHERE id = $2 AND board_id = $1`, boardID, labelID))
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return err
+	}
+	if err := exactlyOne(tx.Exec(ctx, `DELETE FROM labels WHERE id = $2 AND board_id = $1`, boardID, labelID)); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `
+		UPDATE column_conditions k
+		SET params = jsonb_set(k.params, '{label_ids}',
+		    coalesce((SELECT jsonb_agg(v) FROM jsonb_array_elements(k.params->'label_ids') v WHERE v::bigint <> $2), '[]'::jsonb))
+		FROM columns c
+		WHERE c.id = k.column_id AND c.board_id = $1 AND k.kind = 'has_label' AND k.params->'label_ids' @> to_jsonb($2::bigint)`,
+		boardID, labelID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `
+		DELETE FROM column_conditions k USING columns c
+		WHERE c.id = k.column_id AND c.board_id = $1 AND k.kind = 'has_label'
+		  AND k.params ? 'label_ids' AND jsonb_array_length(k.params->'label_ids') = 0`, boardID); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 // SetCardLabels makes labelIDs the card's labels. Ids that are not the board's
@@ -49,6 +77,9 @@ func (s *Store) SetCardLabels(ctx context.Context, boardID, cardID int64, labelI
 		return err
 	}
 	defer tx.Rollback(ctx)
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return err
+	}
 	var id int64
 	err = tx.QueryRow(ctx, `
 		UPDATE cards SET version = version + 1 WHERE id = $2 AND board_id = $1 RETURNING id`, boardID, cardID).Scan(&id)

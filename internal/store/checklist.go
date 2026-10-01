@@ -72,6 +72,10 @@ func (s *Store) inCard(ctx context.Context, boardID, cardID int64, fn func(pgx.T
 		return err
 	}
 	defer tx.Rollback(ctx)
+	// The board first, as a move takes it: what changes here is what rules read.
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return err
+	}
 	var id int64
 	err = tx.QueryRow(ctx, `
 		UPDATE cards SET version = version + 1 WHERE id = $2 AND board_id = $1 RETURNING id`, boardID, cardID).Scan(&id)

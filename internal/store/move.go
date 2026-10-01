@@ -42,7 +42,7 @@ func moveCard(ctx context.Context, tx pgx.Tx, m Move) (Card, error) {
 		return Card{}, err
 	}
 	card, err := scanCard(tx.QueryRow(ctx,
-		`SELECT `+cardColumns+` FROM cards WHERE id = $2 AND board_id = $1 AND archived_at IS NULL`, m.BoardID, m.CardID))
+		`SELECT `+cardColumns+` FROM cards WHERE id = $2 AND board_id = $1 AND archived_at IS NULL FOR UPDATE`, m.BoardID, m.CardID))
 	if err != nil {
 		return Card{}, err
 	}

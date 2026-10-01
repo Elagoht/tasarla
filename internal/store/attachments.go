@@ -33,6 +33,9 @@ func (s *Store) AddAttachment(ctx context.Context, boardID, cardID int64, a Atta
 		return Attachment{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return Attachment{}, err
+	}
 	if err := cardOfBoard(ctx, tx, boardID, cardID); err != nil {
 		return Attachment{}, err
 	}
@@ -86,6 +89,9 @@ func (s *Store) DeleteAttachment(ctx context.Context, boardID, cardID, id, userI
 		return "", err
 	}
 	defer tx.Rollback(ctx)
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return "", err
+	}
 	var key, filename string
 	err = tx.QueryRow(ctx, `
 		DELETE FROM attachments a USING cards k

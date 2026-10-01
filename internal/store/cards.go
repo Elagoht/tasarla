@@ -122,7 +122,7 @@ func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedV
 		return Card{}, err
 	}
 	card, err := scanCard(tx.QueryRow(ctx,
-		`SELECT `+cardColumns+` FROM cards WHERE id = $2 AND board_id = $1`, boardID, cardID))
+		`SELECT `+cardColumns+` FROM cards WHERE id = $2 AND board_id = $1 FOR UPDATE`, boardID, cardID))
 	if err != nil {
 		return Card{}, err
 	}
