@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/text/collate"
+	"golang.org/x/text/language"
+
 	"kanban/internal/store"
 )
 
@@ -69,13 +72,13 @@ type laneCell struct {
 // the empty lanes; priorityLabel names a priority.
 //
 // Lanes come in this order: by assignee, the unassigned first, then members
-// by name, then those no longer in the team; by priority, urgent first and
+// by name (Turkish order, case ignored), then those no longer in the team; by priority, urgent first and
 // none last. Only lanes with cards are made.
 func buildLanes(field string, cols []columnView, members []store.Member, unassigned, none string, priorityLabel func(int16) string) []laneView {
 	type lane struct {
 		view laneView
 		rank int    // order: unassigned/urgent first
-		name string // for assignee lanes, lower-cased name
+		name string // for assignee lanes, the name
 	}
 	byKey := map[string]*lane{}
 	member := map[int64]bool{}
@@ -93,7 +96,7 @@ func buildLanes(field string, cols []columnView, members []store.Member, unassig
 			} else {
 				id := *s.Card.AssigneeID
 				value = strconv.FormatInt(id, 10)
-				key, label, name = "assignee:"+value, s.AssigneeName, strings.ToLower(s.AssigneeName)
+				key, label, name = "assignee:"+value, s.AssigneeName, s.AssigneeName
 				rank, former = 1, !member[id]
 				if former {
 					rank = 2
@@ -126,11 +129,13 @@ func buildLanes(field string, cols []columnView, members []store.Member, unassig
 		}
 	}
 	lanes := slices.Collect(maps.Values(byKey))
+	// A collator is not safe for concurrent use, so each call has its own.
+	byName := collate.New(language.Turkish, collate.IgnoreCase)
 	slices.SortFunc(lanes, func(a, b *lane) int {
 		if a.rank != b.rank {
 			return a.rank - b.rank
 		}
-		if c := strings.Compare(a.name, b.name); c != 0 {
+		if c := byName.CompareString(a.name, b.name); c != 0 {
 			return c
 		}
 		return strings.Compare(a.view.Key, b.view.Key)

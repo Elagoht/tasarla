@@ -43,6 +43,27 @@ func TestBuildLanesByAssignee(t *testing.T) {
 	}
 }
 
+// Turkish alphabet: Ç after C, İ after I, Z last.
+func TestBuildLanesByAssigneeTurkishOrder(t *testing.T) {
+	names := []string{"Zeynep", "Çağla", "Can", "İpek", "Ilgın"}
+	var members []store.Member
+	var cards []cardView
+	for i, n := range names {
+		id := int64(i + 1)
+		members = append(members, store.Member{User: store.User{ID: id, Name: n}})
+		cards = append(cards, card(100+id, 10, &id, n, nil))
+	}
+	lanes := buildLanes("assignee", []columnView{{Column: store.Column{ID: 10}, Cards: cards}}, members, "Atanmamış", "Yok", nil)
+	var got []string
+	for _, l := range lanes {
+		got = append(got, l.Label)
+	}
+	want := []string{"Can", "Çağla", "Ilgın", "İpek", "Zeynep"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("lanes = %v, want %v", got, want)
+	}
+}
+
 func TestBuildLanesByPriority(t *testing.T) {
 	high, low := int16(3), int16(1)
 	cols := []columnView{{Column: store.Column{ID: 10}, Cards: []cardView{card(1, 10, nil, "", &low), card(2, 10, nil, "", nil), card(3, 10, nil, "", &high)}}}
