@@ -55,7 +55,15 @@ a.nav__heading:hover { color: var(--accent-strong); }
   background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow-float);
 }
 .me-menu__list form { display: contents; }
-.nav__item--button { width: 100%; background: none; font: inherit; font-weight: 700; font-size: var(--text-sm); text-align: left; cursor: pointer; }
+/* Both entries of the account menu look alike; signing out turns red. */
+.me-menu__item {
+  display: flex; align-items: center; gap: var(--s2); width: 100%;
+  padding: 7px var(--s2); border: 0; border-radius: var(--r-sm); background: none;
+  color: var(--ink-soft); font: inherit; font-weight: 700; font-size: var(--text-sm);
+  text-align: left; text-decoration: none; cursor: pointer;
+}
+.me-menu__item:hover { background: var(--shelf); color: var(--ink); }
+.me-menu__item--danger:hover { background: var(--danger-soft); color: var(--danger); }
 
 .workspace { min-width: 0; display: flex; flex-direction: column; }
 .main { flex: 1; min-width: 0; width: 100%; padding: var(--s6) var(--s6) var(--s7); }

@@ -36,10 +36,10 @@
           <span class="me__chevron" aria-hidden="true">{{template "icon" "chevron-up"}}</span>
         </summary>
         <div class="me-menu__list">
-          <a class="nav__item{{if eq .Page "me-settings"}} is-active{{end}}" href="{{pageURL "me-settings"}}">{{template "icon" "settings"}}<span class="nav__label">{{t "me.title"}}</span></a>
+          <a class="me-menu__item" href="{{pageURL "me-settings"}}">{{template "icon" "settings"}}<span>{{t "me.title"}}</span></a>
           <form method="post" action="{{actionURL "logout"}}">
             {{csrfToken}}
-            <button type="submit" class="nav__item nav__item--button">{{template "icon" "logout"}}<span class="nav__label">{{t "auth.logout"}}</span></button>
+            <button type="submit" class="me-menu__item me-menu__item--danger">{{template "icon" "logout"}}<span>{{t "auth.logout"}}</span></button>
           </form>
         </div>
       </details>
