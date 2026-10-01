@@ -377,10 +377,19 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 	if err != nil {
 		index = 1 << 30 // the fallback form sends none: the bottom of the column
 	}
-	moved, err := h.store.MoveCard(ctx, store.Move{
+	m := store.Move{
 		BoardID: bc.Board.ID, CardID: cardID, ToColumnID: to, ToIndex: index,
 		ExpectedFrom: from, ExpectedVersion: int(version), Actor: bc.actor(),
-	})
+	}
+	if lane := v.Value("lane"); lane != "" {
+		target, ok := laneTarget(lane, v.Value("lane_value"), v.Value("before_card_id"))
+		if !ok {
+			return collage.NoContent(http.StatusBadRequest), nil
+		}
+		m.Lane = &target
+	}
+	mr, err := h.store.MoveCardWith(ctx, m)
+	moved := mr.After
 	status, notices := http.StatusOK, violationMessages(rc, err)
 	switch {
 	case notices != nil:
@@ -393,6 +402,9 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 		return nil, err
 	}
 	tags := []string{boardTag(bc.Board.ID), cardTag(cardID)}
+	if err == nil && m.Lane != nil {
+		h.notifyAssigned(ctx, bc, mr.Before, mr.After)
+	}
 	if err == nil && moved.ColumnID != from && h.finishedBy(ctx, moved) {
 		h.notifyUnblocked(ctx, bc, moved.ID)
 	}

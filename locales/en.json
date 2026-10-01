@@ -344,6 +344,7 @@
     "cards_count": "{count} cards"
   },
   "rules": {
+    "assignee_not_member": "A card cannot be given to someone outside the team.",
     "transition": "Moving from {from} to {to} is not allowed.",
     "permission": "You may not move cards into {column}.",
     "wip_column": "{column} is at its WIP limit ({limit}).",

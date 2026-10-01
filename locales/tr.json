@@ -344,6 +344,7 @@
     "cards_count": "{count} kart"
   },
   "rules": {
+    "assignee_not_member": "Kart, takımın üyesi olmayan birine atanamaz.",
     "transition": "{from} kolonundan {to} kolonuna geçiş tanımlı değil.",
     "permission": "{column} kolonuna kart taşıma yetkiniz yok.",
     "wip_column": "{column} kolonunun WIP limiti ({limit}) dolu.",
