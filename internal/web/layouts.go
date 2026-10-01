@@ -3,7 +3,10 @@ package web
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
+	flash "github.com/Elagoht/collage-flash"
 	session "github.com/Elagoht/collage-session"
 	"github.com/Elagoht/collage/pkg/collage"
 
@@ -48,24 +51,91 @@ func baseLayout() *collage.Fragment {
 }
 
 type appView struct {
-	User store.User
+	User     store.User
+	Hue      int64
+	Initial  string
+	Locale   string
+	Page     string // the registered name of the page being shown
+	Wide     bool   // the board: no reading-width limit
+	Teams    []navTeam
+	BoardID  int64
+	Flashes  []flashView
 }
 
-// appLayout is every page for signed-in readers. Its guard sends anyone else
-// to /login; pages under it must be Dynamic (spec §2.1).
-func appLayout(badge *collage.Fragment) *collage.Fragment {
+type navTeam struct {
+	Team   store.TeamSummary
+	Boards []navBoard
+}
+
+type navBoard struct {
+	Board  store.Board
+	Color  string
+	Active bool
+}
+
+type flashView struct {
+	Kind string
+	Text string
+}
+
+// boardColor gives each board and column a colour from the label palette.
+func boardColor(i int) string { return labelPalette[i%len(labelPalette)] }
+
+// initial is the first letter of a name, for avatars.
+func initial(name string) string {
+	for _, r := range strings.TrimSpace(name) {
+		return strings.ToUpper(string(r))
+	}
+	return "?"
+}
+
+// appLayout is every page for signed-in readers: the sidebar with the
+// reader's teams and boards. Its guard sends anyone else to /login; pages
+// under it must be Dynamic (spec §2.1).
+func (h *handlers) appLayout() *collage.Fragment {
 	return collage.NewFragment("app", "layouts/app.html").
-		WithSlotFragment("badge", badge).
+		WithSlotFragment("badge", h.badge).
 		WithGuard(session.RequireUser("/login")).
-		WithDataHandler(collage.Load(func(ctx context.Context, _ *collage.RenderContext) (appView, error) {
-			u, err := currentUser(ctx)
-			return appView{User: u}, err
-		})).
+		WithDataHandler(collage.Load(h.loadApp)).
 		Required().
 		Build()
 }
 
+func (h *handlers) loadApp(ctx context.Context, rc *collage.RenderContext) (appView, error) {
+	u, err := currentUser(ctx)
+	if err != nil {
+		return appView{}, err
+	}
+	v := appView{User: u, Hue: u.ID % 8, Initial: initial(u.Name), Locale: rc.Locale}
+	if rc.Page != nil {
+		v.Page = rc.Page.Name
+	}
+	v.Wide = v.Page == "board"
+	if id, err := strconv.ParseInt(rc.Param("id"), 10, 64); err == nil && (strings.HasPrefix(v.Page, "board") || v.Page == "card") {
+		v.BoardID = id
+	}
+	teams, err := h.store.TeamsOf(ctx, u.ID)
+	if err != nil {
+		return v, err
+	}
+	for _, t := range teams {
+		boards, err := h.store.BoardsOfTeam(ctx, t.Team.ID)
+		if err != nil {
+			return v, err
+		}
+		nt := navTeam{Team: t}
+		for _, b := range boards {
+			nt.Boards = append(nt.Boards, navBoard{Board: b, Color: boardColor(int(b.ID)), Active: b.ID == v.BoardID})
+		}
+		v.Teams = append(v.Teams, nt)
+	}
+	for _, m := range flash.Take(rc) {
+		v.Flashes = append(v.Flashes, flashView{Kind: m.Kind, Text: m.Text})
+	}
+	return v, nil
+}
+
 // privatePage starts a page under both layouts.
 func (h *handlers) privatePage(name string, content *collage.Fragment) *collage.PageBuilder {
-	return collage.NewPage(name).WithLayouts(baseLayout(), appLayout(h.badge)).WithContent(content)
+	return collage.NewPage(name).WithLayouts(baseLayout(), h.appLayout()).WithContent(content)
 }

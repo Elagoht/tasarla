@@ -4,16 +4,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   {{hoist "head"}}
-  <link rel="stylesheet" href="{{asset "/static/app.css"}}">
+  <link rel="preload" href="/static/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{asset "/static/css/tokens.css"}}">
+  <link rel="stylesheet" href="{{asset "/static/css/base.css"}}">
+  <link rel="stylesheet" href="{{asset "/static/css/components.css"}}">
+  <link rel="stylesheet" href="{{asset "/static/css/layout.css"}}">
+  <link rel="stylesheet" href="{{asset "/static/css/board.css"}}">
+  <link rel="stylesheet" href="{{asset "/static/css/card.css"}}">
+  <link rel="stylesheet" href="{{asset "/static/css/settings.css"}}">
   {{liveClient}}
+  <script type="module" src="{{asset "/static/js/app.js"}}"></script>
 </head>
 
 <body>
-  <nav class="locale-switcher" aria-label="{{t "locale.switcher"}}">
-    {{with localeURL "tr"}}<a hreflang="tr" lang="tr" href="{{.}}">Türkçe</a>{{end}}
-    {{with localeURL "en"}}<a hreflang="en" lang="en" href="{{.}}">English</a>{{end}}
-  </nav>
   {{slot "content"}}
 </body>
 

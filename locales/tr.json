@@ -9,7 +9,11 @@
     "home": "Ana sayfa",
     "teams": "Takımlar",
     "users": "Kullanıcılar",
-    "tasks": "Bana atananlar"
+    "tasks": "Bana atananlar",
+    "main": "Ana menü",
+    "boards": "Board'larım",
+    "collapse": "Menüyü daralt",
+    "menu": "Menüyü aç"
   },
   "auth": {
     "logout": "Çıkış yap",

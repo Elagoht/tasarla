@@ -1,16 +1,63 @@
-<header class="topbar">
-  <a class="topbar__home" href="{{pageURL "home"}}">{{t "app.name"}}</a>
-  <nav class="topbar__nav">
-    <a href="{{pageURL "teams"}}">{{t "nav.teams"}}</a>
-    <a href="{{pageURL "tasks"}}">{{t "nav.tasks"}}</a>
-    <a href="{{pageURL "notifications"}}">{{t "notify.title"}} <span data-collage-fragment="{{fragmentURL "notifications" "notifications-badge"}}" data-collage-push>{{slot "badge"}}</span></a>
-    {{if .User.IsAdmin}}<a href="{{pageURL "admin-users"}}">{{t "nav.users"}}</a>{{end}}
-  </nav>
-  <a class="topbar__user" href="{{pageURL "me-settings"}}">{{.User.Name}}</a>
-  <form class="topbar__logout" method="post" action="{{actionURL "logout"}}">
-    {{csrfToken}}
-    <button type="submit">{{t "auth.logout"}}</button>
-  </form>
-</header>
-{{range flashes}}<p class="flash flash--{{.Kind}}" role="status">{{.Text}}</p>{{end}}
-<main class="page">{{slot "content"}}</main>
+<div class="shell" data-shell>
+  <aside class="sidebar" id="sidebar" aria-label="{{t "nav.main"}}">
+    <div class="sidebar__top">
+      <a class="brand" href="{{pageURL "home"}}"><span class="brand__mark">{{template "icon" "board"}}</span><span class="brand__name">{{t "app.name"}}</span></a>
+      <button type="button" class="btn btn--quiet btn--sm btn--icon collapse-toggle" data-collapse aria-label="{{t "nav.collapse"}}" aria-controls="sidebar">{{template "icon" "chevron-left"}}</button>
+    </div>
+
+    <nav class="nav" aria-label="{{t "nav.main"}}">
+      <a class="nav__item{{if eq .Page "home"}} is-active{{end}}" href="{{pageURL "home"}}" {{if eq .Page "home"}}aria-current="page"{{end}}>{{template "icon" "board"}}<span class="nav__label">{{t "nav.boards"}}</span></a>
+      <a class="nav__item{{if eq .Page "tasks"}} is-active{{end}}" href="{{pageURL "tasks"}}" {{if eq .Page "tasks"}}aria-current="page"{{end}}>{{template "icon" "check"}}<span class="nav__label">{{t "nav.tasks"}}</span></a>
+      <a class="nav__item{{if eq .Page "notifications"}} is-active{{end}}" href="{{pageURL "notifications"}}" {{if eq .Page "notifications"}}aria-current="page"{{end}}>{{template "icon" "bell"}}<span class="nav__label">{{t "notify.title"}}</span>
+        <span data-collage-fragment="{{fragmentURL "notifications" "notifications-badge"}}" data-collage-push>{{slot "badge"}}</span></a>
+    </nav>
+
+    <nav class="nav" aria-label="{{t "nav.teams"}}">
+      {{range .Teams}}
+      <div class="nav__group">
+        <a class="nav__heading" href="{{pageURL "team" "id" .Team.Team.ID}}">{{.Team.Team.Name}}</a>
+        {{range .Boards}}
+        <a class="nav__item{{if .Active}} is-active{{end}}" href="{{pageURL "board" "id" .Board.ID}}" data-color="{{.Color}}" {{if .Active}}aria-current="page"{{end}}><span class="nav__tab"></span><span class="nav__label">{{.Board.Name}}</span></a>
+        {{else}}
+        <p class="nav__empty">{{t "board.empty"}}</p>
+        {{end}}
+      </div>
+      {{else}}
+      <p class="nav__empty">{{t "home.empty"}}</p>
+      {{end}}
+    </nav>
+
+    <div class="sidebar__foot">
+      <a class="nav__item{{if or (eq .Page "teams") (eq .Page "team")}} is-active{{end}}" href="{{pageURL "teams"}}">{{template "icon" "team"}}<span class="nav__label">{{t "nav.teams"}}</span></a>
+      {{if .User.IsAdmin}}<a class="nav__item{{if eq .Page "admin-users"}} is-active{{end}}" href="{{pageURL "admin-users"}}">{{template "icon" "lock"}}<span class="nav__label">{{t "nav.users"}}</span></a>{{end}}
+      <a class="me" href="{{pageURL "me-settings"}}" title="{{t "me.title"}}">
+        <span class="avatar" data-hue="{{.Hue}}">{{.Initial}}</span>
+        <span class="me__text"><span class="me__name">{{.User.Name}}</span><br><span class="me__mail">{{.User.Email}}</span></span>
+      </a>
+      <div class="sidebar__row">
+        <span class="lang" aria-label="{{t "locale.switcher"}}">
+          {{if eq .Locale "tr"}}<span aria-current="true">TR</span>{{else}}{{with localeURL "tr"}}<a hreflang="tr" lang="tr" href="{{.}}">TR</a>{{end}}{{end}}
+          {{if eq .Locale "en"}}<span aria-current="true">EN</span>{{else}}{{with localeURL "en"}}<a hreflang="en" lang="en" href="{{.}}">EN</a>{{end}}{{end}}
+        </span>
+        <form method="post" action="{{actionURL "logout"}}">
+          {{csrfToken}}
+          <button type="submit" class="btn btn--quiet btn--sm">{{template "icon" "logout"}} {{t "auth.logout"}}</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <div class="mobilebar">
+      <button type="button" class="btn btn--quiet btn--icon" data-menu aria-label="{{t "nav.menu"}}" aria-controls="sidebar">{{template "icon" "menu"}}</button>
+      <a class="brand" href="{{pageURL "home"}}"><span class="brand__mark">{{template "icon" "board"}}</span>{{t "app.name"}}</a>
+    </div>
+    <main class="main{{if .Wide}} main--wide{{end}}" id="main">
+      {{slot "content"}}
+    </main>
+  </div>
+
+  <div class="toasts" role="status" aria-live="polite" data-toasts>
+    {{range .Flashes}}<p class="toast{{if eq .Kind "error"}} toast--error{{end}}" data-toast>{{.Text}}</p>{{end}}
+  </div>
+</div>

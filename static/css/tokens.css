@@ -1,0 +1,190 @@
+/* Design tokens: "warm paper". Every colour and size in the other sheets
+   comes from here; the dark theme follows the system setting. */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/fonts/atkinson-hyperlegible-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/static/fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/static/fonts/atkinson-hyperlegible-latin-ext-700-normal.woff2") format("woff2");
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/fonts/atkinson-hyperlegible-latin-400-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("/static/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("/static/fonts/bricolage-grotesque-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Paper */
+  --paper: #fbfaf7;        /* the desk: page background */
+  --sheet: #fffefb;        /* cards, panels, dialogs */
+  --shelf: #f2efe8;        /* columns, sidebar */
+  --shelf-strong: #e9e4d9;
+  --line: #ebe6db;
+  --line-strong: #ddd5c6;
+  --shadow-paper: 0 1px 0 #e6e0d3, 0 1px 2px rgb(60 40 10 / 0.04);
+  --shadow-lift: 0 2px 4px rgb(60 40 10 / 0.06), 0 10px 24px rgb(60 40 10 / 0.08);
+  --shadow-float: 0 12px 40px rgb(60 40 10 / 0.18), 0 2px 6px rgb(60 40 10 / 0.08);
+
+  /* Ink */
+  --ink: #2a2620;
+  --ink-soft: #5c554a;
+  --ink-muted: #857c6f;
+  --ink-faint: #b8ae9f;
+
+  /* Accent and states */
+  --accent: #e8590c;
+  --accent-strong: #c4470a;
+  --accent-soft: #fff1e4;
+  --accent-line: #ffd2ad;
+  --on-accent: #ffffff;
+  --danger: #b42318;
+  --danger-strong: #8f1c13;
+  --danger-soft: #fde2e2;
+  --danger-line: #f5c2c0;
+  --ok: #2b8a3e;
+  --ok-soft: #dff5e3;
+  --warn: #b35c00;
+  --warn-soft: #fff1d6;
+  --focus: rgb(232 89 12 / 0.45);
+
+  /* Type */
+  --font-body: "Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque", var(--font-body);
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-xs: 0.75rem;   /* 12 */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-md: 0.9375rem; /* 15 */
+  --text-lg: 1.125rem;  /* 18 */
+  --text-xl: 1.5rem;    /* 24 */
+  --text-2xl: 2rem;     /* 32 */
+
+  /* Space */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  /* Shape */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  --sidebar: 248px;
+  --drawer: min(560px, 100vw);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #191714;
+    --sheet: #2b2722;
+    --shelf: #221f1b;
+    --shelf-strong: #2a2621;
+    --line: #39342d;
+    --line-strong: #4a443b;
+    --shadow-paper: 0 1px 0 rgb(0 0 0 / 0.35);
+    --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.35), 0 10px 24px rgb(0 0 0 / 0.3);
+    --shadow-float: 0 16px 48px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.4);
+    --ink: #eee9df;
+    --ink-soft: #cfc6b6;
+    --ink-muted: #a89e8e;
+    --ink-faint: #6f675b;
+    --accent: #ff7a2f;
+    --accent-strong: #ff9a5c;
+    --accent-soft: #3a2415;
+    --accent-line: #6b3a1c;
+    --on-accent: #1d120a;
+    --danger: #ff8f85;
+    --danger-strong: #ffb3ab;
+    --danger-soft: #3d1c1a;
+    --danger-line: #6b2b26;
+    --ok: #8ce99a;
+    --ok-soft: #183a20;
+    --warn: #ffc078;
+    --warn-soft: #3d2a10;
+    --focus: rgb(255 122 47 / 0.55);
+  }
+}
+
+/* Label palette: data-color is the stored #rrggbb; each gets a soft
+   background and a readable ink, per theme. */
+[data-color="#e03131"] { --chip-bg: #ffe3e3; --chip-ink: #b42318; --chip-dot: #e03131; }
+[data-color="#f08c00"] { --chip-bg: #fff0d6; --chip-ink: #9a4f00; --chip-dot: #f08c00; }
+[data-color="#2f9e44"] { --chip-bg: #dcf5e0; --chip-ink: #24773a; --chip-dot: #2f9e44; }
+[data-color="#1971c2"] { --chip-bg: #dfedfb; --chip-ink: #175a9a; --chip-dot: #1971c2; }
+[data-color="#7048e8"] { --chip-bg: #ebe4ff; --chip-ink: #5a36c9; --chip-dot: #7048e8; }
+[data-color="#c2255c"] { --chip-bg: #fde2ec; --chip-ink: #a3194b; --chip-dot: #c2255c; }
+[data-color="#0c8599"] { --chip-bg: #d9f3f6; --chip-ink: #0a6b7b; --chip-dot: #0c8599; }
+[data-color="#495057"] { --chip-bg: #ebe8e2; --chip-ink: #4a453d; --chip-dot: #7a7368; }
+
+@media (prefers-color-scheme: dark) {
+  [data-color="#e03131"] { --chip-bg: #3e1c1c; --chip-ink: #ffa8a8; }
+  [data-color="#f08c00"] { --chip-bg: #3d2a10; --chip-ink: #ffc078; }
+  [data-color="#2f9e44"] { --chip-bg: #183a20; --chip-ink: #8ce99a; }
+  [data-color="#1971c2"] { --chip-bg: #15293f; --chip-ink: #8fc4f5; }
+  [data-color="#7048e8"] { --chip-bg: #2a2350; --chip-ink: #b9a6ff; }
+  [data-color="#c2255c"] { --chip-bg: #3d1828; --chip-ink: #faa2c1; }
+  [data-color="#0c8599"] { --chip-bg: #10333a; --chip-ink: #7fd8e6; }
+  [data-color="#495057"] { --chip-bg: #34302a; --chip-ink: #d3cbbd; }
+}
+
+/* Avatars: data-hue is the user id modulo 8. */
+[data-hue="0"] { --hue: #e8590c; }
+[data-hue="1"] { --hue: #2f9e44; }
+[data-hue="2"] { --hue: #1971c2; }
+[data-hue="3"] { --hue: #7048e8; }
+[data-hue="4"] { --hue: #c2255c; }
+[data-hue="5"] { --hue: #0c8599; }
+[data-hue="6"] { --hue: #b35c00; }
+[data-hue="7"] { --hue: #5c554a; }

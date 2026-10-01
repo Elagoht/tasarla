@@ -9,7 +9,11 @@
     "home": "Home",
     "teams": "Teams",
     "users": "Users",
-    "tasks": "My tasks"
+    "tasks": "My tasks",
+    "main": "Main menu",
+    "boards": "My boards",
+    "collapse": "Collapse the menu",
+    "menu": "Open the menu"
   },
   "auth": {
     "logout": "Sign out",
