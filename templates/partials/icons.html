@@ -25,6 +25,8 @@
 {{- else if eq . "flag"}}<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>
 {{- else if eq . "clock"}}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
 {{- else if eq . "chevron-left"}}<path d="M15 6l-6 6 6 6"/>
+{{- else if eq . "chevron-up"}}<path d="M6 15l6-6 6 6"/>
+{{- else if eq . "chevron-down"}}<path d="M6 9l6 6 6-6"/>
 {{- else if eq . "chevron-right"}}<path d="M9 6l6 6-6 6"/>
 {{- else if eq . "link"}}<path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"/>
 {{- end}}</svg>{{end}}

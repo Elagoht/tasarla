@@ -74,6 +74,32 @@ func TestSavingTheColumnTable(t *testing.T) {
 }
 
 // Review Focus 2: one bad row refuses the whole table and keeps what was typed.
+// A table with no done column chosen marks none, rather than the first.
+func TestNoDoneColumnChosenMarksNone(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	rows := []map[string]string{
+		{"id": id(b.cols[0].ID), "name": "Todo"},
+		{"id": id(b.cols[1].ID), "name": "Doing"},
+		{"id": id(b.cols[2].ID), "name": "Done"},
+	}
+	form := columnsForm(rows, 0, 0)
+	form.Del("col_done")
+	if res := b.lead.Submit(b.path+"/settings?tab=columns", b.path+"/settings", form); res.Status != http.StatusSeeOther {
+		t.Fatalf("columns_save = %d", res.Status)
+	}
+	cols, _ := b.h.store.Columns(ctx, b.board.ID)
+	for _, c := range cols {
+		if c.IsDone {
+			t.Fatalf("%s is marked done", c.Name)
+		}
+	}
+	page := b.lead.Get(b.path + "/settings?tab=columns").Body
+	if strings.Contains(page, `name="col_done" value="0" checked`) {
+		t.Error("the table shows the first column as done")
+	}
+}
+
 func TestABadColumnTableSavesNothing(t *testing.T) {
 	b := newBoardSetup(t)
 	ctx := context.Background()

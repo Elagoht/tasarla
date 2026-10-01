@@ -304,7 +304,30 @@
       "blockers_done": "bloklayan kartları bitmiş",
       "min_attachments": "en az {count} dosya eki"
     },
-    "rule_invalid": "Kural eksik ya da hatalı; alanları kontrol edin."
+    "rule_invalid": "Kural eksik ya da hatalı; alanları kontrol edin.",
+    "builder": {
+      "permission": "{column} kolonuna {from} yalnızca {who} kart taşıyabilir.",
+      "condition": "{column} {phase} kartın {condition} olmalı.",
+      "from_any": "her kolondan",
+      "from_column": "{name} kolonundan",
+      "phase_enter": "kolonuna girerken",
+      "phase_exit": "kolonundan çıkarken",
+      "has_label": "şu etiketlerden biri",
+      "min_attachments": "en az N dosya eki",
+      "count": "Dosya eki sayısı",
+      "add": "Kuralı ekle",
+      "title": "Yeni kural",
+      "pick": "Kural türü",
+      "no_labels": "Bu board'da etiket yok; önce Etiketler sekmesinden ekleyin."
+    },
+    "columns_dirty": "{count} değişiklik kaydedilmedi",
+    "move_up": "Yukarı taşı",
+    "move_down": "Aşağı taşı",
+    "role_members_count": "{count} üye",
+    "danger_zone": "Tehlikeli bölge",
+    "archive_hint": "Arşivlenen board takım sayfasından ve sol menüden kalkar.",
+    "and": "ve",
+    "cards_count": "{count} kart"
   },
   "rules": {
     "transition": "{from} kolonundan {to} kolonuna geçiş tanımlı değil.",

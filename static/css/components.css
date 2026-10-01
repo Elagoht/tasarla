@@ -74,6 +74,7 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
 .stack--sm { gap: var(--s2); }
 .stack--lg { gap: var(--s5); }
 .split { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); }
+.inline-form { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
 .actions__spacer { flex: 1; }
 .grid-cards { display: grid; gap: var(--s4); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }

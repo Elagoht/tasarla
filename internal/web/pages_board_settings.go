@@ -43,6 +43,46 @@ type settingsView struct {
 	Subjects  []string
 	Kinds     []string
 	AllCols   []store.Column
+	// Builders are the sentences a new rule is written in, by kind, with
+	// blanks where its fields go.
+	Builders map[string][]sentencePart
+}
+
+// sentencePart is a piece of a rule sentence: text, or the blank named Slot.
+type sentencePart struct {
+	Text string
+	Slot string
+}
+
+// builderKeys are the sentences of the rule builders; their blanks are named
+// as in the sentence the rule is listed with.
+var builderKeys = map[string]string{
+	"permission": "settings.builder.permission",
+	"from":       "settings.sentence.from",
+	"condition":  "settings.builder.condition",
+	"wip":        "settings.sentence.wip",
+	"person_wip": "settings.sentence.person_wip",
+}
+
+// sentenceParts splits "{column} kolonuna …" into its text and its blanks, so
+// each language keeps its own word order around the form's fields.
+func sentenceParts(text string) []sentencePart {
+	var parts []sentencePart
+	for text != "" {
+		open := strings.IndexByte(text, '{')
+		end := strings.IndexByte(text[max(open, 0):], '}')
+		if open < 0 || end < 0 {
+			parts = append(parts, sentencePart{Text: text})
+			break
+		}
+		end += open
+		if open > 0 {
+			parts = append(parts, sentencePart{Text: text[:open]})
+		}
+		parts = append(parts, sentencePart{Slot: text[open+1 : end]})
+		text = text[end+1:]
+	}
+	return parts
 }
 
 // columnRowView is one row of the column table, from the database or from a
@@ -114,7 +154,11 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 	}
 	rc.HoistTitle(i18n.T(rc, "settings.title") + " · " + bc.Board.Name)
 	view := settingsView{Board: bc.Board, Team: bc.Team, Tabs: settingsTabs, Palette: labelPalette,
-		Subjects: []string{rules.SubjectAnyMember, rules.SubjectTeamLead, rules.SubjectAssignee}, Kinds: rules.Kinds}
+		Subjects: []string{rules.SubjectAnyMember, rules.SubjectTeamLead, rules.SubjectAssignee}, Kinds: rules.Kinds,
+		Create: -1, Done: -1, Builders: map[string][]sentencePart{}}
+	for kind, key := range builderKeys {
+		view.Builders[kind] = sentenceParts(i18n.T(rc, key))
+	}
 	view.Tab = rc.Request.URL.Query().Get("tab")
 	if !slices.Contains(settingsTabs, view.Tab) {
 		view.Tab = "general"
@@ -173,6 +217,14 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 	return view, nil
 }
 
+// listOf joins names as a sentence lists them: "A, B and C".
+func listOf(rc *collage.RenderContext, items []string) string {
+	if len(items) < 2 {
+		return strings.Join(items, "")
+	}
+	return strings.Join(items[:len(items)-1], ", ") + " " + i18n.T(rc, "settings.and") + " " + items[len(items)-1]
+}
+
 // sentenceViews writes each rule as a sentence in the reader's language.
 func sentenceViews(rc *collage.RenderContext, ss []store.Sentence, cols []store.Column, roles []store.BoardRole, labels []store.Label) []sentenceView {
 	colName := map[int64]string{}
@@ -192,7 +244,7 @@ func sentenceViews(rc *collage.RenderContext, ss []store.Sentence, cols []store.
 		for _, id := range ids {
 			out = append(out, colName[id])
 		}
-		return strings.Join(out, ", ")
+		return listOf(rc, out)
 	}
 	var out []sentenceView
 	for _, s := range ss {
@@ -208,9 +260,9 @@ func sentenceViews(rc *collage.RenderContext, ss []store.Sentence, cols []store.
 				who = append(who, roleName[id])
 			}
 			if s.FromID != 0 {
-				v.Text = i18n.T(rc, "settings.sentence.permission_from", "column", col, "from", colName[s.FromID], "who", strings.Join(who, ", "))
+				v.Text = i18n.T(rc, "settings.sentence.permission_from", "column", col, "from", colName[s.FromID], "who", listOf(rc, who))
 			} else {
-				v.Text = i18n.T(rc, "settings.sentence.permission", "column", col, "who", strings.Join(who, ", "))
+				v.Text = i18n.T(rc, "settings.sentence.permission", "column", col, "who", listOf(rc, who))
 			}
 		case store.SentenceFrom:
 			if len(s.Columns) == 0 {
@@ -330,8 +382,15 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 	if err != nil || n < 0 || n > 100 {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
-	create, _ := strconv.Atoi(v.Value("col_create"))
-	done, _ := strconv.Atoi(v.Value("col_done"))
+	// No column chosen: none is marked; Atoi's 0 would mark the first.
+	create, err := strconv.Atoi(v.Value("col_create"))
+	if err != nil {
+		create = -1
+	}
+	done, err := strconv.Atoi(v.Value("col_done"))
+	if err != nil {
+		done = -1
+	}
 	type indexed struct {
 		order int
 		view  columnRowView

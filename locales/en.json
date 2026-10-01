@@ -304,7 +304,30 @@
       "blockers_done": "every blocking card done",
       "min_attachments": "at least {count} attachments"
     },
-    "rule_invalid": "The rule is incomplete or wrong; check the fields."
+    "rule_invalid": "The rule is incomplete or wrong; check the fields.",
+    "builder": {
+      "permission": "Only {who} may move cards into {column} {from}.",
+      "condition": "A card {phase} {column} needs {condition}.",
+      "from_any": "from any column",
+      "from_column": "from {name}",
+      "phase_enter": "entering",
+      "phase_exit": "leaving",
+      "has_label": "one of these labels",
+      "min_attachments": "at least N attachments",
+      "count": "Number of attachments",
+      "add": "Add the rule",
+      "title": "New rule",
+      "pick": "Kind of rule",
+      "no_labels": "This board has no labels; add some on the Labels tab first."
+    },
+    "columns_dirty": "{count} unsaved changes",
+    "move_up": "Move up",
+    "move_down": "Move down",
+    "role_members_count": "{count} members",
+    "danger_zone": "Danger zone",
+    "archive_hint": "An archived board leaves the team page and the sidebar.",
+    "and": "and",
+    "cards_count": "{count} cards"
   },
   "rules": {
     "transition": "Moving from {from} to {to} is not allowed.",

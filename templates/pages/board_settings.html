@@ -11,7 +11,7 @@
 </nav>
 
 {{if eq .Tab "general"}}
-<section class="panel stack">
+<section class="panel stack general">
   <form class="field-row" method="post" action="{{$self}}?tab=general">
     {{csrfToken}}
     <input type="hidden" name="op" value="rename">
@@ -23,8 +23,11 @@
     <button type="submit" class="btn btn--primary">{{t "settings.rename"}}</button>
   </form>
 </section>
-<section class="panel panel--danger stack">
-  <h2 class="h3">{{t "settings.archive"}}</h2>
+<section class="panel panel--danger split">
+  <div class="stack stack--sm">
+    <h2 class="h3">{{t "settings.danger_zone"}}</h2>
+    <p class="muted small">{{t "settings.archive_hint"}}</p>
+  </div>
   <form method="post" action="{{$self}}?tab=general" data-confirm="{{t "confirm.archive_board"}}">
     {{csrfToken}}
     <input type="hidden" name="op" value="archive_board">
@@ -57,7 +60,11 @@
         {{$p := printf "col_%d_" .Index}}
         <tr class="{{if .Problem}}has-error{{end}}" data-col-row>
           <td class="table__grip">
-            <span class="grip" title="{{t "settings.drag"}}">{{template "icon" "grip"}}</span>
+            <span class="grip" title="{{t "settings.drag"}}" data-col-handle>{{template "icon" "grip"}}</span>
+            <span class="reorder">
+              <button type="button" class="btn btn--quiet btn--sm btn--icon" data-col-up aria-label="{{t "settings.move_up"}}" title="{{t "settings.move_up"}}">{{template "icon" "chevron-up"}}</button>
+              <button type="button" class="btn btn--quiet btn--sm btn--icon" data-col-down aria-label="{{t "settings.move_down"}}" title="{{t "settings.move_down"}}">{{template "icon" "chevron-down"}}</button>
+            </span>
             <input class="input input--tiny" name="{{$p}}order" value="{{.Index}}" inputmode="numeric" aria-label="{{t "settings.order"}}" data-col-order>
             <input type="hidden" name="{{$p}}id" value="{{.ID}}">
           </td>
@@ -70,7 +77,7 @@
           <td><input type="radio" class="check" name="col_done" value="{{.Index}}" {{if eq .Index $.Done}}checked{{end}} aria-label="{{t "settings.is_done"}}"></td>
           <td><input type="checkbox" class="check" name="{{$p}}person" value="1" {{if .Person}}checked{{end}} aria-label="{{t "settings.counts_person_wip"}}"></td>
           <td>
-            {{if .Cards}}<span class="muted" title="{{t "settings.column_not_empty"}}">{{.Cards}}</span>
+            {{if .Cards}}<span class="locked" title="{{t "settings.column_not_empty"}}">{{template "icon" "lock"}} {{t "settings.cards_count" "count" .Cards}}</span>
             {{else}}<label class="delete-toggle"><input type="checkbox" class="check" name="{{$p}}delete" value="1" {{if .Delete}}checked{{end}}> <span class="sr-only">{{t "settings.delete"}}</span>{{template "icon" "trash"}}</label>{{end}}
           </td>
         </tr>
@@ -79,7 +86,11 @@
         {{$p := printf "col_%d_" $n}}
         <tr class="table__new" data-col-row data-col-template>
           <td class="table__grip">
-            <span class="grip">{{template "icon" "plus"}}</span>
+            <span class="grip" data-col-handle>{{template "icon" "plus"}}</span>
+            <span class="reorder">
+              <button type="button" class="btn btn--quiet btn--sm btn--icon" data-col-up aria-label="{{t "settings.move_up"}}" title="{{t "settings.move_up"}}">{{template "icon" "chevron-up"}}</button>
+              <button type="button" class="btn btn--quiet btn--sm btn--icon" data-col-down aria-label="{{t "settings.move_down"}}" title="{{t "settings.move_down"}}">{{template "icon" "chevron-down"}}</button>
+            </span>
             <input class="input input--tiny" name="{{$p}}order" value="{{$n}}" inputmode="numeric" aria-label="{{t "settings.order"}}" data-col-order>
             <input type="hidden" name="{{$p}}id" value="">
           </td>
@@ -96,7 +107,7 @@
   <div class="actions">
     <button type="button" class="btn btn--secondary" data-col-add hidden>{{template "icon" "plus"}} {{t "settings.add_column"}}</button>
     <span class="actions__spacer"></span>
-    <span class="muted" data-col-dirty hidden>{{t "settings.unsaved"}}</span>
+    <span class="dirty" data-col-dirty data-template="{{t "settings.columns_dirty" "count" "{count}"}}" hidden></span>
     <button type="submit" class="btn btn--primary">{{t "settings.save_columns"}}</button>
   </div>
 </form>
@@ -145,14 +156,15 @@
 {{if eq .Tab "roles"}}
 <section class="stack">
   {{range .Roles}}
-  <article class="panel stack">
+  <article class="panel stack role-card">
     <div class="split">
-      <form class="field-row" method="post" action="{{$self}}?tab=roles">
+      <form class="inline-form" method="post" action="{{$self}}?tab=roles">
         {{csrfToken}}
         <input type="hidden" name="op" value="role_rename">
         <input type="hidden" name="role_id" value="{{.Role.ID}}">
-        <input class="input" name="role_name" value="{{.Role.Name}}" required maxlength="40" aria-label="{{t "settings.role_name"}}">
-        <button type="submit" class="btn btn--secondary">{{t "settings.role_rename"}}</button>
+        <span class="role-card__icon" aria-hidden="true">{{template "icon" "team"}}</span>
+        <input class="input role-card__name" name="role_name" value="{{.Role.Name}}" required maxlength="40" aria-label="{{t "settings.role_name"}}">
+        <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "pencil"}} {{t "settings.role_rename"}}</button>
       </form>
       <form method="post" action="{{$self}}?tab=roles" data-confirm="{{t "confirm.role_delete"}}">
         {{csrfToken}}
@@ -177,7 +189,7 @@
   {{else}}
   <p class="empty">{{t "settings.none"}}</p>
   {{end}}
-  <form class="panel field-row" method="post" action="{{$self}}?tab=roles">
+  <form class="panel field-row role-new" method="post" action="{{$self}}?tab=roles">
     {{csrfToken}}
     <input type="hidden" name="op" value="role_add">
     <label class="field">
@@ -191,18 +203,19 @@
 {{end}}
 
 {{if eq .Tab "rules"}}
-<section class="stack">
+<section class="stack stack--lg">
   <p class="muted">{{t "settings.rules_hint"}}</p>
   {{if .Sentences}}
   <ul class="rules">
     {{range .Sentences}}
     <li class="rule{{if .Warning}} rule--warning{{end}}">
+      <span class="rule__icon" aria-hidden="true">{{if .Warning}}{{template "icon" "flag"}}{{else}}{{template "icon" "check"}}{{end}}</span>
       <span class="rule__text">{{.Text}}</span>
       <form method="post" action="{{$self}}?tab=rules" data-confirm="{{t "confirm.rule_delete"}}">
         {{csrfToken}}
         <input type="hidden" name="op" value="rule_delete">
         <input type="hidden" name="key" value="{{.Key}}">
-        <button type="submit" class="btn btn--quiet btn--sm btn--danger-text" aria-label="{{t "settings.delete"}}">{{template "icon" "trash"}}</button>
+        <button type="submit" class="btn btn--quiet btn--sm btn--icon btn--danger-text" aria-label="{{t "settings.delete"}}" title="{{t "settings.delete"}}">{{template "icon" "trash"}}</button>
       </form>
     </li>
     {{end}}
@@ -211,66 +224,92 @@
   <p class="empty">{{t "settings.no_rules"}}</p>
   {{end}}
 
-  <h2 class="h3">{{t "settings.add_rule"}}</h2>
-  <div class="rule-builders">
-    <details class="panel rule-builder">
+  <section class="panel stack builder">
+    <h2 class="h3">{{template "icon" "plus"}} {{t "settings.builder.title"}}</h2>
+    {{$cols := .AllCols}}
+
+    <details class="rule-builder" name="rule-builder">
       <summary>{{t "settings.sentence_types.permission"}}</summary>
       <form class="sentence" method="post" action="{{$self}}?tab=rules">
         {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="permission">
-        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
-        <span>{{t "settings.to"}} ·</span>
-        <select class="select" name="from_column" aria-label="{{t "settings.from"}}"><option value="">{{t "settings.any_column"}}</option>{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
-        <span>· {{t "settings.who"}}:</span>
-        <div class="checks">
-          {{range .Subjects}}<label class="check-pill"><input type="checkbox" name="subject" value="{{.}}"> {{t (printf "settings.subjects.%s" .)}}</label>{{end}}
-          {{range .Roles}}<label class="check-pill"><input type="checkbox" name="role" value="{{.Role.ID}}"> {{.Role.Name}}</label>{{end}}
-        </div>
-        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+        <p class="sentence__line">
+        {{range .Builders.permission}}{{if eq .Slot "column"}}<select class="select select--inline" name="column" aria-label="{{t "settings.to"}}">{{range $cols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>{{else if eq .Slot "from"}}<select class="select select--inline" name="from_column" aria-label="{{t "settings.from"}}"><option value="">{{t "settings.builder.from_any"}}</option>{{range $cols}}<option value="{{.ID}}">{{t "settings.builder.from_column" "name" .Name}}</option>{{end}}</select>{{else if eq .Slot "who"}}<span class="sentence__blank">{{t "settings.who"}}</span>{{else}}<span>{{.Text}}</span>{{end}}{{end}}
+        </p>
+        <fieldset class="sentence__choices">
+          <legend class="field__label">{{t "settings.who"}}</legend>
+          <div class="checks">
+            {{range .Subjects}}<label class="check-pill"><input type="checkbox" name="subject" value="{{.}}"> {{t (printf "settings.subjects.%s" .)}}</label>{{end}}
+            {{range .Roles}}<label class="check-pill check-pill--role"><input type="checkbox" name="role" value="{{.Role.ID}}"> {{template "icon" "team"}} {{.Role.Name}}</label>{{end}}
+          </div>
+        </fieldset>
+        <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{t "settings.builder.add"}}</button></div>
       </form>
     </details>
-    <details class="panel rule-builder">
+
+    <details class="rule-builder" name="rule-builder">
       <summary>{{t "settings.sentence_types.from"}}</summary>
       <form class="sentence" method="post" action="{{$self}}?tab=rules">
         {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="from">
-        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
-        <span>← {{t "settings.sources"}}:</span>
-        <div class="checks">{{range .AllCols}}<label class="check-pill"><input type="checkbox" name="from" value="{{.ID}}"> {{.Name}}</label>{{end}}</div>
-        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+        <p class="sentence__line">
+        {{range .Builders.from}}{{if eq .Slot "column"}}<select class="select select--inline" name="column" aria-label="{{t "settings.to"}}">{{range $cols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>{{else if eq .Slot "sources"}}<span class="sentence__blank">{{t "settings.sources"}}</span>{{else}}<span>{{.Text}}</span>{{end}}{{end}}
+        </p>
+        <fieldset class="sentence__choices">
+          <legend class="field__label">{{t "settings.sources"}}</legend>
+          <div class="checks">{{range $cols}}<label class="check-pill"><input type="checkbox" name="from" value="{{.ID}}"> {{.Name}}</label>{{end}}</div>
+        </fieldset>
+        <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{t "settings.builder.add"}}</button></div>
       </form>
     </details>
-    <details class="panel rule-builder">
+
+    <details class="rule-builder" name="rule-builder">
       <summary>{{t "settings.sentence_types.condition"}}</summary>
       <form class="sentence" method="post" action="{{$self}}?tab=rules" data-rule-condition>
         {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="condition">
-        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
-        <select class="select" name="phase" aria-label="{{t "settings.phase"}}"><option value="enter">{{t "settings.phases.enter"}}</option><option value="exit">{{t "settings.phases.exit"}}</option></select>
-        <select class="select" name="kind" aria-label="{{t "settings.kind"}}" data-rule-kind>{{range .Kinds}}<option value="{{.}}">{{t (printf "settings.kinds.%s" .) "count" "N"}}</option>{{end}}</select>
-        <input class="input input--small" name="count" inputmode="numeric" placeholder="N" aria-label="{{t "settings.count"}}" data-rule-for="min_attachments">
-        {{if .Labels}}<div class="checks" data-rule-for="has_label">{{range .Labels}}<label class="check-pill"><input type="checkbox" name="label" value="{{.ID}}"> <span class="chip" data-color="{{.Color}}">{{.Name}}</span></label>{{end}}</div>{{end}}
-        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+        <p class="sentence__line">
+        {{range .Builders.condition}}{{if eq .Slot "column"}}<select class="select select--inline" name="column" aria-label="{{t "settings.column_name"}}">{{range $cols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>{{else if eq .Slot "phase"}}<select class="select select--inline" name="phase" aria-label="{{t "settings.phase"}}"><option value="enter">{{t "settings.builder.phase_enter"}}</option><option value="exit">{{t "settings.builder.phase_exit"}}</option></select>{{else if eq .Slot "condition"}}<select class="select select--inline" name="kind" aria-label="{{t "settings.kind"}}" data-rule-kind>{{range $.Kinds}}<option value="{{.}}">{{if eq . "has_label"}}{{t "settings.builder.has_label"}}{{else if eq . "min_attachments"}}{{t "settings.builder.min_attachments"}}{{else}}{{t (printf "settings.phrase.%s" .)}}{{end}}</option>{{end}}</select>{{else}}<span>{{.Text}}</span>{{end}}{{end}}
+        </p>
+        <label class="field sentence__choices" data-rule-for="min_attachments">
+          <span class="field__label">{{t "settings.builder.count"}}</span>
+          <input class="input input--small" name="count" inputmode="numeric" placeholder="N">
+        </label>
+        <fieldset class="sentence__choices" data-rule-for="has_label">
+          <legend class="field__label">{{t "card.labels"}}</legend>
+          {{if .Labels}}<div class="checks">{{range .Labels}}<label class="label-pick" data-color="{{.Color}}"><input type="checkbox" name="label" value="{{.ID}}"><span class="label-pick__dot" aria-hidden="true"></span>{{.Name}}</label>{{end}}</div>
+          {{else}}<p class="muted small">{{t "settings.builder.no_labels"}}</p>{{end}}
+        </fieldset>
+        <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{t "settings.builder.add"}}</button></div>
       </form>
     </details>
-    <details class="panel rule-builder">
+
+    <details class="rule-builder" name="rule-builder">
       <summary>{{t "settings.sentence_types.wip"}}</summary>
       <form class="sentence" method="post" action="{{$self}}?tab=rules">
         {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="wip">
-        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
-        <span>≤</span>
-        <input class="input input--small" name="limit" inputmode="numeric" placeholder="N" aria-label="{{t "settings.limit"}}" required>
-        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+        <p class="sentence__line">
+        {{range .Builders.wip}}{{if eq .Slot "column"}}<select class="select select--inline" name="column" aria-label="{{t "settings.column_name"}}">{{range $cols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>{{else if eq .Slot "limit"}}<input class="input input--small" name="limit" inputmode="numeric" placeholder="N" aria-label="{{t "settings.limit"}}" required>{{else}}<span>{{.Text}}</span>{{end}}{{end}}
+        </p>
+        <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{t "settings.builder.add"}}</button></div>
       </form>
     </details>
-    <details class="panel rule-builder">
+
+    <details class="rule-builder" name="rule-builder">
       <summary>{{t "settings.sentence_types.person_wip"}}</summary>
       <form class="sentence" method="post" action="{{$self}}?tab=rules">
         {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="person_wip">
-        <span>{{t "settings.limit"}}</span>
-        <input class="input input--small" name="limit" inputmode="numeric" placeholder="N" aria-label="{{t "settings.limit"}}" required>
-        <span>· {{t "settings.counted"}}:</span>
-        <div class="checks">{{range .AllCols}}<label class="check-pill"><input type="checkbox" name="counted" value="{{.ID}}" {{if .CountsPersonWIP}}checked{{end}}> {{.Name}}</label>{{end}}</div>
-        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+        <p class="sentence__line">
+        {{range .Builders.person_wip}}{{if eq .Slot "columns"}}<span class="sentence__blank">{{t "settings.counted"}}</span>{{else if eq .Slot "limit"}}<input class="input input--small" name="limit" inputmode="numeric" placeholder="N" aria-label="{{t "settings.limit"}}" required>{{else}}<span>{{.Text}}</span>{{end}}{{end}}
+        </p>
+        <fieldset class="sentence__choices">
+          <legend class="field__label">{{t "settings.counted"}}</legend>
+          <div class="checks">{{range $cols}}<label class="check-pill"><input type="checkbox" name="counted" value="{{.ID}}" {{if .CountsPersonWIP}}checked{{end}}> {{.Name}}</label>{{end}}</div>
+        </fieldset>
+        <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{t "settings.builder.add"}}</button></div>
       </form>
     </details>
-  </div>
+  </section>
 </section>
 {{end}}
+
+{{if eq .Tab "columns"}}<script src="{{asset "/static/vendor/Sortable.min.js"}}"></script>
+<script type="module" src="{{asset "/static/js/columns-editor.js"}}"></script>{{end}}
+{{if eq .Tab "rules"}}<script type="module" src="{{asset "/static/js/rules.js"}}"></script>{{end}}
