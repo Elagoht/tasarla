@@ -89,7 +89,7 @@ func New(d Deps) (*App, error) {
 				"initial":         initial,
 				"withQuery":       withQuery,
 				"ganttLink":       ganttLink,
-				"extraQuery":      func(v url.Values) string { return v.Encode() },
+				"clearQuery":      clearQuery,
 				"priorityChoices": func() []int16 { return []int16{4, 3, 2, 1} },
 				"dueChoices":      func() []store.DueFilter { return dueFilters },
 			},

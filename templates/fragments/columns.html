@@ -1,5 +1,54 @@
 {{if .Notices}}<div class="alert board-alert" role="alert" data-board-alert>{{template "icon" "flag"}}<ul>{{range .Notices}}<li>{{.}}</li>{{end}}</ul></div>{{end}}
 {{if .Filter.Filter.Active}}<p class="filter-count" role="status">{{t "filter.count" "matching" (printf "%d" .Matching) "total" (printf "%d" .Total)}}</p>{{end}}
+{{if .Lanes}}
+<div class="columns columns--lanes" data-lane="{{.Lane}}">
+  <div class="lanes__head">
+    {{range .Columns}}
+    <section class="column column--head" data-color="{{.Color}}" data-state="{{.State}}"{{if .Column.IsDone}} data-done{{end}} aria-labelledby="column-{{.Column.ID}}">
+      <header class="column__head">
+        <span class="column__dot" aria-hidden="true"></span>
+        <h2 class="column__name" id="column-{{.Column.ID}}">{{.Column.Name}}</h2>
+        {{if .Column.IsDone}}<span class="column__done" title="{{t "settings.is_done"}}">{{template "icon" "check"}}</span>{{end}}
+        <span class="column__count" {{if .Limit}}title="{{t "board.wip_limit"}}"{{end}}>{{len .Cards}}{{if .Limit}}<span class="column__limit"> / {{.Limit}}</span>{{end}}</span>
+      </header>
+      {{if .OverLimit}}<p class="column__over">{{t "board.over_limit"}}</p>{{end}}
+      {{if .CanCreate}}
+      {{$here := or (eq (fieldValue "column") (printf "%d" .Column.ID)) (and (eq (fieldValue "column") "") .FirstCreate)}}
+      <details class="add-card" data-keep-open="add-{{.Column.ID}}"{{if and $here (fieldError "title")}} open{{end}}>
+        <summary class="add-card__open">{{template "icon" "plus"}} {{t "board.add_card"}}</summary>
+        <form class="add-card__form" method="post" action="{{$.MoveURL}}">
+          {{csrfToken}}
+          <input type="hidden" name="op" value="create_card">
+          <input type="hidden" name="column" value="{{.Column.ID}}">
+          <textarea class="input add-card__title" name="title" rows="2" required maxlength="200" placeholder="{{t "board.new_card"}}" aria-label="{{t "board.new_card"}}" data-submit-on-enter>{{if $here}}{{fieldValue "title"}}{{end}}</textarea>
+          {{if $here}}{{with fieldError "title"}}<p class="field__error">{{.}}</p>{{end}}{{end}}
+          <div class="actions">
+            <button type="submit" class="btn btn--primary btn--sm">{{t "board.add_card"}}</button>
+          </div>
+        </form>
+      </details>
+      {{end}}
+    </section>
+    {{end}}
+  </div>
+  {{range .Lanes}}
+  <details class="lane{{if .Former}} lane--former{{end}}" open data-lane-key="{{.Key}}">
+    <summary class="lane__head">
+      <span class="lane__name">{{.Label}}</span>
+      <span class="column__count">{{.Count}}</span>
+    </summary>
+    <div class="lane__cells">
+      {{$lane := .}}
+      {{range .Cells}}
+      <ol class="column__cards lane__cell" data-column="{{.ColumnID}}" data-lane-value="{{$lane.Value}}"{{if .Done}} data-done{{end}} data-empty="{{.Empty}}">
+        {{range .Cards}}{{template "board-card" .}}{{end}}
+      </ol>
+      {{end}}
+    </div>
+  </details>
+  {{end}}
+</div>
+{{else}}
 <div class="columns">
   {{range .Columns}}
   {{$col := .}}
@@ -11,23 +60,8 @@
       <span class="column__count" {{if .Limit}}title="{{t "board.wip_limit"}}"{{end}}>{{len .Cards}}{{if .Limit}}<span class="column__limit"> / {{.Limit}}</span>{{end}}</span>
     </header>
     {{if .OverLimit}}<p class="column__over">{{t "board.over_limit"}}</p>{{end}}
-    <ol class="column__cards" data-column="{{.Column.ID}}" data-empty="{{if .Column.IsDone}}{{t "done.drop_here"}}{{else}}{{t "board.no_cards"}}{{end}}">
-      {{range .Cards}}
-      <li class="card{{if .Dimmed}} card--dimmed{{end}}{{if .Summary.Blocked}} card--blocked{{end}}" id="card-{{.Summary.Card.ID}}" data-card="{{.Summary.Card.ID}}" data-version="{{.Summary.Card.Version}}" data-column="{{.Summary.Card.ColumnID}}">
-        <a class="card__title" data-card-link href="{{pageURL "card" "id" .Summary.Card.BoardID "card" .Summary.Card.ID}}">{{.Summary.Card.Title}}</a>
-        {{if .Summary.Labels}}<ul class="chips card__labels">{{range .Summary.Labels}}<li class="chip label" data-color="{{.Color}}">{{.Name}}</li>{{end}}</ul>{{end}}
-        {{if or .Summary.AssigneeName .Due .Priority .Summary.ChecklistTotal .Summary.Attachments .Summary.Blocked}}
-        <div class="card__meta">
-          {{if .Summary.Blocked}}<span class="card__blocked">{{template "icon" "lock"}} {{t "board.blocked"}}</span>{{end}}
-          {{if .Priority}}<span class="card__priority" data-priority="{{.Summary.Card.Priority}}">{{template "icon" "flag"}} {{.Priority}}</span>{{end}}
-          {{if .Due}}<span class="card__due{{if .Overdue}} card__due--late{{end}}" title="{{t "card.due_date"}}">{{template "icon" "calendar"}} <time datetime="{{.Due}}">{{.Due}}</time></span>{{end}}
-          {{if .Summary.ChecklistTotal}}<span class="card__checklist{{if eq .Summary.ChecklistDone .Summary.ChecklistTotal}} is-complete{{end}}" title="{{t "card.checklist"}}">{{template "icon" "checklist"}} {{.Summary.ChecklistDone}}/{{.Summary.ChecklistTotal}}</span>{{end}}
-          {{if .Summary.Attachments}}<span class="card__files" title="{{t "attachments.title"}}">{{template "icon" "paperclip"}} {{.Summary.Attachments}}</span>{{end}}
-          {{if .Summary.AssigneeName}}<span class="card__assignee" title="{{.Summary.AssigneeName}}"><span class="avatar" data-hue="{{.Hue}}" aria-hidden="true">{{.Initial}}</span><span class="sr-only">{{.Summary.AssigneeName}}</span></span>{{end}}
-        </div>
-        {{end}}
-      </li>
-      {{end}}
+    <ol class="column__cards" data-column="{{.Column.ID}}"{{if .Column.IsDone}} data-done{{end}} data-empty="{{if .Column.IsDone}}{{t "done.drop_here"}}{{else}}{{t "board.no_cards"}}{{end}}">
+      {{range .Cards}}{{template "board-card" .}}{{end}}
     </ol>
     {{if .CanCreate}}
     {{$here := or (eq (fieldValue "column") (printf "%d" .Column.ID)) (and (eq (fieldValue "column") "") .FirstCreate)}}
@@ -48,3 +82,4 @@
   </section>
   {{end}}
 </div>
+{{end}}

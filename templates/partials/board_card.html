@@ -1,0 +1,17 @@
+{{/* board-card: a card on the board, in a column or a lane's cell. Takes a cardView. */}}
+{{define "board-card"}}
+<li class="card{{if .Dimmed}} card--dimmed{{end}}{{if .Summary.Blocked}} card--blocked{{end}}" id="card-{{.Summary.Card.ID}}" data-card="{{.Summary.Card.ID}}" data-version="{{.Summary.Card.Version}}" data-column="{{.Summary.Card.ColumnID}}">
+  <a class="card__title" data-card-link href="{{pageURL "card" "id" .Summary.Card.BoardID "card" .Summary.Card.ID}}">{{.Summary.Card.Title}}</a>
+  {{if .Summary.Labels}}<ul class="chips card__labels">{{range .Summary.Labels}}<li class="chip label" data-color="{{.Color}}">{{.Name}}</li>{{end}}</ul>{{end}}
+  {{if or .Summary.AssigneeName .Due .Priority .Summary.ChecklistTotal .Summary.Attachments .Summary.Blocked}}
+  <div class="card__meta">
+    {{if .Summary.Blocked}}<span class="card__blocked">{{template "icon" "lock"}} {{t "board.blocked"}}</span>{{end}}
+    {{if .Priority}}<span class="card__priority" data-priority="{{.Summary.Card.Priority}}">{{template "icon" "flag"}} {{.Priority}}</span>{{end}}
+    {{if .Due}}<span class="card__due{{if .Overdue}} card__due--late{{end}}" title="{{t "card.due_date"}}">{{template "icon" "calendar"}} <time datetime="{{.Due}}">{{.Due}}</time></span>{{end}}
+    {{if .Summary.ChecklistTotal}}<span class="card__checklist{{if eq .Summary.ChecklistDone .Summary.ChecklistTotal}} is-complete{{end}}" title="{{t "card.checklist"}}">{{template "icon" "checklist"}} {{.Summary.ChecklistDone}}/{{.Summary.ChecklistTotal}}</span>{{end}}
+    {{if .Summary.Attachments}}<span class="card__files" title="{{t "attachments.title"}}">{{template "icon" "paperclip"}} {{.Summary.Attachments}}</span>{{end}}
+    {{if .Summary.AssigneeName}}<span class="card__assignee" title="{{.Summary.AssigneeName}}"><span class="avatar" data-hue="{{.Hue}}" aria-hidden="true">{{.Initial}}</span><span class="sr-only">{{.Summary.AssigneeName}}</span></span>{{end}}
+  </div>
+  {{end}}
+</li>
+{{end}}

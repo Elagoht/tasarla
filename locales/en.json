@@ -523,6 +523,13 @@
     "clear": "Clear",
     "count": "{matching} of {total} cards match"
   },
+  "lanes": {
+    "by": "Lanes",
+    "none": "No lanes",
+    "assignee": "By assignee",
+    "priority": "By priority",
+    "no_priority": "No priority"
+  },
   "done": {
     "title": "Done",
     "subtitle": "Cards entering a done column are completed and leave the board; they stay here and can be reopened.",

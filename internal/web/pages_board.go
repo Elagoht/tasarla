@@ -92,6 +92,10 @@ type columnsView struct {
 	// with the filter, where moves and new cards are sent.
 	Matching, Total int
 	MoveURL         string
+	// Lane is the field the board is split by ("" for none); Lanes are its
+	// lanes, made only then.
+	Lane  string
+	Lanes []laneView
 }
 
 type filterView struct {
@@ -101,6 +105,8 @@ type filterView struct {
 	Members []store.Member
 	Labels  []store.Label
 	Extra   url.Values // other settings the page keeps (Gantt's scale…), as hidden fields
+	// ShowLane offers the lane choice: the board has lanes, the Gantt chart not.
+	ShowLane bool
 }
 
 // boardFilterFor is the board's filter for this render — the page's and its
@@ -177,6 +183,7 @@ func (h *handlers) loadBoard(ctx context.Context, rc *collage.RenderContext) (bo
 	if err != nil {
 		return boardView{}, err
 	}
+	fv.ShowLane = true
 	return boardView{Notices: notices, Board: bc.Board, Team: bc.Team, Access: bc.Access, Filter: fv}, nil
 }
 
@@ -257,6 +264,21 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 			c.State = "full"
 		default:
 			c.State = "ok"
+		}
+	}
+	if fv.Filter.Lane != "" {
+		view.Lane = fv.Filter.Lane
+		view.Lanes = buildLanes(view.Lane, view.Columns, fv.Members, i18n.T(rc, "board.unassigned"), i18n.T(rc, "lanes.no_priority"),
+			func(p int16) string { return i18n.T(rc, "card.priorities."+strconv.Itoa(int(p))) })
+		doneHint, emptyHint := i18n.T(rc, "done.drop_here"), i18n.T(rc, "board.no_cards")
+		for i := range view.Lanes {
+			for j := range view.Lanes[i].Cells {
+				cell := &view.Lanes[i].Cells[j]
+				cell.Empty = emptyHint
+				if cell.Done {
+					cell.Empty = doneHint
+				}
+			}
 		}
 	}
 	return view, tags, nil

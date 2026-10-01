@@ -1,7 +1,7 @@
 {{/* filter-bar: the board filter (spec 2026-10-01 filtre… §3.1), a GET form that works without scripts; filter.js submits it as it changes. Takes a filterView. */}}
 {{define "filter-bar"}}
 <form class="filter-bar" method="get" action="{{.Action}}" role="search" data-filter-bar>
-  {{range $k, $vs := .Extra}}{{range $vs}}<input type="hidden" name="{{$k}}" value="{{.}}">{{end}}{{end}}
+  {{range $k, $vs := .Extra}}{{range $vs}}<input type="hidden" name="{{$k}}" value="{{.}}" data-filter-setting>{{end}}{{end}}
   <label class="sr-only" for="filter-q">{{t "filter.text"}}</label>
   <input class="input filter-bar__text" id="filter-q" name="q" type="search" value="{{.Filter.Text}}" placeholder="{{t "filter.text"}}" data-filter-text>
   <details class="filter-pick{{if or .Filter.Me .Filter.None .Filter.Assignees}} is-on{{end}}">
@@ -31,7 +31,15 @@
     <option value="">{{t "filter.due_any"}}</option>
     {{range dueChoices}}<option value="{{.}}"{{if eq (printf "%s" .) (printf "%s" $.Filter.Due)}} selected{{end}}>{{t (printf "filter.due_%s" .)}}</option>{{end}}
   </select>
+  {{if .ShowLane}}
+  <label class="sr-only" for="filter-lane">{{t "lanes.by"}}</label>
+  <select class="input input--sm" id="filter-lane" name="lane" data-filter-setting>
+    <option value="">{{t "lanes.none"}}</option>
+    <option value="assignee"{{if eq .Filter.Lane "assignee"}} selected{{end}}>{{t "lanes.assignee"}}</option>
+    <option value="priority"{{if eq .Filter.Lane "priority"}} selected{{end}}>{{t "lanes.priority"}}</option>
+  </select>
+  {{end}}
   <noscript><button type="submit" class="btn btn--secondary btn--sm">{{t "filter.apply"}}</button></noscript>
-  <a class="btn btn--quiet btn--sm" href="{{withQuery .Action (extraQuery .Extra)}}" data-filter-clear{{if not .Filter.Active}} hidden{{end}}>{{t "filter.clear"}}</a>
+  <a class="btn btn--quiet btn--sm" href="{{withQuery .Action (clearQuery .)}}" data-filter-clear{{if not .Filter.Active}} hidden{{end}}>{{t "filter.clear"}}</a>
 </form>
 {{end}}

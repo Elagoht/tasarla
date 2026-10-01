@@ -523,6 +523,13 @@
     "clear": "Temizle",
     "count": "Eşleşen: {matching} / {total}"
   },
+  "lanes": {
+    "by": "Şeritle",
+    "none": "Şerit yok",
+    "assignee": "Atanan kişiye göre",
+    "priority": "Önceliğe göre",
+    "no_priority": "Önceliksiz"
+  },
   "done": {
     "title": "Bitenler",
     "subtitle": "Bitti kolonuna giren kartlar tamamlanır ve board'dan kalkar; burada durur, istenirse yeniden açılır.",

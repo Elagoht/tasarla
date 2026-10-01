@@ -121,9 +121,26 @@
 .drawer__body { height: 100%; overflow-y: auto; }
 @keyframes drawer-in { from { transform: translateX(32px); opacity: 0; } }
 
+/* Lanes: the column heads once, then a row of cells per lane, scrolled together. */
+.columns--lanes { flex-direction: column; align-items: stretch; gap: var(--s3); min-height: 0; }
+.lanes__head, .lane__cells { display: flex; gap: var(--s4); align-items: flex-start; }
+.column--head { max-height: none; }
+.lane { min-width: max-content; }
+.lane__head {
+  position: sticky; left: 0; display: inline-flex; align-items: center; gap: var(--s2);
+  padding: var(--s1) var(--s2); cursor: pointer; font-weight: 700; color: var(--ink-soft);
+}
+.lane--former .lane__head { opacity: 0.6; font-style: italic; }
+.lane__cell {
+  flex: 0 0 300px; box-sizing: border-box; padding: var(--s2); border-radius: var(--r-lg);
+  background: var(--shelf); border: 1px solid var(--line); max-height: none;
+}
+.lane__cell[data-done] .card__title { color: var(--ink-soft); }
+
 @media (max-width: 900px) {
   .columns { padding-left: 0; }
   .column { flex-basis: min(300px, 82vw); }
+  .lane__cell { flex-basis: min(300px, 82vw); }
   .board-head { padding-right: var(--s4); }
 }
 

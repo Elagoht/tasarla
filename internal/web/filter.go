@@ -85,7 +85,10 @@ func (f boardFilter) Active() bool {
 }
 
 // ClearQuery is the query of the board with the filter cleared: the lane kept.
-func (f boardFilter) ClearQuery() string { return boardFilter{Lane: f.Lane}.Query() }
+func (f boardFilter) ClearQuery() string { return f.cleared().Query() }
+
+// cleared is the filter with only the lane left.
+func (f boardFilter) cleared() boardFilter { return boardFilter{Lane: f.Lane} }
 
 // Values is the filter as a canonical query: one filter, one URL.
 func (f boardFilter) Values() url.Values {
@@ -144,6 +147,16 @@ func (f boardFilter) HasAssignee(token string) bool {
 
 func (f boardFilter) HasLabel(id int64) bool   { return slices.Contains(f.Labels, id) }
 func (f boardFilter) HasPriority(p int16) bool { return slices.Contains(f.Priorities, p) }
+
+// clearQuery is the query of the bar's Clear link: the page's own settings
+// (Extra) and the filter cleared, the lane kept — ClearQuery with Extra.
+func clearQuery(v filterView) string {
+	q := v.Filter.cleared().Values()
+	for k, vals := range v.Extra {
+		q[k] = vals
+	}
+	return q.Encode()
+}
 
 // withQuery is path, with ?query when there is one.
 func withQuery(path, query string) string {

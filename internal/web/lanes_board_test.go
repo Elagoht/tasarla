@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"kanban/internal/store"
@@ -69,5 +70,33 @@ func TestLaneDropRefusalsAndBadValues(t *testing.T) {
 		if r := b.lead.SubmitFetch(page, page, laneForm(c, b.cols[0].ID, b.cols[0].ID, bad[0], bad[1], "")); r.Status != http.StatusBadRequest {
 			t.Errorf("lane %s=%s: %d, want 400", bad[0], bad[1], r.Status)
 		}
+	}
+}
+
+func TestBoardInLanes(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	member := b.h.user("member@example.com").ID
+	c := b.card(t, 0, "Member's")
+	if _, err := b.h.store.UpdateCardField(ctx, b.board.ID, c.ID, c.Version, store.FieldAssignee,
+		store.CardFields{AssigneeID: &member}, b.h.user("lead@example.com").ID); err != nil {
+		t.Fatal(err)
+	}
+	b.card(t, 1, "Nobody's")
+	page := b.member.Get(b.path + "?lane=assignee&q=member")
+	if page.Status != http.StatusOK {
+		t.Fatalf("lanes = %d", page.Status)
+	}
+	mustContain(t, page.Body,
+		`data-lane-key="assignee:none"`, `data-lane-key="assignee:`+id(member)+`"`,
+		`data-lane-value="`+id(member)+`"`, "Atanmamış", "Member",
+		`class="card card--dimmed"`, // "Nobody's" does not match q
+		`data-collage-fragment="`+b.path+`/columns?lane=assignee&amp;q=member"`,
+		`href="`+b.path+`?lane=assignee" data-filter-clear`)
+	if strings.Contains(b.member.Get(b.path+"?lane=priority").Body, `class="filter-count"`) {
+		t.Error("a lane alone shows the filter count")
+	}
+	if strings.Contains(b.member.Get(b.path+"?lane=bogus").Body, "data-lane-key") {
+		t.Error("an unknown lane splits the board")
 	}
 }
