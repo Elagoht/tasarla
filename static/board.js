@@ -14,13 +14,15 @@ function live() {
   return window.collageLive;
 }
 
-// setupSortables attaches a Sortable to every column list. The board is
-// morphed in place by collage-live, so lists that already have one are skipped.
+// setupSortables attaches a Sortable to every column list that has none. The
+// board is morphed in place by collage-live, which drops attributes the server
+// did not send, so the check asks Sortable itself rather than a data attribute;
+// otherwise every push would stack another instance, and one drop would post
+// one move per instance.
 function setupSortables() {
   if (!board || !window.Sortable) return;
   for (const list of board.querySelectorAll(".column__cards")) {
-    if (list.dataset.sortable) continue;
-    list.dataset.sortable = "1";
+    if (window.Sortable.get(list)) continue;
     window.Sortable.create(list, {
       group: "cards",
       animation: 120,
