@@ -16,6 +16,8 @@ var (
 	ErrLastAdmin = errors.New("store: the last active admin cannot be removed")
 	// ErrAmbiguousEmail reports that more than one active user has an email.
 	ErrAmbiguousEmail = errors.New("store: more than one active user has this email")
+	// ErrInUse refuses to delete something a rule still names.
+	ErrInUse = errors.New("store: still used by a rule")
 )
 
 // Store is the application's data access.

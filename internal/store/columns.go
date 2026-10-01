@@ -123,8 +123,20 @@ func (s *Store) DeleteColumn(ctx context.Context, boardID, columnID int64) error
 		return err
 	}
 	defer tx.Rollback(ctx)
-	if _, err := tx.Exec(ctx, `SELECT id FROM boards WHERE id = $1 FOR UPDATE`, boardID); err != nil {
+	if err := lockBoard(ctx, tx, boardID); err != nil {
 		return err
+	}
+	var owned, used bool
+	if err := tx.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM columns WHERE id = $1 AND board_id = $2),
+		       EXISTS (SELECT 1 FROM move_permissions WHERE from_column_id = $1)`, columnID, boardID).Scan(&owned, &used); err != nil {
+		return err
+	}
+	if !owned {
+		return ErrNotFound
+	}
+	if used {
+		return ErrInUse // dropping the permission would open the column to everyone
 	}
 	var cards int
 	if err := tx.QueryRow(ctx, `SELECT count(*) FROM cards WHERE column_id = $1`, columnID).Scan(&cards); err != nil {

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -201,8 +202,19 @@ func (s *Store) DeleteMovePermission(ctx context.Context, boardID, id int64) err
 	return exactlyOne(s.pool.Exec(ctx, `DELETE FROM move_permissions WHERE id = $2 AND board_id = $1`, boardID, id))
 }
 
-// AddCondition adds a condition to a column of boardID.
+// AddCondition adds a condition to a column of boardID. Labels it names must be
+// the board's.
 func (s *Store) AddCondition(ctx context.Context, boardID int64, c ColumnCondition) error {
+	if len(c.Params.LabelIDs) > 0 {
+		var n int
+		if err := s.pool.QueryRow(ctx, `SELECT count(DISTINCT id) FROM labels WHERE board_id = $1 AND id = ANY($2::bigint[])`,
+			boardID, c.Params.LabelIDs).Scan(&n); err != nil {
+			return err
+		}
+		if n != len(slices.Compact(slices.Sorted(slices.Values(c.Params.LabelIDs)))) {
+			return ErrNotFound
+		}
+	}
 	tag, err := s.pool.Exec(ctx, `
 		INSERT INTO column_conditions (column_id, phase, kind, params)
 		SELECT id, $3, $4, $5 FROM columns WHERE id = $2 AND board_id = $1`,
@@ -224,8 +236,16 @@ func (s *Store) CreateBoardRole(ctx context.Context, boardID int64, name string)
 	return r, err
 }
 
-// DeleteBoardRole removes a role and the permissions that name it.
+// DeleteBoardRole removes a role. A role a permission names is ErrInUse:
+// deleting it would drop the permission and, with it, the restriction.
 func (s *Store) DeleteBoardRole(ctx context.Context, boardID, id int64) error {
+	var used bool
+	if err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM move_permissions WHERE board_role_id = $1 AND board_id = $2)`, id, boardID).Scan(&used); err != nil {
+		return err
+	}
+	if used {
+		return ErrInUse
+	}
 	return exactlyOne(s.pool.Exec(ctx, `DELETE FROM board_roles WHERE id = $2 AND board_id = $1`, boardID, id))
 }
 

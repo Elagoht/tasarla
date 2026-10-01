@@ -43,7 +43,8 @@ func TestRulesConfiguration(t *testing.T) {
 	if err := f.s.AddMovePermission(ctx, f.board.ID, store.MovePermission{ToColumnID: f.cols[2].ID, Subject: rules.SubjectBoardRole, BoardRoleID: &qa.ID}); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.s.AddCondition(ctx, f.board.ID, store.ColumnCondition{ColumnID: f.cols[1].ID, Phase: rules.PhaseEnter, Kind: rules.HasLabel, Params: rules.ConditionParams{LabelIDs: []int64{1}}}); err != nil {
+	bug, _ := f.s.CreateLabel(ctx, f.board.ID, "bug", "#e03131")
+	if err := f.s.AddCondition(ctx, f.board.ID, store.ColumnCondition{ColumnID: f.cols[1].ID, Phase: rules.PhaseEnter, Kind: rules.HasLabel, Params: rules.ConditionParams{LabelIDs: []int64{bug.ID}}}); err != nil {
 		t.Fatal(err)
 	}
 	r, err := f.s.BoardRules(ctx, f.board.ID)
@@ -51,7 +52,7 @@ func TestRulesConfiguration(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(r.Transitions) != 1 || len(r.Roles) != 1 || len(r.Roles[0].MemberIDs) != 1 || len(r.Permissions) != 1 || len(r.Conditions) != 1 ||
-		r.Conditions[0].Params.LabelIDs[0] != 1 {
+		r.Conditions[0].Params.LabelIDs[0] != bug.ID {
 		t.Fatalf("rules = %+v", r)
 	}
 	board, _ := f.s.Board(ctx, f.board.ID)
