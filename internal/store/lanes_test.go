@@ -81,6 +81,31 @@ func TestLaneMoveRefusedChangesNothing(t *testing.T) {
 	}
 }
 
+// Both columns count the person's WIP: the lane drop itself checks it, since
+// Evaluate (which covers only a card coming from an uncounted column) does not.
+func TestLaneMoveBetweenCountedColumnsChecksPersonWIP(t *testing.T) {
+	f := newBoardFixture(t)
+	ctx := context.Background()
+	one := 1
+	if err := f.s.SetPersonWIP(ctx, f.board.ID, &one, []int64{f.cols[0].ID, f.cols[1].ID}); err != nil {
+		t.Fatal(err)
+	}
+	assign(t, f, f.card(t, 1, "Busy"), &f.member.ID)
+	c := f.card(t, 0, "A")
+	_, err := f.s.MoveCardWith(ctx, laneMove(f, c, 1, store.LaneTarget{Field: store.FieldAssignee, AssigneeID: &f.member.ID}))
+	var re *store.RuleError
+	if !errors.As(err, &re) || len(re.Violations) != 1 || re.Violations[0].Code != "rules.wip_person" {
+		t.Fatalf("err = %v, want one rules.wip_person", err)
+	}
+	now, err := f.s.Card(ctx, f.board.ID, c.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if now.ColumnID != c.ColumnID || now.AssigneeID != nil || now.Version != c.Version || now.Position != c.Position {
+		t.Errorf("refused move changed the card: %+v", now)
+	}
+}
+
 // Same column, another person's lane: no column rule runs, the person's WIP does.
 func TestLaneChangeInOneColumnChecksOnlyTheAssignment(t *testing.T) {
 	f := newBoardFixture(t)
