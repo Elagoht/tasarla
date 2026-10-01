@@ -94,7 +94,7 @@ func TestOutboxRetriesThenGivesUp(t *testing.T) {
 	down := errors.New("smtp down")
 	now := time.Now()
 	for i := 1; i <= 8; i++ {
-		sent, failed, err := f.s.ProcessOutbox(ctx, now, 20, func(store.OutboxMessage) error { return down })
+		sent, failed, err := f.s.ProcessOutbox(ctx, now, 20, func(store.OutboxMessage) error { return down }, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,7 +102,7 @@ func TestOutboxRetriesThenGivesUp(t *testing.T) {
 			t.Fatalf("attempt %d: sent %d failed %d", i, sent, failed)
 		}
 		// Not due again until the backoff has passed.
-		if s, f2, _ := f.s.ProcessOutbox(ctx, now, 20, func(store.OutboxMessage) error { return nil }); s+f2 != 0 {
+		if s, f2, _ := f.s.ProcessOutbox(ctx, now, 20, func(store.OutboxMessage) error { return nil }, nil); s+f2 != 0 {
 			t.Fatalf("attempt %d: retried before its time", i)
 		}
 		now = now.Add(7 * time.Hour)
@@ -120,12 +120,12 @@ func TestOutboxSendsWhenSMTPComesBack(t *testing.T) {
 	ctx := context.Background()
 	f.s.CreateNotification(ctx, store.NewNotification{UserID: f.member.ID, Kind: store.NotifyAssigned,
 		Email: &store.OutboxMessage{To: "member@example.com", Subject: "Hello", HTML: "h", Text: "t"}})
-	f.s.ProcessOutbox(ctx, time.Now(), 20, func(store.OutboxMessage) error { return errors.New("down") })
+	f.s.ProcessOutbox(ctx, time.Now(), 20, func(store.OutboxMessage) error { return errors.New("down") }, nil)
 	var got []store.OutboxMessage
 	sent, _, err := f.s.ProcessOutbox(ctx, time.Now().Add(time.Hour), 20, func(m store.OutboxMessage) error {
 		got = append(got, m)
 		return nil
-	})
+	}, nil)
 	if err != nil || sent != 1 || got[0].Subject != "Hello" || got[0].To != "member@example.com" {
 		t.Fatalf("sent %d, %v, %+v", sent, err, got)
 	}

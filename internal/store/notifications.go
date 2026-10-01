@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -177,45 +178,56 @@ func (s *Store) SetLocale(ctx context.Context, userID int64, locale string) erro
 // maxAttempts is how often an e-mail is tried before it is given up (spec §10).
 const maxAttempts = 8
 
-// ProcessOutbox sends up to limit e-mails that are due at now, one transaction
-// holding their rows (FOR UPDATE SKIP LOCKED) so that no other worker takes
-// them. A failure is retried later, 2^attempts minutes later and at most six
-// hours; after maxAttempts the e-mail is marked failed.
-func (s *Store) ProcessOutbox(ctx context.Context, now time.Time, limit int, send func(OutboxMessage) error) (sent, failed int, err error) {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return 0, 0, err
-	}
-	defer tx.Rollback(ctx)
-	rows, err := tx.Query(ctx, `
-		SELECT id, to_address, subject, html, text FROM email_outbox
-		WHERE status = 'pending' AND next_attempt_at <= $1
-		ORDER BY id LIMIT $2 FOR UPDATE SKIP LOCKED`, now, limit)
-	if err != nil {
-		return 0, 0, err
-	}
-	messages, err := pgx.CollectRows(rows, pgx.RowToStructByPos[OutboxMessage])
-	if err != nil {
-		return 0, 0, err
-	}
-	for _, m := range messages {
+// claimLease is how long a claimed e-mail is kept from other workers while it
+// is being sent; a worker that dies mid-send leaves it to be tried again after.
+const claimLease = 10 * time.Minute
+
+// ProcessOutbox sends up to limit e-mails due at now, one at a time: each is
+// claimed in a short transaction (FOR UPDATE SKIP LOCKED), sent with no lock
+// held, and its result recorded at once, even when ctx is cancelled, so a sent
+// e-mail is never sent again after a shutdown. A failure is retried 2^attempts
+// minutes later, at most six hours; after maxAttempts the e-mail is marked
+// failed and handed to gaveUp. No new e-mail is claimed once ctx is done.
+func (s *Store) ProcessOutbox(ctx context.Context, now time.Time, limit int, send func(OutboxMessage) error, gaveUp func(OutboxMessage, error)) (sent, failed int, err error) {
+	record := context.WithoutCancel(ctx)
+	for range limit {
+		if ctx.Err() != nil {
+			return sent, failed, ctx.Err()
+		}
+		var m OutboxMessage
+		var attempts int
+		err := s.pool.QueryRow(ctx, `
+			UPDATE email_outbox SET next_attempt_at = $2::timestamptz + $3::interval
+			WHERE id = (SELECT id FROM email_outbox WHERE status = 'pending' AND next_attempt_at <= $1
+			            ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED)
+			RETURNING id, to_address, subject, html, text, attempts`, now, now, claimLease).
+			Scan(&m.ID, &m.To, &m.Subject, &m.HTML, &m.Text, &attempts)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return sent, failed, nil
+		}
+		if err != nil {
+			return sent, failed, err
+		}
 		if sendErr := send(m); sendErr == nil {
-			if _, err := tx.Exec(ctx, `UPDATE email_outbox SET status = 'sent', attempts = attempts + 1, last_error = NULL WHERE id = $1`, m.ID); err != nil {
+			if _, err := s.pool.Exec(record, `UPDATE email_outbox SET status = 'sent', attempts = attempts + 1, last_error = NULL WHERE id = $1`, m.ID); err != nil {
 				return sent, failed, err
 			}
 			sent++
 		} else {
 			failed++
-			if _, err := tx.Exec(ctx, `
+			if _, err := s.pool.Exec(record, `
 				UPDATE email_outbox SET attempts = attempts + 1, last_error = $2,
 				       status = CASE WHEN attempts + 1 >= $3 THEN 'failed' ELSE 'pending' END,
 				       next_attempt_at = $4::timestamptz + least(power(2, attempts + 1) * interval '1 minute', interval '6 hours')
 				WHERE id = $1`, m.ID, sendErr.Error(), maxAttempts, now); err != nil {
 				return sent, failed, err
 			}
+			if attempts+1 >= maxAttempts && gaveUp != nil {
+				gaveUp(m, sendErr)
+			}
 		}
 	}
-	return sent, failed, tx.Commit(ctx)
+	return sent, failed, nil
 }
 
 // OutboxCount counts e-mails by status.
@@ -290,4 +302,15 @@ func (s *Store) NewlyUnblocked(ctx context.Context, blockerID int64) ([]Card, er
 	}
 	rows.Close()
 	return out, rows.Err()
+}
+
+// CanSeeBoard reports whether userID may see boardID: an admin, or a member of
+// the board's team.
+func (s *Store) CanSeeBoard(ctx context.Context, userID, boardID int64) (bool, error) {
+	var ok bool
+	err := s.pool.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM users WHERE id = $1 AND is_admin)
+		    OR EXISTS (SELECT 1 FROM boards b JOIN team_members m ON m.team_id = b.team_id
+		               WHERE b.id = $2 AND m.user_id = $1)`, userID, boardID).Scan(&ok)
+	return ok, err
 }
