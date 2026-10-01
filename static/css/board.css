@@ -130,6 +130,13 @@
   position: sticky; left: 0; display: inline-flex; align-items: center; gap: var(--s2);
   padding: var(--s1) var(--s2); cursor: pointer; font-weight: 700; color: var(--ink-soft);
 }
+.lane__head::before {
+  content: ""; width: 0.5rem; height: 0.5rem; flex: none;
+  border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint);
+  transform: rotate(-45deg); transition: transform 150ms var(--ease);
+}
+.lane[open] > .lane__head::before { transform: rotate(45deg); }
+@media (prefers-reduced-motion: reduce) { .lane__head::before { transition: none; } }
 .lane--former .lane__head { opacity: 0.6; font-style: italic; }
 .lane__cell {
   flex: 0 0 300px; box-sizing: border-box; padding: var(--s2); border-radius: var(--r-lg);
