@@ -67,9 +67,9 @@
   --shelf-strong: #e9e4d9;
   --line: #ebe6db;
   --line-strong: #ddd5c6;
-  --shadow-paper: 0 1px 0 #e6e0d3, 0 1px 2px rgb(60 40 10 / 0.04);
-  --shadow-lift: 0 2px 4px rgb(60 40 10 / 0.06), 0 10px 24px rgb(60 40 10 / 0.08);
-  --shadow-float: 0 12px 40px rgb(60 40 10 / 0.18), 0 2px 6px rgb(60 40 10 / 0.08);
+  --shadow-paper: 0 0.0625rem 0 #e6e0d3, 0 0.0625rem 0.125rem rgb(60 40 10 / 0.04);
+  --shadow-lift: 0 0.125rem 0.25rem rgb(60 40 10 / 0.06), 0 0.625rem 1.5rem rgb(60 40 10 / 0.08);
+  --shadow-float: 0 0.75rem 2.5rem rgb(60 40 10 / 0.18), 0 0.125rem 0.375rem rgb(60 40 10 / 0.08);
 
   /* Ink */
   --ink: #2a2620;
@@ -97,30 +97,30 @@
   --font-body: "Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Bricolage Grotesque", var(--font-body);
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
-  --text-xs: 0.75rem;   /* 12 */
-  --text-sm: 0.8125rem; /* 13 */
-  --text-md: 0.9375rem; /* 15 */
-  --text-lg: 1.125rem;  /* 18 */
-  --text-xl: 1.5rem;    /* 24 */
-  --text-2xl: 2rem;     /* 32 */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
 
   /* Space */
-  --s1: 4px;
-  --s2: 8px;
-  --s3: 12px;
-  --s4: 16px;
-  --s5: 24px;
-  --s6: 32px;
-  --s7: 48px;
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2rem;
+  --s7: 3rem;
 
   /* Shape */
-  --r-sm: 8px;
-  --r-md: 10px;
-  --r-lg: 14px;
-  --r-pill: 999px;
+  --r-sm: 0.5rem;
+  --r-md: 0.625rem;
+  --r-lg: 0.875rem;
+  --r-pill: 100rem;
 
-  --sidebar: 248px;
-  --drawer: min(560px, 100vw);
+  --sidebar: 15.5rem;
+  --drawer: min(35rem, 100vw);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -133,9 +133,9 @@
     --shelf-strong: #2a2621;
     --line: #39342d;
     --line-strong: #4a443b;
-    --shadow-paper: 0 1px 0 rgb(0 0 0 / 0.35);
-    --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.35), 0 10px 24px rgb(0 0 0 / 0.3);
-    --shadow-float: 0 16px 48px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.4);
+    --shadow-paper: 0 0.0625rem 0 rgb(0 0 0 / 0.35);
+    --shadow-lift: 0 0.125rem 0.375rem rgb(0 0 0 / 0.35), 0 0.625rem 1.5rem rgb(0 0 0 / 0.3);
+    --shadow-float: 0 1rem 3rem rgb(0 0 0 / 0.5), 0 0.125rem 0.6rem rgb(0 0 0 / 0.4);
     --ink: #eee9df;
     --ink-soft: #cfc6b6;
     --ink-muted: #a89e8e;
