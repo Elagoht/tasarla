@@ -149,11 +149,11 @@ func TestAssignedTo(t *testing.T) {
 	b := f.card(t, 1, "B")
 	f.card(t, 0, "C")
 	for _, c := range []store.Card{a, b} {
-		if _, err := f.s.UpdateCard(ctx, f.board.ID, c.ID, c.Version, store.CardFields{Title: c.Title, AssigneeID: &f.member.ID}); err != nil {
+		if _, err := f.s.UpdateCard(ctx, f.board.ID, c.ID, c.Version, store.CardFields{Title: c.Title, AssigneeID: &f.member.ID}, 0); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if err := f.s.ArchiveCard(ctx, f.board.ID, b.ID); err != nil {
+	if err := f.s.ArchiveCard(ctx, f.board.ID, b.ID, 0); err != nil {
 		t.Fatal(err)
 	}
 	tasks, err := f.s.AssignedTo(ctx, f.member.ID)

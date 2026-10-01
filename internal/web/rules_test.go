@@ -65,7 +65,7 @@ func TestAssigningOverPersonalWIPIsRefused(t *testing.T) {
 	b.h.store.UpdateColumn(ctx, b.board.ID, b.cols[0].ID, store.ColumnUpdate{Name: "Todo", AllowCreate: true, CountsPersonWIP: true})
 	memberID := b.h.user("member@example.com").ID
 	first, second := b.card(t, 0, "First"), b.card(t, 0, "Second")
-	if _, err := b.h.store.UpdateCard(ctx, b.board.ID, first.ID, first.Version, store.CardFields{Title: "First", AssigneeID: &memberID}); err != nil {
+	if _, err := b.h.store.UpdateCard(ctx, b.board.ID, first.ID, first.Version, store.CardFields{Title: "First", AssigneeID: &memberID}, 0); err != nil {
 		t.Fatal(err)
 	}
 	res := b.member.SubmitFetch(b.cardPath(second), b.cardPath(second), updateForm(second, map[string]string{"assignee_id": id(memberID)}))

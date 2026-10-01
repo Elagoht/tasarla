@@ -130,7 +130,7 @@ func TestUpdateCard(t *testing.T) {
 	due := time.Date(2026, 10, 15, 0, 0, 0, 0, time.UTC)
 	prio := int16(2)
 	fields := store.CardFields{Title: "A2", Description: "body", AssigneeID: &f.member.ID, Estimate: &est, DueDate: &due, Priority: &prio}
-	got, err := f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, fields)
+	got, err := f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, fields, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,10 +138,10 @@ func TestUpdateCard(t *testing.T) {
 		!got.DueDate.Equal(due) || *got.Priority != 2 || got.Version != a.Version+1 {
 		t.Errorf("updated = %+v", got)
 	}
-	if _, err := f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, fields); !errors.Is(err, store.ErrConflict) {
+	if _, err := f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, fields, 0); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("stale update: %v", err)
 	}
-	if _, err := f.s.UpdateCard(ctx, f.board.ID, 99999, 1, fields); !errors.Is(err, store.ErrNotFound) {
+	if _, err := f.s.UpdateCard(ctx, f.board.ID, 99999, 1, fields, 0); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("unknown card: %v", err)
 	}
 }
@@ -152,7 +152,7 @@ func TestArchiveCardClosesTheGap(t *testing.T) {
 	f.card(t, 0, "A")
 	b := f.card(t, 0, "B")
 	f.card(t, 0, "C")
-	if err := f.s.ArchiveCard(ctx, f.board.ID, b.ID); err != nil {
+	if err := f.s.ArchiveCard(ctx, f.board.ID, b.ID, 0); err != nil {
 		t.Fatal(err)
 	}
 	if got := f.order(t, 0); got != "A,C" {
@@ -171,7 +171,7 @@ func TestBoardCardsCarriesWhatTheBoardShows(t *testing.T) {
 	f := newBoardFixture(t)
 	ctx := context.Background()
 	a := f.card(t, 0, "A")
-	a, _ = f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A", AssigneeID: &f.member.ID})
+	a, _ = f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A", AssigneeID: &f.member.ID}, 0)
 	view, err := f.s.BoardCards(ctx, f.board.ID)
 	if err != nil || len(view) != 1 {
 		t.Fatalf("BoardCards = %v, %v", view, err)

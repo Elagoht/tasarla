@@ -109,7 +109,7 @@ func TestMovesObeyTheRules(t *testing.T) {
 		t.Fatal("a refused move changed the card")
 	}
 	est := 1.0
-	a, _ = f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A", Estimate: &est})
+	a, _ = f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A", Estimate: &est}, 0)
 	lead := rules.Actor{UserID: f.lead.ID, TeamRole: rules.RoleLead}
 	if _, err := f.s.MoveCard(ctx, store.Move{BoardID: f.board.ID, CardID: a.ID, ToColumnID: f.cols[1].ID, ExpectedFrom: f.cols[0].ID, ExpectedVersion: a.Version, Actor: lead}); err != nil {
 		t.Fatalf("an allowed move: %v", err)
@@ -165,7 +165,7 @@ func TestCreateAndAssignObeyTheRules(t *testing.T) {
 	if err := f.s.SetBoardPolicy(ctx, f.board.ID, rules.ModeOpen, &limit); err != nil {
 		t.Fatal(err)
 	}
-	a, err = f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A", AssigneeID: &f.member.ID})
+	a, err = f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A", AssigneeID: &f.member.ID}, 0)
 	if err != nil {
 		t.Fatalf("first assignment: %v", err)
 	}
@@ -173,12 +173,12 @@ func TestCreateAndAssignObeyTheRules(t *testing.T) {
 	limit2 := 5
 	f.s.UpdateColumn(ctx, f.board.ID, f.cols[0].ID, store.ColumnUpdate{Name: "Todo", WIPLimit: &limit2, AllowCreate: true, CountsPersonWIP: true})
 	b := f.card(t, 0, "B")
-	_, err = f.s.UpdateCard(ctx, f.board.ID, b.ID, b.Version, store.CardFields{Title: "B", AssigneeID: &f.member.ID})
+	_, err = f.s.UpdateCard(ctx, f.board.ID, b.ID, b.Version, store.CardFields{Title: "B", AssigneeID: &f.member.ID}, 0)
 	if got := violations(t, err); len(got) != 1 || got[0] != "rules.wip_person" {
 		t.Fatalf("second assignment: %v", got)
 	}
 	// Editing the first card again, same assignee, is not a new assignment.
-	if _, err := f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A again", AssigneeID: &f.member.ID}); err != nil {
+	if _, err := f.s.UpdateCard(ctx, f.board.ID, a.ID, a.Version, store.CardFields{Title: "A again", AssigneeID: &f.member.ID}, 0); err != nil {
 		t.Fatalf("re-saving the same assignee: %v", err)
 	}
 }

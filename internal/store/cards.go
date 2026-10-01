@@ -71,13 +71,17 @@ func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, title s
 	if err := ruleError(rules.EvaluateCreate(columnID, snap)); err != nil {
 		return Card{}, err
 	}
-	return scanCard(tx.QueryRow(ctx, `
+	card, err := scanCard(tx.QueryRow(ctx, `
 		INSERT INTO cards (board_id, column_id, position, title, created_by)
 		SELECT $1, c.id,
 		       (SELECT count(*) FROM cards WHERE column_id = c.id AND archived_at IS NULL),
 		       $3, $4
 		FROM columns c WHERE c.id = $2 AND c.board_id = $1
 		RETURNING `+cardColumns, boardID, columnID, title, createdBy))
+	if err != nil {
+		return Card{}, err
+	}
+	return card, logActivity(ctx, tx, boardID, &card.ID, createdBy, ActivityCardCreated, ActivityPayload{Title: title})
 }
 
 // lockBoard serialises the moves and creations of one board (spec §5.3).
@@ -108,7 +112,7 @@ type CardFields struct {
 
 // UpdateCard changes a card's fields if it is still at expectedVersion. Giving
 // the card to someone new checks their WIP (spec §5.2).
-func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedVersion int, f CardFields) (Card, error) {
+func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedVersion int, f CardFields, actorID int64) (Card, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return Card{}, err
@@ -138,6 +142,7 @@ func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedV
 			return Card{}, err
 		}
 	}
+	before := card
 	card, err = scanCard(tx.QueryRow(ctx, `
 		UPDATE cards SET title = $3, description = $4, assignee_id = $5, estimate = $6,
 		       due_date = $7, priority = $8, version = version + 1
@@ -147,11 +152,41 @@ func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedV
 	if err != nil {
 		return Card{}, err
 	}
+	if changed := changedFields(before, card); len(changed) > 0 {
+		if err := logActivity(ctx, tx, boardID, &card.ID, actorID, ActivityCardUpdated, ActivityPayload{Fields: changed}); err != nil {
+			return Card{}, err
+		}
+	}
 	return card, tx.Commit(ctx)
 }
 
+// changedFields names the fields that differ between two versions of a card.
+func changedFields(a, b Card) []string {
+	var out []string
+	add := func(name string, differ bool) {
+		if differ {
+			out = append(out, name)
+		}
+	}
+	add("title", a.Title != b.Title)
+	add("description", a.Description != b.Description)
+	add("assignee", !samePtr(a.AssigneeID, b.AssigneeID))
+	add("estimate", !samePtr(a.Estimate, b.Estimate))
+	add("due_date", !sameDate(a.DueDate, b.DueDate))
+	add("priority", !samePtr(a.Priority, b.Priority))
+	return out
+}
+
+func samePtr[T comparable](a, b *T) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
+}
+
+func sameDate(a, b *time.Time) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && a.Equal(*b))
+}
+
 // ArchiveCard takes a card off the board.
-func (s *Store) ArchiveCard(ctx context.Context, boardID, cardID int64) error {
+func (s *Store) ArchiveCard(ctx context.Context, boardID, cardID, actorID int64) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -172,6 +207,9 @@ func (s *Store) ArchiveCard(ctx context.Context, boardID, cardID int64) error {
 		return err
 	}
 	if err := renumberCards(ctx, tx, column); err != nil {
+		return err
+	}
+	if err := logActivity(ctx, tx, boardID, &cardID, actorID, ActivityCardArchived, ActivityPayload{}); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)

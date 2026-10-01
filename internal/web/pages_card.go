@@ -228,7 +228,7 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		}
 		return h.cardChanged(rc, cc, err)
 	case "archive":
-		if err := h.store.ArchiveCard(ctx, cc.Board.ID, cc.Card.ID); err != nil {
+		if err := h.store.ArchiveCard(ctx, cc.Board.ID, cc.Card.ID, cc.User.ID); err != nil {
 			return nil, err
 		}
 		flash.Add(rc, flash.Success, i18n.T(rc, "card.archived"))
@@ -347,7 +347,7 @@ func (h *handlers) updateCard(ctx context.Context, rc *collage.RenderContext, v 
 		prio := int16(n)
 		fields.Priority = &prio
 	}
-	_, err = h.store.UpdateCard(ctx, cc.Board.ID, cc.Card.ID, int(version), fields)
+	_, err = h.store.UpdateCard(ctx, cc.Board.ID, cc.Card.ID, int(version), fields, cc.User.ID)
 	if msgs := violationMessages(rc, err); msgs != nil {
 		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, msgs...)
 	}

@@ -70,6 +70,12 @@ func moveCard(ctx context.Context, tx pgx.Tx, m Move) (Card, error) {
 		if err := ruleError(rules.Evaluate(actor, move, snap)); err != nil {
 			return Card{}, err
 		}
+		moved, err := placeCard(ctx, tx, card, m.ToColumnID, m.ToIndex)
+		if err != nil {
+			return Card{}, err
+		}
+		p := ActivityPayload{From: snap.Columns[card.ColumnID].Name, To: snap.Columns[m.ToColumnID].Name}
+		return moved, logActivity(ctx, tx, m.BoardID, &card.ID, m.Actor.UserID, ActivityCardMoved, p)
 	}
 	return placeCard(ctx, tx, card, m.ToColumnID, m.ToIndex)
 }
