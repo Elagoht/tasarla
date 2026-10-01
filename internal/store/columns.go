@@ -161,3 +161,109 @@ func renumberColumns(ctx context.Context, tx pgx.Tx, boardID int64) error {
 		WHERE c.id = r.id`, boardID)
 	return err
 }
+
+// ColumnRow is one row of the settings' column table, in its new order.
+// ID 0 is a new column.
+type ColumnRow struct {
+	ID              int64
+	Name            string
+	WIPLimit        *int
+	IsDone          bool
+	AllowCreate     bool
+	CountsPersonWIP bool
+	Delete          bool
+}
+
+// ColumnRowError is why one row could not be saved; Index -1 is about the
+// table as a whole.
+type ColumnRowError struct {
+	Index int
+	Err   error
+}
+
+// ColumnsError refuses a whole column table; nothing of it was saved.
+type ColumnsError struct {
+	Rows []ColumnRowError
+}
+
+func (e *ColumnsError) Error() string { return "store: the columns could not be saved" }
+
+// SaveColumns applies a whole column table in one transaction under the
+// board's lock: order, names, settings, new columns and deleted ones. A row
+// that cannot be applied refuses the whole table, every such row named.
+func (s *Store) SaveColumns(ctx context.Context, boardID int64, rows []ColumnRow) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return err
+	}
+	var problems []ColumnRowError
+	kept := 0
+	for i, r := range rows {
+		if r.ID != 0 {
+			var owned bool
+			if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM columns WHERE id = $1 AND board_id = $2)`, r.ID, boardID).Scan(&owned); err != nil {
+				return err
+			}
+			if !owned {
+				return ErrNotFound
+			}
+		}
+		if !r.Delete {
+			kept++
+			continue
+		}
+		if r.ID == 0 {
+			continue
+		}
+		var cards int
+		var used bool
+		if err := tx.QueryRow(ctx, `
+			SELECT (SELECT count(*) FROM cards WHERE column_id = $1),
+			       EXISTS (SELECT 1 FROM move_permissions WHERE from_column_id = $1)`, r.ID).Scan(&cards, &used); err != nil {
+			return err
+		}
+		switch {
+		case cards > 0:
+			problems = append(problems, ColumnRowError{Index: i, Err: ErrColumnNotEmpty})
+		case used:
+			problems = append(problems, ColumnRowError{Index: i, Err: ErrInUse})
+		}
+	}
+	if kept == 0 {
+		problems = append(problems, ColumnRowError{Index: -1, Err: ErrInUse})
+	}
+	if len(problems) > 0 {
+		return &ColumnsError{Rows: problems}
+	}
+	position := 0
+	for _, r := range rows {
+		switch {
+		case r.Delete && r.ID != 0:
+			if _, err := tx.Exec(ctx, `DELETE FROM columns WHERE id = $1 AND board_id = $2`, r.ID, boardID); err != nil {
+				return err
+			}
+		case r.Delete:
+		case r.ID == 0:
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO columns (board_id, name, position, wip_limit, is_done, allow_create, counts_person_wip)
+				VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+				boardID, r.Name, position, r.WIPLimit, r.IsDone, r.AllowCreate, r.CountsPersonWIP); err != nil {
+				return err
+			}
+			position++
+		default:
+			if _, err := tx.Exec(ctx, `
+				UPDATE columns SET name = $3, position = $4, wip_limit = $5, is_done = $6, allow_create = $7, counts_person_wip = $8
+				WHERE id = $1 AND board_id = $2`,
+				r.ID, boardID, r.Name, position, r.WIPLimit, r.IsDone, r.AllowCreate, r.CountsPersonWIP); err != nil {
+				return err
+			}
+			position++
+		}
+	}
+	return tx.Commit(ctx)
+}

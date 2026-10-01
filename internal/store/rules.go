@@ -229,6 +229,11 @@ func (s *Store) DeleteCondition(ctx context.Context, boardID, id int64) error {
 		WHERE k.id = $2 AND c.id = k.column_id AND c.board_id = $1`, boardID, id))
 }
 
+// RenameBoardRole renames a role of boardID.
+func (s *Store) RenameBoardRole(ctx context.Context, boardID, roleID int64, name string) error {
+	return exactlyOne(s.pool.Exec(ctx, `UPDATE board_roles SET name = $3 WHERE id = $2 AND board_id = $1`, boardID, roleID, name))
+}
+
 // CreateBoardRole adds a role with no members.
 func (s *Store) CreateBoardRole(ctx context.Context, boardID int64, name string) (BoardRole, error) {
 	r := BoardRole{BoardID: boardID, Name: name}

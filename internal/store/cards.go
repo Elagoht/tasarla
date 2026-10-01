@@ -113,6 +113,57 @@ type CardFields struct {
 // UpdateCard changes a card's fields if it is still at expectedVersion. Giving
 // the card to someone new checks their WIP (spec §5.2).
 func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedVersion int, f CardFields, actorID int64) (Card, error) {
+	return s.updateCard(ctx, boardID, cardID, expectedVersion, func(Card) CardFields { return f }, actorID)
+}
+
+// CardField names one field of a card that can be saved on its own.
+type CardField string
+
+const (
+	FieldTitle       CardField = "title"
+	FieldDescription CardField = "description"
+	FieldAssignee    CardField = "assignee"
+	FieldDueDate     CardField = "due_date"
+	FieldPriority    CardField = "priority"
+	FieldEstimate    CardField = "estimate"
+)
+
+// ErrUnknownField refuses a field UpdateCardField does not save.
+var ErrUnknownField = errors.New("store: unknown card field")
+
+// UpdateCardField saves one field of a card, taking it from f; every other
+// field keeps the card's current value, so a save cannot overwrite what
+// someone else changed meanwhile in another field.
+func (s *Store) UpdateCardField(ctx context.Context, boardID, cardID int64, expectedVersion int, field CardField, f CardFields, actorID int64) (Card, error) {
+	switch field {
+	case FieldTitle, FieldDescription, FieldAssignee, FieldDueDate, FieldPriority, FieldEstimate:
+	default:
+		return Card{}, ErrUnknownField
+	}
+	return s.updateCard(ctx, boardID, cardID, expectedVersion, func(c Card) CardFields {
+		cur := CardFields{Title: c.Title, Description: c.Description, AssigneeID: c.AssigneeID,
+			Estimate: c.Estimate, DueDate: c.DueDate, Priority: c.Priority}
+		switch field {
+		case FieldTitle:
+			cur.Title = f.Title
+		case FieldDescription:
+			cur.Description = f.Description
+		case FieldAssignee:
+			cur.AssigneeID = f.AssigneeID
+		case FieldDueDate:
+			cur.DueDate = f.DueDate
+		case FieldPriority:
+			cur.Priority = f.Priority
+		case FieldEstimate:
+			cur.Estimate = f.Estimate
+		}
+		return cur
+	}, actorID)
+}
+
+// updateCard writes the fields fieldsFor derives from the card as it stands,
+// under the board's lock.
+func (s *Store) updateCard(ctx context.Context, boardID, cardID int64, expectedVersion int, fieldsFor func(Card) CardFields, actorID int64) (Card, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return Card{}, err
@@ -129,6 +180,7 @@ func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedV
 	if card.Version != expectedVersion {
 		return Card{}, ErrConflict
 	}
+	f := fieldsFor(card)
 	if f.AssigneeID != nil && (card.AssigneeID == nil || *card.AssigneeID != *f.AssigneeID) && card.ArchivedAt == nil {
 		snap, err := loadSnapshot(ctx, tx, boardID, card)
 		if err != nil {
