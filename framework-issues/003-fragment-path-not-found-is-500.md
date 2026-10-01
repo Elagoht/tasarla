@@ -1,5 +1,9 @@
 # 003 — A fragment path answers 500 when its required fragment reports `ErrNotFound`
 
+> **Resolved in collage v0.39.2** (2026-10-01): "A fragment path answers 404 when its
+> required fragment is not found." The app is on v0.39.2;
+> `TestOutsidersGetNotFoundForBoardsAndCards` now expects 404 from the fragment paths.
+
 - **Type:** bug (a documented guarantee does not hold)
 - **Packages:** `github.com/Elagoht/collage` v0.39.0
 - **Found while:** Kanban phase 2. `/boards/{id}/columns` and `/boards/{id}/cards/{card}/panel` must answer 404 to a reader outside the board's team (spec §6), as the pages themselves do.

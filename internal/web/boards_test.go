@@ -108,12 +108,12 @@ func TestOutsidersGetNotFoundForBoardsAndCards(t *testing.T) {
 			t.Errorf("GET %s = %d, want 404", p, res.Status)
 		}
 	}
-	// Fragment paths answer 500, not 404, for a missing board or card:
-	// framework-issues/003. They must still send nothing of the board.
-	for _, p := range []string{b.path + "/columns", b.cardPath(c) + "/panel"} {
+	// A board's fragment paths answer 404 as its pages do (framework-issues/003,
+	// fixed in collage v0.39.2), and send nothing of the board.
+	for _, p := range []string{b.path + "/columns", b.cardPath(c) + "/panel", b.path + "/gantt/chart", "/boards/99999/columns"} {
 		res := out.Get(p)
-		if res.Status == http.StatusOK || strings.Contains(res.Body, "Secret") {
-			t.Errorf("GET %s = %d and leaks the card:\n%s", p, res.Status, res.Body)
+		if res.Status != http.StatusNotFound || strings.Contains(res.Body, "Secret") {
+			t.Errorf("GET %s = %d, want 404 with nothing of the card:\n%s", p, res.Status, res.Body)
 		}
 	}
 	res := out.Submit("/", b.path, url.Values{"op": {"create_card"}, "title": {"x"}})
