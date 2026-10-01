@@ -256,7 +256,7 @@ func (s *Store) DueCandidates(ctx context.Context, now time.Time) ([]DueCandidat
 		FROM cards k
 		JOIN columns c ON c.id = k.column_id
 		JOIN boards b ON b.id = k.board_id
-		WHERE k.archived_at IS NULL AND b.archived_at IS NULL AND NOT c.is_done
+		WHERE k.archived_at IS NULL AND b.archived_at IS NULL AND k.completed_at IS NULL
 		  AND k.assignee_id IS NOT NULL AND k.due_date IS NOT NULL AND k.due_date <= $2::date
 		ORDER BY k.id`, today, tomorrow)
 	if err != nil {
@@ -268,7 +268,7 @@ func (s *Store) DueCandidates(ctx context.Context, now time.Time) ([]DueCandidat
 		var d DueCandidate
 		c := &d.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
 			&d.BoardName, &d.Kind); err != nil {
 			return nil, err
 		}
@@ -283,10 +283,10 @@ func (s *Store) NewlyUnblocked(ctx context.Context, blockerID int64) ([]Card, er
 	rows, err := s.pool.Query(ctx, `
 		SELECT `+prefixed("k", cardColumns)+` FROM card_dependencies d
 		JOIN cards k ON k.id = d.blocked_id
-		WHERE d.blocker_id = $1 AND k.archived_at IS NULL
+		WHERE d.blocker_id = $1 AND k.archived_at IS NULL AND k.completed_at IS NULL
 		  AND NOT EXISTS (
-		      SELECT 1 FROM card_dependencies o JOIN cards b ON b.id = o.blocker_id JOIN columns bc ON bc.id = b.column_id
-		      WHERE o.blocked_id = k.id AND b.archived_at IS NULL AND NOT bc.is_done)
+		      SELECT 1 FROM card_dependencies o JOIN cards b ON b.id = o.blocker_id
+		      WHERE o.blocked_id = k.id AND b.archived_at IS NULL AND b.completed_at IS NULL)
 		ORDER BY k.id`, blockerID)
 	if err != nil {
 		return nil, err

@@ -13,6 +13,8 @@ const (
 	ActivityCardMoved         = "card_moved"
 	ActivityCardUpdated       = "card_updated"
 	ActivityCardArchived      = "card_archived"
+	ActivityCardCompleted     = "card_completed"
+	ActivityCardReopened      = "card_reopened"
 	ActivityLabelsChanged     = "labels_changed"
 	ActivityChecklistAdded    = "checklist_added"
 	ActivityChecklistChecked  = "checklist_checked"

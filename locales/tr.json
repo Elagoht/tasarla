@@ -108,12 +108,7 @@
     "open_card": "Kartı aç",
     "no_cards": "Kart yok",
     "wip_limit": "Kart sayısı / WIP limiti",
-    "dismiss": "Kapat",
-    "hide_done": "Bitenleri gizle",
-    "hidden_count": {
-      "one": "{count} bitmiş kart gizli",
-      "other": "{count} bitmiş kart gizli"
-    }
+    "dismiss": "Kapat"
   },
   "card": {
     "title": "Başlık",
@@ -280,7 +275,7 @@
     "unsaved": "Kaydedilmemiş değişiklikler var",
     "save_columns": "Kolonları kaydet",
     "new_row": "Yeni kolon adı",
-    "columns_hint": "Değişiklikler \"Kolonları kaydet\" ile birlikte uygulanır. Kartı olan bir kolon silinemez.",
+    "columns_hint": "Değişiklikler \"Kolonları kaydet\" ile birlikte uygulanır. Bitti kolonuna giren kart tamamlanır ve Bitenler sayfasına geçer. Kartı olan bir kolon silinemez.",
     "column_one_left": "En az bir kolon kalmalı.",
     "role_rename": "Yeniden adlandır",
     "role_members_hint": "Bu rolü taşıyan takım üyeleri",
@@ -423,7 +418,9 @@
     },
     "card_updated_short": "{actor} kartı düzenledi",
     "none": "—",
-    "card_restored": "{actor} kartı arşivden geri yükledi"
+    "card_restored": "{actor} kartı arşivden geri yükledi",
+    "card_completed": "{actor} kartı tamamladı ({to})",
+    "card_reopened": "{actor} kartı yeniden açtı ({to} kolonuna)"
   },
   "notify": {
     "assigned": "{actor} sizi bir karta atadı: {card}",
@@ -495,5 +492,20 @@
     "from_column": "{column} kolonundan",
     "boards": "Arşivlenmiş board'lar",
     "see_all": "Arşive git"
+  },
+  "done": {
+    "title": "Bitenler",
+    "subtitle": "Bitti kolonuna giren kartlar tamamlanır ve board'dan kalkar; burada durur, istenirse yeniden açılır.",
+    "search": "Bitenlerde ara",
+    "empty": "Henüz biten kart yok.",
+    "no_results": "Aramaya uyan kart yok.",
+    "completed": "Tamamlandı",
+    "completed_by": "{name} tamamladı",
+    "reopen": "Yeniden aç",
+    "reopen_into": "Yeniden açılacağı kolon",
+    "reopened": "Kart yeniden açıldı.",
+    "see_all": "Bitenlere git",
+    "drop_here": "Buraya bırakılan kart tamamlanır",
+    "option": "{name} (tamamlar)"
   }
 }

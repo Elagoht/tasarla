@@ -91,15 +91,24 @@
 .add-card__form { display: grid; gap: var(--s2); }
 .add-card__title { min-height: 64px; resize: none; font-weight: 700; }
 
-/* "Hide done": a done column keeps its place, and stays a place to drop a
-   card, but shows only how many it holds. */
-.column__hidden { display: none; align-items: center; gap: 6px; padding: var(--s2) var(--s1) 0; color: var(--ink-muted); font-size: var(--text-sm); font-weight: 700; }
-.column__hidden .icon { color: var(--ok); }
-#board[data-hide-done] .column[data-done] { flex-basis: 220px; }
-#board[data-hide-done] .column[data-done] .column__hidden { display: flex; }
-#board[data-hide-done] .column[data-done] .column__cards > .card { display: none; }
-#board[data-hide-done] .column[data-done] .column__cards::before { content: none; }
-.hide-done[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-strong); }
+/* Completing: a ring draws round a tick over the card, then it folds away. */
+.card--completing { overflow: hidden; border-color: var(--ok); }
+.card--completing > :not(.complete-burst) { opacity: 0.25; transition: opacity 200ms var(--ease); }
+.complete-burst { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.complete-burst svg { width: 44px; height: 44px; fill: none; stroke: var(--ok); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; animation: burst-pop 320ms 380ms var(--ease) both; }
+.complete-burst__ring { stroke-dasharray: 139; stroke-dashoffset: 139; transform: rotate(-90deg); transform-origin: center; animation: burst-ring 420ms var(--ease) forwards; }
+.complete-burst__tick { stroke-dasharray: 34; stroke-dashoffset: 34; animation: burst-tick 260ms 360ms var(--ease) forwards; }
+@keyframes burst-ring { to { stroke-dashoffset: 0; } }
+@keyframes burst-tick { to { stroke-dashoffset: 0; } }
+@keyframes burst-pop { 50% { transform: scale(1.15); } }
+.card--leaving {
+  transition: height 340ms var(--ease), opacity 280ms var(--ease), transform 340ms var(--ease), padding 340ms var(--ease), margin 340ms var(--ease);
+  height: 0 !important; padding-top: 0; padding-bottom: 0; opacity: 0; transform: scale(0.92); border-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .complete-burst__ring, .complete-burst__tick { stroke-dashoffset: 0; animation: none; }
+  .complete-burst svg { animation: none; }
+}
 
 /* The card drawer: a sheet sliding in from the right of the board. */
 .drawer {

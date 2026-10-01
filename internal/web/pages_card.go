@@ -89,6 +89,12 @@ type panelView struct {
 	ChecklistDone int
 	// OpenBlockers counts the blocking cards not done yet.
 	OpenBlockers int
+	// Completed: the card is done and off the board; it is reopened into one
+	// of OpenColumns, ReopenTo first.
+	Completed     bool
+	CompletedWhen string
+	OpenColumns   []store.Column
+	ReopenTo      int64
 }
 
 // fieldState is what the panel shows beside one field: the notices about it
@@ -213,6 +219,11 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 		if c.ID == card.ColumnID {
 			v.Column = c
 		}
+	}
+	v.OpenColumns = openColumns(v.Columns)
+	if card.CompletedAt != nil {
+		v.Completed, v.ReopenTo = true, reopenColumn(card, v.OpenColumns)
+		v.CompletedWhen = card.CompletedAt.Local().Format("2006-01-02 15:04")
 	}
 	if v.Members, err = h.store.Members(ctx, cc.Team.ID); err != nil {
 		return v, tags, err

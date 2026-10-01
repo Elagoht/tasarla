@@ -108,12 +108,7 @@
     "open_card": "Open card",
     "no_cards": "No cards",
     "wip_limit": "Cards / WIP limit",
-    "dismiss": "Dismiss",
-    "hide_done": "Hide done",
-    "hidden_count": {
-      "one": "{count} done card hidden",
-      "other": "{count} done cards hidden"
-    }
+    "dismiss": "Dismiss"
   },
   "card": {
     "title": "Title",
@@ -280,7 +275,7 @@
     "unsaved": "There are unsaved changes",
     "save_columns": "Save columns",
     "new_row": "New column name",
-    "columns_hint": "Changes apply together with \"Save columns\". A column with cards cannot be deleted.",
+    "columns_hint": "Changes apply together with \"Save columns\". A card entering a done column is completed and moves to the Done page. A column holding cards cannot be deleted.",
     "column_one_left": "At least one column must remain.",
     "role_rename": "Rename",
     "role_members_hint": "Team members holding this role",
@@ -423,7 +418,9 @@
     },
     "card_updated_short": "{actor} edited the card",
     "none": "—",
-    "card_restored": "{actor} restored the card from the archive"
+    "card_restored": "{actor} restored the card from the archive",
+    "card_completed": "{actor} completed the card ({to})",
+    "card_reopened": "{actor} reopened the card into {to}"
   },
   "notify": {
     "assigned": "{actor} assigned you to a card: {card}",
@@ -495,5 +492,20 @@
     "from_column": "from {column}",
     "boards": "Archived boards",
     "see_all": "Go to the archive"
+  },
+  "done": {
+    "title": "Done",
+    "subtitle": "Cards entering a done column are completed and leave the board; they stay here and can be reopened.",
+    "search": "Search done cards",
+    "empty": "No done cards yet.",
+    "no_results": "No card matches.",
+    "completed": "Done",
+    "completed_by": "completed by {name}",
+    "reopen": "Reopen",
+    "reopen_into": "Column to reopen into",
+    "reopened": "The card is reopened.",
+    "see_all": "Go to Done",
+    "drop_here": "Drop a card here to complete it",
+    "option": "{name} (completes)"
   }
 }

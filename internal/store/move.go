@@ -75,7 +75,28 @@ func moveCard(ctx context.Context, tx pgx.Tx, m Move) (Card, error) {
 			return Card{}, err
 		}
 		p := ActivityPayload{From: snap.Columns[card.ColumnID].Name, To: snap.Columns[m.ToColumnID].Name}
-		return moved, logActivity(ctx, tx, m.BoardID, &card.ID, m.Actor.UserID, ActivityCardMoved, p)
+		kind := ActivityCardMoved
+		// Entering a done column completes the card: it leaves the board.
+		// Leaving one for another column reopens it.
+		switch toDone := snap.Columns[m.ToColumnID].IsDone; {
+		case toDone && card.CompletedAt == nil:
+			kind = ActivityCardCompleted
+			moved, err = scanCard(tx.QueryRow(ctx, `
+				UPDATE cards SET completed_at = now(), completed_from_column_id = $2 WHERE id = $1
+				RETURNING `+cardColumns, card.ID, card.ColumnID))
+			if err == nil {
+				err = renumberCards(ctx, tx, m.ToColumnID)
+			}
+		case !toDone && card.CompletedAt != nil:
+			kind = ActivityCardReopened
+			moved, err = scanCard(tx.QueryRow(ctx, `
+				UPDATE cards SET completed_at = NULL, completed_from_column_id = NULL WHERE id = $1
+				RETURNING `+cardColumns, card.ID))
+		}
+		if err != nil {
+			return Card{}, err
+		}
+		return moved, logActivity(ctx, tx, m.BoardID, &card.ID, m.Actor.UserID, kind, p)
 	}
 	return placeCard(ctx, tx, card, m.ToColumnID, m.ToIndex)
 }
@@ -84,7 +105,7 @@ func moveCard(ctx context.Context, tx pgx.Tx, m Move) (Card, error) {
 func placeCard(ctx context.Context, tx pgx.Tx, card Card, column int64, index int) (Card, error) {
 	rows, err := tx.Query(ctx, `
 		SELECT id FROM cards
-		WHERE column_id = $1 AND archived_at IS NULL AND id <> $2
+		WHERE column_id = $1 AND archived_at IS NULL AND completed_at IS NULL AND id <> $2
 		ORDER BY position, id`, column, card.ID)
 	if err != nil {
 		return Card{}, err
@@ -130,7 +151,7 @@ func renumberCards(ctx context.Context, tx pgx.Tx, column int64) error {
 	_, err := tx.Exec(ctx, `
 		UPDATE cards c SET position = r.n
 		FROM (SELECT id, row_number() OVER (ORDER BY position, id) - 1 AS n
-		      FROM cards WHERE column_id = $1 AND archived_at IS NULL) r
+		      FROM cards WHERE column_id = $1 AND archived_at IS NULL AND completed_at IS NULL) r
 		WHERE c.id = r.id`, column)
 	return err
 }

@@ -5,7 +5,7 @@
     <div class="cardp__crumbs">
       <a href="{{pageURL "board" "id" .Board.ID}}">{{.Board.Name}}</a>
       {{template "icon" "chevron-right"}}
-      <span class="chip" data-column-chip>{{.Column.Name}}</span>
+      {{if .Completed}}<span class="chip chip--ok">{{template "icon" "check"}} {{t "done.completed"}}</span>{{else}}<span class="chip" data-column-chip>{{.Column.Name}}</span>{{end}}
       <a class="btn btn--quiet btn--sm btn--icon cardp__close" href="{{pageURL "board" "id" .Board.ID}}" data-drawer-close aria-label="{{t "card.close"}}" title="{{t "card.close"}}">{{template "icon" "close"}}</a>
     </div>
     {{if $edit}}
@@ -38,6 +38,24 @@
     {{end}}
   </div>
   {{end}}
+  {{if and .Completed (not .Archived)}}
+  <div class="alert alert--ok completed-note">
+    <span class="completed-note__mark" aria-hidden="true">{{template "icon" "check"}}</span>
+    <span><strong>{{t "done.completed"}}</strong> · <time>{{.CompletedWhen}}</time> · <a href="{{pageURL "board-done" "id" .Board.ID}}">{{t "done.see_all"}}</a></span>
+    {{if and $edit .OpenColumns}}
+    <form class="inline-form" method="post" action="{{$self}}" data-collage-target="#card-panel">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="move_to">
+      <input type="hidden" name="expected_from" value="{{.Card.ColumnID}}">
+      <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+      <select class="select select--compact" name="to_column" aria-label="{{t "done.reopen_into"}}">
+        {{range .OpenColumns}}<option value="{{.ID}}" {{if eq .ID $.ReopenTo}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "arrow-left"}} {{t "done.reopen"}}</button>
+    </form>
+    {{end}}
+  </div>
+  {{end}}
   {{if .OpenBlockers}}<a class="blocked-banner" href="#card-deps" data-tab-link="details">{{template "icon" "lock"}}<span><strong>{{t "card.blocked_title"}}</strong> {{tn "card.blocked_by" .OpenBlockers}}</span></a>{{end}}
   {{with .TopNotices}}<div class="alert" role="alert">{{template "icon" "flag"}}<ul>{{range .}}<li>{{.}}</li>{{end}}</ul></div>{{end}}
 
@@ -45,7 +63,7 @@
     <div class="prop">
       <dt class="prop__label">{{template "icon" "board"}} {{t "card.column"}}</dt>
       <dd class="prop__value">
-        {{if $edit}}
+        {{if and $edit (not .Completed)}}
         {{$f := .Field "column"}}
         <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
           {{csrfToken}}
@@ -53,12 +71,12 @@
           <input type="hidden" name="expected_from" value="{{.Card.ColumnID}}">
           <input type="hidden" name="expected_version" value="{{.Card.Version}}">
           <select class="select prop__control" name="to_column" aria-label="{{t "card.move"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>
-            {{range .Columns}}<option value="{{.ID}}" {{if eq .ID $.Card.ColumnID}}selected{{end}}>{{.Name}}</option>{{end}}
+            {{range .Columns}}<option value="{{.ID}}" {{if eq .ID $.Card.ColumnID}}selected{{end}}>{{if .IsDone}}{{t "done.option" "name" .Name}}{{else}}{{.Name}}{{end}}</option>{{end}}
           </select>
           <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.move_button"}}</button>
           {{template "field-state" $f}}
         </form>
-        {{else}}{{.Column.Name}}{{end}}
+        {{else if .Completed}}{{t "done.completed"}}{{else}}{{.Column.Name}}{{end}}
       </dd>
     </div>
 

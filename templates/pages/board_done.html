@@ -1,0 +1,45 @@
+{{$self := pageURL "board-done" "id" .Board.ID}}
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{pageURL "board" "id" .Board.ID}}">{{template "icon" "arrow-left"}} {{.Board.Name}}</a>
+    <h1>{{t "done.title"}}</h1>
+    <p class="page-head__meta">{{t "done.subtitle"}}</p>
+  </div>
+  <form class="search" method="get" action="{{$self}}" role="search">
+    <label class="sr-only" for="done-q">{{t "done.search"}}</label>
+    <input class="input" id="done-q" name="q" type="search" value="{{.Query}}" placeholder="{{t "done.search"}}">
+    <button type="submit" class="btn btn--secondary">{{t "archive.search_button"}}</button>
+  </form>
+</header>
+{{if .Cards}}
+<ul class="list-rows">
+  {{range .Cards}}
+  <li class="list-rows__row">
+    <div class="list-rows__main">
+      <span class="done-mark" aria-hidden="true">{{template "icon" "check"}}</span>
+      <div class="person">
+        <a class="list-rows__title" href="{{pageURL "card" "id" $.Board.ID "card" .Card.ID}}">{{.Card.Title}}</a>
+        <span class="person__mail">{{if .CompletedBy}}{{t "done.completed_by" "name" .CompletedBy}} · {{end}}<time datetime="{{.ISO}}">{{.When}}</time></span>
+      </div>
+    </div>
+    {{if and $.CanEdit $.Open}}
+    <form class="inline-form" method="post" action="{{$self}}">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="reopen">
+      <input type="hidden" name="card" value="{{.Card.ID}}">
+      <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+      <select class="select select--compact" name="to_column" aria-label="{{t "done.reopen_into"}}">
+        {{$back := .Back}}{{range $.Open}}<option value="{{.ID}}" {{if eq .ID $back}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "arrow-left"}} {{t "done.reopen"}}</button>
+    </form>
+    {{end}}
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<div class="empty">
+  <span class="empty__icon">{{template "icon" "check"}}</span>
+  <p>{{if .Query}}{{t "done.no_results"}}{{else}}{{t "done.empty"}}{{end}}</p>
+</div>
+{{end}}

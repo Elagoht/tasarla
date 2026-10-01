@@ -70,3 +70,6 @@ a.notification__text:hover { color: var(--accent-strong); }
 /* A search beside a page's title. */
 .search { display: flex; gap: var(--s2); align-items: center; }
 .search .input { width: min(320px, 60vw); }
+
+/* A done card in the Done list. */
+.done-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--ok-soft); color: var(--ok); flex: none; }

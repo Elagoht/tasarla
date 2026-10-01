@@ -10,8 +10,7 @@
       <span class="column__count" {{if .Limit}}title="{{t "board.wip_limit"}}"{{end}}>{{len .Cards}}{{if .Limit}}<span class="column__limit"> / {{.Limit}}</span>{{end}}</span>
     </header>
     {{if .OverLimit}}<p class="column__over">{{t "board.over_limit"}}</p>{{end}}
-    {{if and .Column.IsDone .Cards}}<p class="column__hidden">{{template "icon" "check"}} {{tn "board.hidden_count" (len .Cards)}}</p>{{end}}
-    <ol class="column__cards" data-column="{{.Column.ID}}" data-empty="{{t "board.no_cards"}}">
+    <ol class="column__cards" data-column="{{.Column.ID}}" data-empty="{{if .Column.IsDone}}{{t "done.drop_here"}}{{else}}{{t "board.no_cards"}}{{end}}">
       {{range .Cards}}
       <li class="card{{if .Summary.Blocked}} card--blocked{{end}}" id="card-{{.Summary.Card.ID}}" data-card="{{.Summary.Card.ID}}" data-version="{{.Summary.Card.Version}}" data-column="{{.Summary.Card.ColumnID}}">
         <a class="card__title" data-card-link href="{{pageURL "card" "id" .Summary.Card.BoardID "card" .Summary.Card.ID}}">{{.Summary.Card.Title}}</a>

@@ -28,7 +28,7 @@ func loadSnapshot(ctx context.Context, tx pgx.Tx, boardID int64, card Card) (rul
 
 	rows, err := tx.Query(ctx, `
 		SELECT c.id, c.name, coalesce(c.wip_limit, 0), c.is_done, c.counts_person_wip,
-		       (SELECT count(*) FROM cards k WHERE k.column_id = c.id AND k.archived_at IS NULL AND k.id <> $2)
+		       (SELECT count(*) FROM cards k WHERE k.column_id = c.id AND k.archived_at IS NULL AND k.completed_at IS NULL AND k.id <> $2)
 		FROM columns c WHERE c.board_id = $1`, boardID, card.ID)
 	if err != nil {
 		return s, err
@@ -110,8 +110,7 @@ func loadSnapshot(ctx context.Context, tx pgx.Tx, boardID int64, card Card) (rul
 			SELECT (SELECT count(*) FROM checklist_items WHERE card_id = $1),
 			       (SELECT count(*) FROM checklist_items WHERE card_id = $1 AND done),
 			       (SELECT count(*) FROM card_dependencies d JOIN cards b ON b.id = d.blocker_id
-			        JOIN columns bc ON bc.id = b.column_id
-			        WHERE d.blocked_id = $1 AND b.archived_at IS NULL AND NOT bc.is_done),
+			        WHERE d.blocked_id = $1 AND b.archived_at IS NULL AND b.completed_at IS NULL),
 			       (SELECT count(*) FROM attachments WHERE card_id = $1)`, card.ID).
 			Scan(&s.Card.ChecklistTotal, &s.Card.ChecklistDone, &s.Card.OpenBlockers, &s.Card.Attachments); err != nil {
 			return s, err
@@ -132,7 +131,7 @@ func assigneeWIP(ctx context.Context, tx pgx.Tx, s *rules.Snapshot, boardID, car
 	}
 	return tx.QueryRow(ctx, `
 		SELECT count(*) FROM cards k JOIN columns c ON c.id = k.column_id
-		WHERE k.board_id = $1 AND k.assignee_id = $2 AND k.archived_at IS NULL
+		WHERE k.board_id = $1 AND k.assignee_id = $2 AND k.archived_at IS NULL AND k.completed_at IS NULL
 		  AND c.counts_person_wip AND k.id <> $3`, boardID, s.Card.AssigneeID, cardID).Scan(&s.AssigneeWIP)
 }
 

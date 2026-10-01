@@ -81,18 +81,18 @@ func (s *Store) RemoveDependency(ctx context.Context, boardID, blockerID, blocke
 }
 
 // CardDependencies returns what a card waits on and what waits on it. A card
-// counts as done in a done column or in the archive.
+// counts as done once completed, or in the archive.
 func (s *Store) CardDependencies(ctx context.Context, cardID int64) (Dependencies, error) {
 	var d Dependencies
 	var err error
 	if d.Blockers, err = s.cardRefs(ctx, `
-		SELECT c.id, c.title, (c.archived_at IS NOT NULL OR col.is_done)
+		SELECT c.id, c.title, (c.archived_at IS NOT NULL OR c.completed_at IS NOT NULL)
 		FROM card_dependencies d JOIN cards c ON c.id = d.blocker_id JOIN columns col ON col.id = c.column_id
 		WHERE d.blocked_id = $1 ORDER BY c.id`, cardID); err != nil {
 		return d, err
 	}
 	d.Blocking, err = s.cardRefs(ctx, `
-		SELECT c.id, c.title, (c.archived_at IS NOT NULL OR col.is_done)
+		SELECT c.id, c.title, (c.archived_at IS NOT NULL OR c.completed_at IS NOT NULL)
 		FROM card_dependencies d JOIN cards c ON c.id = d.blocked_id JOIN columns col ON col.id = c.column_id
 		WHERE d.blocker_id = $1 ORDER BY c.id`, cardID)
 	return d, err

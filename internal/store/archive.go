@@ -42,7 +42,7 @@ func (s *Store) ArchivedCards(ctx context.Context, boardID int64, query string) 
 		var a ArchivedCard
 		c := &a.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
 			&a.ColumnName, &a.ArchivedBy); err != nil {
 			return nil, err
 		}
@@ -77,7 +77,7 @@ func (s *Store) RestoreCard(ctx context.Context, boardID, cardID, actorID int64)
 	}
 	if _, err := tx.Exec(ctx, `
 		UPDATE cards SET archived_at = NULL, version = version + 1,
-		       position = (SELECT count(*) FROM cards WHERE column_id = $3 AND archived_at IS NULL)
+		       position = (SELECT count(*) FROM cards WHERE column_id = $3 AND archived_at IS NULL AND completed_at IS NULL)
 		WHERE id = $2 AND board_id = $1`, boardID, cardID, card.ColumnID); err != nil {
 		return err
 	}

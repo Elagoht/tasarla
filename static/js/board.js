@@ -26,6 +26,9 @@ function setupSortables() {
       group: "cards",
       animation: 150,
       draggable: ".card",
+      // A done column is always empty now: let a card drop anywhere over it,
+      // not only near its edge.
+      emptyInsertThreshold: 60,
       ghostClass: "card--ghost",
       chosenClass: "card--chosen",
       dragClass: "card--drag",
@@ -33,6 +36,36 @@ function setupSortables() {
       onEnd: onDrop,
     });
   }
+}
+
+// Completing: a card dropped into a done column is ticked off — a ring draws
+// round a tick — and, once the server agrees, folds away; the board's answer
+// no longer holds it. Refused, the mark goes and the card goes back.
+const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function startCompleting(card) {
+  const mark = document.createElement("span");
+  mark.className = "complete-burst";
+  mark.setAttribute("aria-hidden", "true");
+  mark.innerHTML =
+    '<svg viewBox="0 0 52 52"><circle class="complete-burst__ring" cx="26" cy="26" r="22"/>' +
+    '<path class="complete-burst__tick" d="M16 27l7 7 14-15"/></svg>';
+  card.append(mark);
+  card.classList.add("card--completing");
+}
+
+async function finishCompleting(card, started) {
+  const shown = reduced() ? 150 : 800;
+  await pause(Math.max(0, shown - (performance.now() - started)));
+  card.style.height = card.offsetHeight + "px";
+  card.classList.add("card--leaving");
+  await pause(reduced() ? 50 : 380);
+}
+
+function stopCompleting(card) {
+  card.classList.remove("card--completing", "card--leaving");
+  card.querySelector(".complete-burst")?.remove();
 }
 
 async function onDrop(evt) {
@@ -45,9 +78,12 @@ async function onDrop(evt) {
   form.set("expected_from", card.dataset.column);
   form.set("expected_version", card.dataset.version);
   form.set("_csrf", csrfToken());
+  const completing = evt.from !== evt.to && evt.to.closest(".column")?.hasAttribute("data-done");
   try {
     // Dropped where it started: nothing to tell the server.
     if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
+    const started = performance.now();
+    if (completing) startCompleting(card);
     const res = await fetch(board.dataset.moveUrl, {
       method: "POST",
       body: form,
@@ -57,11 +93,16 @@ async function onDrop(evt) {
     // 200: the board as moved. 409 and 422: the board as it really is, with a
     // notice; the card goes back where it was without any undo code here.
     if (res.ok || res.status === 409 || res.status === 422) {
-      live()?.put(board, await res.text());
+      const html = await res.text();
+      if (completing && res.ok) await finishCompleting(card, started);
+      else if (completing) stopCompleting(card);
+      live()?.put(board, html);
     } else {
+      if (completing) stopCompleting(card);
       live()?.refresh(board);
     }
   } catch {
+    if (completing) stopCompleting(card);
     live()?.refresh(board);
   } finally {
     live()?.resume(board);
@@ -115,39 +156,7 @@ function dismissAlerts() {
   }
 }
 
-// "Hide done" is the reader's own view of this board, kept in this browser.
-// The setting is on the board element, which collage-live leaves alone.
-function setupHideDone() {
-  const toggle = document.querySelector("[data-hide-done]");
-  const id = board.dataset.moveUrl.match(/\/boards\/(\d+)/)?.[1];
-  if (!toggle || !id) return;
-  const key = "hide-done:" + id;
-  const apply = (on) => {
-    if (on) board.dataset.hideDone = "";
-    else delete board.dataset.hideDone;
-    toggle.setAttribute("aria-pressed", String(on));
-  };
-  let on = false;
-  try {
-    on = localStorage.getItem(key) === "1";
-  } catch {
-    // Storage can be off; the done cards then show each time.
-  }
-  apply(on);
-  toggle.hidden = false;
-  toggle.addEventListener("click", () => {
-    on = !on;
-    apply(on);
-    try {
-      localStorage.setItem(key, on ? "1" : "0");
-    } catch {
-      // As above: the choice lasts for this page only.
-    }
-  });
-}
-
 if (board) {
-  setupHideDone();
   board.addEventListener("submit", (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || !form.matches(".add-card__form")) return;

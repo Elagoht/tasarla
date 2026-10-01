@@ -151,9 +151,13 @@ move_permissions id, board_id, to_column_id, from_column_id NULL,
                  board_role_id NULL
 column_conditions id, column_id, phase ('enter'|'exit'), kind, params jsonb
 
+-- Tamamlanma: `is_done` bir kolona giren kart tamamlanır (`completed_at`) ve board'dan
+-- kalkar; WIP'e, sıraya, kişi limitine sayılmaz. Board'un "Bitenler" sayfasında durur;
+-- bitti olmayan bir kolona taşınınca (yeniden açma) o kolonun kurallarından geçer.
 cards            id, board_id, column_id, position int, title, description,
                  assignee_id NULL, estimate numeric NULL, due_date date NULL,
-                 priority smallint NULL, created_by, version int, archived_at
+                 priority smallint NULL, created_by, version int, archived_at,
+                 completed_at NULL, completed_from_column_id NULL
 labels           id, board_id, name, color
 card_labels      card_id, label_id
 checklist_items  id, card_id, text, done, position
@@ -213,7 +217,7 @@ Koşul türleri (`kind`):
 | `has_description`    | —                                           | Açıklama boş değil                                                 |
 | `has_label`          | `{"label_ids": [..]}` (boşsa herhangi biri) | Etiketlerden en az biri var                                        |
 | `checklist_complete` | —                                           | Tüm checklist maddeleri işaretli (hiç madde yoksa geçer)           |
-| `blockers_done`      | —                                           | Bu kartı bloklayan tüm kartlar `is_done` bir kolonda ya da arşivde |
+| `blockers_done`      | —                                           | Bu kartı bloklayan tüm kartlar tamamlanmış ya da arşivde |
 | `min_attachments`    | `{"count": n}`                              | En az n dosya eki var                                              |
 
 Yeni bir kural türü eklemek; bir `kind` sabiti, bir değerlendirme fonksiyonu, bir ayar

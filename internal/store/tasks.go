@@ -22,7 +22,7 @@ func (s *Store) AssignedTo(ctx context.Context, userID int64) ([]Task, error) {
 		JOIN teams t ON t.id = b.team_id
 		JOIN columns col ON col.id = k.column_id
 		JOIN team_members m ON m.team_id = b.team_id AND m.user_id = $1
-		WHERE k.assignee_id = $1 AND k.archived_at IS NULL AND b.archived_at IS NULL
+		WHERE k.assignee_id = $1 AND k.archived_at IS NULL AND k.completed_at IS NULL AND b.archived_at IS NULL
 		ORDER BY lower(b.name), b.id, col.position, k.position`, userID)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (s *Store) AssignedTo(ctx context.Context, userID int64) ([]Task, error) {
 		var t Task
 		c := &t.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
 			&t.BoardName, &t.ColumnName, &t.TeamName); err != nil {
 			return nil, err
 		}

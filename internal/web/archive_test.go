@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -85,8 +86,37 @@ func TestALeadRestoresAnArchivedBoard(t *testing.T) {
 	}
 }
 
-func TestTheBoardOffersToHideDoneCards(t *testing.T) {
+// A card moved into a done column is completed: it leaves the board for the
+// Done page, from where it is reopened into a column, through its rules.
+func TestCompletingAndReopeningACard(t *testing.T) {
 	b := newBoardSetup(t)
-	b.card(t, 2, "Shipped")
-	mustContain(t, b.member.Get(b.path).Body, `data-hide-done`, "1 bitmiş kart gizli")
+	ctx := context.Background()
+	c := b.card(t, 0, "Ship it")
+	if res := b.member.SubmitFetch(b.path, b.path, moveForm(c, b.cols[2].ID, 0, b.cols[0].ID, c.Version)); res.Status != http.StatusOK || strings.Contains(res.Body, "Ship it") {
+		t.Fatalf("complete = %d; the card is still on the board: %v", res.Status, strings.Contains(res.Body, "Ship it"))
+	}
+	mustContain(t, b.member.Get(b.path).Body, `href="`+b.path+`/done"`, "Buraya bırakılan kart tamamlanır")
+	done := b.member.Get(b.path + "/done").Body
+	mustContain(t, done, "Ship it", "Member tamamladı", `name="op" value="reopen"`, `<option value="`+id(b.cols[0].ID)+`" selected>`)
+	if strings.Contains(done, `<option value="`+id(b.cols[2].ID)+`"`) {
+		t.Error("a done column is offered to reopen into")
+	}
+	panel := b.member.Get(b.cardPath(c)).Body
+	mustContain(t, panel, "Tamamlandı", "Bitenlere git")
+	got, _ := b.h.store.Card(ctx, b.board.ID, c.ID)
+	// Reopening into a done column is refused; into another one it goes back.
+	if res := b.member.Submit(b.path+"/done", b.path+"/done", url.Values{"op": {"reopen"}, "card": {id(c.ID)},
+		"to_column": {id(b.cols[2].ID)}, "expected_version": {strconv.Itoa(got.Version)}}); res.Status != http.StatusBadRequest {
+		t.Errorf("reopen into done = %d, want 400", res.Status)
+	}
+	res := b.member.Submit(b.path+"/done", b.path+"/done", url.Values{"op": {"reopen"}, "card": {id(c.ID)},
+		"to_column": {id(b.cols[1].ID)}, "expected_version": {strconv.Itoa(got.Version)}})
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("reopen = %d", res.Status)
+	}
+	if got, _ := b.h.store.Card(ctx, b.board.ID, c.ID); got.CompletedAt != nil || got.ColumnID != b.cols[1].ID {
+		t.Fatalf("after reopen: %+v", got)
+	}
+	mustContain(t, b.member.Get(b.path).Body, "Ship it")
+	mustContain(t, b.member.Get(b.cardPath(c)).Body, "kartı tamamladı", "kartı yeniden açtı")
 }

@@ -30,14 +30,18 @@ type Card struct {
 	Version     int
 	ArchivedAt  *time.Time
 	CreatedAt   time.Time
+	// CompletedAt is when the card entered a done column, nil while it is on
+	// the board; CompletedFrom is the column it came from.
+	CompletedAt   *time.Time
+	CompletedFrom *int64
 }
 
-const cardColumns = `id, board_id, column_id, position, title, description, assignee_id, estimate::float8, due_date, priority, created_by, version, archived_at, created_at`
+const cardColumns = `id, board_id, column_id, position, title, description, assignee_id, estimate::float8, due_date, priority, created_by, version, archived_at, created_at, completed_at, completed_from_column_id`
 
 func scanCard(row pgx.Row) (Card, error) {
 	var c Card
 	err := row.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-		&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt)
+		&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Card{}, ErrNotFound
 	}
@@ -75,12 +79,19 @@ func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, title s
 	card, err := scanCard(tx.QueryRow(ctx, `
 		INSERT INTO cards (board_id, column_id, position, title, created_by)
 		SELECT $1, c.id,
-		       (SELECT count(*) FROM cards WHERE column_id = c.id AND archived_at IS NULL),
+		       (SELECT count(*) FROM cards WHERE column_id = c.id AND archived_at IS NULL AND completed_at IS NULL),
 		       $3, $4
 		FROM columns c WHERE c.id = $2 AND c.board_id = $1
 		RETURNING `+cardColumns, boardID, columnID, title, createdBy))
 	if err != nil {
 		return Card{}, err
+	}
+	// A card made in a done column is done from the start.
+	if snap.Columns[columnID].IsDone {
+		if card, err = scanCard(tx.QueryRow(ctx,
+			`UPDATE cards SET completed_at = now() WHERE id = $1 RETURNING `+cardColumns, card.ID)); err != nil {
+			return Card{}, err
+		}
 	}
 	return card, logActivity(ctx, tx, boardID, &card.ID, createdBy, ActivityCardCreated, ActivityPayload{Title: title})
 }
@@ -349,11 +360,11 @@ func (s *Store) BoardCards(ctx context.Context, boardID int64) ([]CardSummary, e
 		       EXISTS (SELECT 1 FROM card_dependencies d
 		               JOIN cards b ON b.id = d.blocker_id
 		               JOIN columns bc ON bc.id = b.column_id
-		               WHERE d.blocked_id = k.id AND b.archived_at IS NULL AND NOT bc.is_done)
+		               WHERE d.blocked_id = k.id AND b.archived_at IS NULL AND b.completed_at IS NULL)
 		FROM cards k
 		JOIN columns col ON col.id = k.column_id
 		LEFT JOIN users u ON u.id = k.assignee_id
-		WHERE k.board_id = $1 AND k.archived_at IS NULL
+		WHERE k.board_id = $1 AND k.archived_at IS NULL AND k.completed_at IS NULL
 		ORDER BY col.position, k.position, k.id`, boardID)
 	if err != nil {
 		return nil, err
@@ -365,7 +376,7 @@ func (s *Store) BoardCards(ctx context.Context, boardID int64) ([]CardSummary, e
 		var cs CardSummary
 		c := &cs.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
 			&cs.AssigneeName, &cs.ChecklistDone, &cs.ChecklistTotal, &cs.Attachments, &cs.Blocked); err != nil {
 			return nil, err
 		}

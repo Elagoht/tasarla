@@ -61,12 +61,12 @@ func TestAMoveIsPushedToOpenBoards(t *testing.T) {
 		t.Fatalf("first event lacks the card: %s", first)
 	}
 
-	if r := b.lead.SubmitFetch(b.path, b.path, moveForm(c, b.cols[2].ID, 0, b.cols[0].ID, c.Version)); r.Status != http.StatusOK {
+	if r := b.lead.SubmitFetch(b.path, b.path, moveForm(c, b.cols[1].ID, 0, b.cols[0].ID, c.Version)); r.Status != http.StatusOK {
 		t.Fatalf("move = %d", r.Status)
 	}
 	pushed := next()
-	// The card's own element now names the done column.
-	moved := regexp.MustCompile(`data-card=\\"` + id(c.ID) + `\\" data-version=\\"\d+\\" data-column=\\"` + id(b.cols[2].ID) + `\\"`)
+	// The card's own element now names the column it went to.
+	moved := regexp.MustCompile(`data-card=\\"` + id(c.ID) + `\\" data-version=\\"\d+\\" data-column=\\"` + id(b.cols[1].ID) + `\\"`)
 	if moved.MatchString(first) {
 		t.Fatalf("the check matches before the move: %s", first)
 	}
