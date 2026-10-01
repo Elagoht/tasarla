@@ -11,6 +11,7 @@
 </nav>
 
 {{if eq .Tab "general"}}
+<div class="stack stack--lg">
 <section class="panel stack general">
   <form class="field-row" method="post" action="{{$self}}?tab=general">
     {{csrfToken}}
@@ -34,6 +35,7 @@
     <button type="submit" class="btn btn--danger">{{template "icon" "archive"}} {{t "settings.archive"}}</button>
   </form>
 </section>
+</div>
 {{end}}
 
 {{if eq .Tab "columns"}}

@@ -1,6 +1,6 @@
 /* Board settings: the column table, roles and the rules written as sentences. */
 
-.general .field-row .input { max-width: 420px; }
+.general .field-row > .field { flex: 0 1 420px; }
 
 /* Column table */
 .table--columns td { white-space: nowrap; }
