@@ -11,6 +11,7 @@ Birkaç takımın günlük iş takibi için kullandığı, kuralları board baş
   - SortableJS ile sürükle-bırak; değişiklik açık board'lara collage-live ile anında itilir.
   - Bayat bir kartı taşımak 409 döner.
   - JS olmadan kart sayfasındaki "kolona taşı" formu kullanılabilir.
+  - **Şeritler:** board atanan kişiye ya da önceliğe göre şeritlere bölünebilir; kartı başka bir şeride sürüklemek kartı o kişiye atar ya da önceliğini değiştirir, kurallardan geçerek.
 - **Kural motoru** (`internal/rules`, saf Go):
   - Kurallar: geçişler, taşıma yetkileri, giriş ve çıkış koşulları, kolon WIP'i, kişi WIP'i.
   - Kural çiğneyen bir istek, ihlallerin hepsi kullanıcının dilinde listelenerek 422 ile reddedilir.
