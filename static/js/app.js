@@ -68,19 +68,25 @@ if (meMenu) {
   });
 }
 
-// A page going to a board or a card hands its title the tile or card the
-// reader clicked: both are named "target" for the view transition (base.css).
-// This page's own target, if it has one, stands aside so the name is unique.
+// The link the reader follows grows into the title of the page it opens:
+// both are named "target" for the view transition (base.css), this page's own
+// title standing aside so the name stays unique. Tabs and toggles change the
+// page under the same title, and are left out.
+let followed = null;
+document.addEventListener("click", (e) => {
+  const link = e.target instanceof Element && e.target.closest("a[href]");
+  followed = link && !link.matches(".tabs__tab, .segmented__item, [aria-pressed]") ? link : null;
+}, true);
+
 addEventListener("pageswap", (e) => {
   const url = e.activation?.entry?.url;
-  if (!e.viewTransition || !url) return;
-  const to = new URL(url);
-  const link = [...document.querySelectorAll("a[href]")].find(
-    (a) => a.href === to.href && (a.matches(".tile, .card__title, .list-rows__title, .nav__item, .gantt__label a") || a.closest(".gantt__bar")),
-  );
-  if (!link) return;
-  for (const el of document.querySelectorAll(".board-head h1, .card-panel--page .cardp__title")) el.style.viewTransitionName = "none";
-  (link.closest(".card") ?? link).style.viewTransitionName = "target";
+  if (!e.viewTransition || !url || !followed) return;
+  const to = new URL(url), from = new URL(followed.href, location.href);
+  if (to.origin !== from.origin || to.pathname !== from.pathname) return;
+  for (const el of document.querySelectorAll(".page-head h1, .card-panel--page .cardp__title, .confirm-page h1, .solo__card h1")) {
+    el.style.viewTransitionName = "none";
+  }
+  (followed.closest(".card") ?? followed).style.viewTransitionName = "target";
 });
 
 for (const toast of document.querySelectorAll("[data-toast]")) {

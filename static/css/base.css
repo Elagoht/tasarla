@@ -71,9 +71,15 @@ time { font-variant-numeric: tabular-nums; }
 /* Moving between pages: the page crossfades while the sidebar stays put, and
    the board tile or card that was clicked grows into the title it opens
    (app.js names it "target" as the page goes). The opt-in itself is inline in
-   base.html's head, where the browser finds it in time. */
+   base.html's head, where the browser finds it in time. Every page's title
+   is the target: with nothing clicked, one page's title flows into the next. */
+.page-head h1, .card-panel--page .cardp__title, .confirm-page h1, .solo__card h1 { view-transition-name: target; width: fit-content; }
+.card-panel--page .cardp__title { width: 100%; }
 ::view-transition-group(*) { animation-duration: 280ms; animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1); }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+/* A small link growing into a large title: scale both pictures by height,
+   keeping their shape, rather than stretching them to the box. */
+::view-transition-old(target), ::view-transition-new(target) { height: 100%; width: auto; object-fit: contain; }
