@@ -30,7 +30,7 @@
     </ol>
     {{if .CanCreate}}
     {{$here := or (eq (fieldValue "column") (printf "%d" .Column.ID)) (and (eq (fieldValue "column") "") .FirstCreate)}}
-    <details class="add-card"{{if and $here (fieldError "title")}} open{{end}}>
+    <details class="add-card" data-keep-open="add-{{.Column.ID}}"{{if and $here (fieldError "title")}} open{{end}}>
       <summary class="add-card__open">{{template "icon" "plus"}} {{t "board.add_card"}}</summary>
       <form class="add-card__form" method="post" action="{{pageURL "board" "id" .Column.BoardID}}">
         {{csrfToken}}

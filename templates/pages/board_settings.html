@@ -73,8 +73,8 @@
             {{with .Problem}}<span class="field__error">{{.}}</span>{{end}}
           </td>
           <td><input class="input input--small" name="{{$p}}wip" value="{{.WIP}}" inputmode="numeric" placeholder="–" aria-label="{{t "settings.wip_limit"}}"></td>
-          <td><input type="radio" class="check" name="col_create" value="{{.Index}}" {{if eq .Index $.Create}}checked{{end}} aria-label="{{t "settings.allow_create"}}"></td>
-          <td><input type="radio" class="check" name="col_done" value="{{.Index}}" {{if eq .Index $.Done}}checked{{end}} aria-label="{{t "settings.is_done"}}"></td>
+          <td><input type="checkbox" class="check" name="{{$p}}create" value="1" {{if .Create}}checked{{end}} aria-label="{{t "settings.allow_create"}}"></td>
+          <td><input type="checkbox" class="check" name="{{$p}}done" value="1" {{if .Done}}checked{{end}} aria-label="{{t "settings.is_done"}}"></td>
           <td><input type="checkbox" class="check" name="{{$p}}person" value="1" {{if .Person}}checked{{end}} aria-label="{{t "settings.counts_person_wip"}}"></td>
           <td>
             {{if .Cards}}<span class="locked" title="{{t "settings.column_not_empty"}}">{{template "icon" "lock"}} {{t "settings.cards_count" "count" .Cards}}</span>
@@ -96,8 +96,8 @@
           </td>
           <td><input class="input" name="{{$p}}name" value="" maxlength="60" placeholder="{{t "settings.new_row"}}" aria-label="{{t "settings.new_row"}}"></td>
           <td><input class="input input--small" name="{{$p}}wip" value="" inputmode="numeric" placeholder="–" aria-label="{{t "settings.wip_limit"}}"></td>
-          <td><input type="radio" class="check" name="col_create" value="{{$n}}" aria-label="{{t "settings.allow_create"}}"></td>
-          <td><input type="radio" class="check" name="col_done" value="{{$n}}" aria-label="{{t "settings.is_done"}}"></td>
+          <td><input type="checkbox" class="check" name="{{$p}}create" value="1" aria-label="{{t "settings.allow_create"}}"></td>
+          <td><input type="checkbox" class="check" name="{{$p}}done" value="1" aria-label="{{t "settings.is_done"}}"></td>
           <td><input type="checkbox" class="check" name="{{$p}}person" value="1" aria-label="{{t "settings.counts_person_wip"}}"></td>
           <td></td>
         </tr>

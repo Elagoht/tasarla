@@ -21,8 +21,9 @@ const queue = [];
 let timer = 0;
 
 function save(form) {
+  // A form changed again while its own save is out is sent again after it.
   if (inflight) {
-    if (form !== inflight && !queue.includes(form)) queue.push(form);
+    if (!queue.includes(form)) queue.push(form);
     return;
   }
   inflight = form;
@@ -72,7 +73,8 @@ document.addEventListener("change", (e) => {
 document.addEventListener("keydown", (e) => {
   const el = e.target;
   if (!(el instanceof HTMLTextAreaElement) || !el.matches(".cardp__title")) return;
-  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+  // A title is one line: Enter saves it, with or without Shift.
+  if (e.key === "Enter" && !e.isComposing) {
     e.preventDefault();
     el.blur();
   } else if (e.key === "Escape") {
@@ -138,6 +140,13 @@ document.addEventListener("collage:swap", (e) => {
 document.addEventListener("collage:stale", (e) => {
   const panel = e.target;
   if (panel instanceof HTMLElement && panel.id === "card-panel") next();
+});
+
+// A closed drawer takes its panel with it, and any save waiting for it.
+document.addEventListener("card:closed", () => {
+  clearTimeout(timer);
+  inflight = null;
+  queue.length = 0;
 });
 
 document.addEventListener("card:panel", (e) => {

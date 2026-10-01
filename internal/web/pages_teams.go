@@ -182,6 +182,19 @@ func (h *handlers) addMember(ctx context.Context, rc *collage.RenderContext, v *
 			return nil, err
 		}
 	}
+	// Adding someone already in the team changes their role; for oneself that
+	// is the change changeMember refuses (spec §2.1).
+	if me, err := currentUser(ctx); v.Valid() && err == nil && me.ID == user.ID {
+		members, err := h.store.Members(ctx, team.ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, m := range members {
+			if m.User.ID == me.ID {
+				v.Fail("new_email", i18n.T(rc, "team.self_change"))
+			}
+		}
+	}
 	if !v.Valid() {
 		return validate.Refuse(rc, v, rc.Page), nil
 	}

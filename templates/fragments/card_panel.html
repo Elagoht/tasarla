@@ -311,7 +311,7 @@
           {{if $edit}}
           <div class="comment__actions">
             {{if .Mine}}
-            <details class="comment__edit">
+            <details class="comment__edit" data-keep-open="comment-{{.Comment.ID}}">
               <summary class="btn btn--quiet btn--sm">{{template "icon" "pencil"}} {{t "comments.edit"}}</summary>
               <form class="stack stack--sm" method="post" action="{{$self}}" data-collage-target="#card-panel">
                 {{csrfToken}}

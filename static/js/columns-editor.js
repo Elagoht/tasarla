@@ -53,7 +53,6 @@ if (form) {
     row.classList.remove("table__new");
     for (const input of row.querySelectorAll("input")) {
       input.name = input.name.replace(`col_${from}_`, `col_${index}_`);
-      if (input.type === "radio") input.value = String(index);
       if (input.type !== "radio" && input.type !== "checkbox" && input.type !== "hidden") input.value = "";
       input.checked = false;
     }

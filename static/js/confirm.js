@@ -13,14 +13,15 @@ function ensureDialog() {
     const form = pending;
     pending = null;
     if (!form || dialog.returnValue !== "yes") return;
-    if (!form.querySelector('input[name="confirm"]')) {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = "confirm";
-      input.value = "1";
-      form.append(input);
-    }
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "confirm";
+    input.value = "1";
+    form.append(input);
     form.requestSubmit();
+    // The submission has read the form; the next one on it asks again, even
+    // if this one failed and the form stays on the page.
+    input.remove();
   });
   return dialog;
 }

@@ -41,7 +41,7 @@ func (h *handlers) confirmFirst(rc *collage.RenderContext, v *validate.Validator
 	if !slices.Contains(destructive, op) || v.Value("confirm") == "1" || (op == "set_disabled" && v.Value("value") != "1") {
 		return nil
 	}
-	view := confirmView{Question: i18n.T(rc, "confirm."+op), Action: rc.Request.URL.Path, Back: rc.Request.URL.Path}
+	view := confirmView{Question: i18n.T(rc, "confirm."+op), Action: rc.Request.URL.RequestURI(), Back: rc.Request.URL.Path}
 	if ref := rc.Request.Referer(); strings.HasPrefix(ref, "/") || sameOrigin(rc.Request, ref) {
 		view.Back = ref
 	}

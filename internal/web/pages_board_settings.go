@@ -32,8 +32,6 @@ type settingsView struct {
 	Board   store.Board
 	Team    store.Team
 	Columns []columnRowView
-	Create  int // index of the row cards are created in
-	Done    int // index of the done row
 	Labels  []store.Label
 	Palette []string
 
@@ -93,6 +91,8 @@ type columnRowView struct {
 	Name    string
 	WIP     string
 	Person  bool
+	Create  bool
+	Done    bool
 	Delete  bool
 	Cards   int
 	Problem string
@@ -142,9 +142,7 @@ func (h *handlers) boardSettingsPage() *collage.Page {
 const draftKey = "columns_draft"
 
 type columnsDraft struct {
-	Rows   []columnRowView
-	Create int
-	Done   int
+	Rows []columnRowView
 }
 
 func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderContext) (settingsView, error) {
@@ -155,7 +153,7 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 	rc.HoistTitle(i18n.T(rc, "settings.title") + " · " + bc.Board.Name)
 	view := settingsView{Board: bc.Board, Team: bc.Team, Tabs: settingsTabs, Palette: labelPalette,
 		Subjects: []string{rules.SubjectAnyMember, rules.SubjectTeamLead, rules.SubjectAssignee}, Kinds: rules.Kinds,
-		Create: -1, Done: -1, Builders: map[string][]sentencePart{}}
+		Builders: map[string][]sentencePart{}}
 	for kind, key := range builderKeys {
 		view.Builders[kind] = sentenceParts(i18n.T(rc, key))
 	}
@@ -167,14 +165,15 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 		return view, err
 	}
 	if draft, ok := collage.Get[columnsDraft](rc, draftKey); ok {
-		view.Columns, view.Create, view.Done, view.Tab = draft.Rows, draft.Create, draft.Done, "columns"
+		view.Columns, view.Tab = draft.Rows, "columns"
 	} else {
 		cards, err := h.store.BoardCards(ctx, bc.Board.ID)
 		if err != nil {
 			return view, err
 		}
 		for i, c := range view.AllCols {
-			row := columnRowView{Index: i, ID: strconv.FormatInt(c.ID, 10), Name: c.Name, Person: c.CountsPersonWIP}
+			row := columnRowView{Index: i, ID: strconv.FormatInt(c.ID, 10), Name: c.Name, Person: c.CountsPersonWIP,
+				Create: c.AllowCreate, Done: c.IsDone}
 			if c.WIPLimit != nil {
 				row.WIP = strconv.Itoa(*c.WIPLimit)
 			}
@@ -182,12 +181,6 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 				if s.Card.ColumnID == c.ID {
 					row.Cards++
 				}
-			}
-			if c.AllowCreate {
-				view.Create = i
-			}
-			if c.IsDone {
-				view.Done = i
 			}
 			view.Columns = append(view.Columns, row)
 		}
@@ -382,15 +375,6 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 	if err != nil || n < 0 || n > 100 {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
-	// No column chosen: none is marked; Atoi's 0 would mark the first.
-	create, err := strconv.Atoi(v.Value("col_create"))
-	if err != nil {
-		create = -1
-	}
-	done, err := strconv.Atoi(v.Value("col_done"))
-	if err != nil {
-		done = -1
-	}
 	type indexed struct {
 		order int
 		view  columnRowView
@@ -402,12 +386,13 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 		view := columnRowView{
 			Index: i, ID: v.Value(p + "id"), Name: strings.TrimSpace(v.Value(p + "name")),
 			WIP: strings.TrimSpace(v.Value(p + "wip")), Person: v.Value(p+"person") == "1", Delete: v.Value(p+"delete") == "1",
+			Create: v.Value(p+"create") == "1", Done: v.Value(p+"done") == "1",
 		}
 		if view.ID == "" && view.Name == "" {
 			continue // the empty "new column" row
 		}
 		row := store.ColumnRow{Name: view.Name, CountsPersonWIP: view.Person, Delete: view.Delete,
-			AllowCreate: i == create, IsDone: i == done}
+			AllowCreate: view.Create, IsDone: view.Done}
 		if view.ID != "" {
 			id, err := strconv.ParseInt(view.ID, 10, 64)
 			if err != nil {
@@ -434,17 +419,11 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 		items = append(items, indexed{order: order, view: view, row: row})
 	}
 	sort.SliceStable(items, func(a, b int) bool { return items[a].order < items[b].order })
-	draft := columnsDraft{Create: -1, Done: -1}
+	var draft columnsDraft
 	var rows []store.ColumnRow
 	problems := false
 	for i, it := range items {
 		it.view.Index = i
-		if it.row.AllowCreate {
-			draft.Create = i
-		}
-		if it.row.IsDone {
-			draft.Done = i
-		}
 		problems = problems || it.view.Problem != ""
 		draft.Rows = append(draft.Rows, it.view)
 		rows = append(rows, it.row)

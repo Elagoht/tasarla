@@ -51,6 +51,11 @@ func TestALeadCannotChangeTheirOwnRole(t *testing.T) {
 			t.Errorf("%s on myself = %d, want 403", form.Get("op"), res.Status)
 		}
 	}
+	// Adding oneself again would change one's role too.
+	res := lead.Submit(path, path, url.Values{"op": {"add_member"}, "new_email": {"lead@example.com"}, "new_role": {"member"}})
+	if res.Status != http.StatusUnprocessableEntity {
+		t.Errorf("adding myself again = %d, want 422", res.Status)
+	}
 	if role, _ := h.store.MemberRole(context.Background(), idOf(path), h.user("lead@example.com").ID); role != store.RoleLead {
 		t.Fatalf("role = %q", role)
 	}

@@ -36,11 +36,16 @@ func TestOnlyManagersSeeBoardSettings(t *testing.T) {
 
 // columnsForm is the column table as the settings page posts it.
 func columnsForm(rows []map[string]string, create, done int) url.Values {
-	f := url.Values{"op": {"columns_save"}, "col_count": {strconv.Itoa(len(rows))},
-		"col_create": {strconv.Itoa(create)}, "col_done": {strconv.Itoa(done)}}
+	f := url.Values{"op": {"columns_save"}, "col_count": {strconv.Itoa(len(rows))}}
 	for i, r := range rows {
 		p := "col_" + strconv.Itoa(i) + "_"
 		f.Set(p+"order", strconv.Itoa(i))
+		if i == create {
+			f.Set(p+"create", "1")
+		}
+		if i == done {
+			f.Set(p+"done", "1")
+		}
 		for k, v := range r {
 			f.Set(p+k, v)
 		}
@@ -75,7 +80,7 @@ func TestSavingTheColumnTable(t *testing.T) {
 
 // Review Focus 2: one bad row refuses the whole table and keeps what was typed.
 // A table with no done column chosen marks none, rather than the first.
-func TestNoDoneColumnChosenMarksNone(t *testing.T) {
+func TestNoDoneColumnTickedMarksNone(t *testing.T) {
 	b := newBoardSetup(t)
 	ctx := context.Background()
 	rows := []map[string]string{
@@ -83,8 +88,7 @@ func TestNoDoneColumnChosenMarksNone(t *testing.T) {
 		{"id": id(b.cols[1].ID), "name": "Doing"},
 		{"id": id(b.cols[2].ID), "name": "Done"},
 	}
-	form := columnsForm(rows, 0, 0)
-	form.Del("col_done")
+	form := columnsForm(rows, 0, -1)
 	if res := b.lead.Submit(b.path+"/settings?tab=columns", b.path+"/settings", form); res.Status != http.StatusSeeOther {
 		t.Fatalf("columns_save = %d", res.Status)
 	}
@@ -95,9 +99,30 @@ func TestNoDoneColumnChosenMarksNone(t *testing.T) {
 		}
 	}
 	page := b.lead.Get(b.path + "/settings?tab=columns").Body
-	if strings.Contains(page, `name="col_done" value="0" checked`) {
+	if strings.Contains(page, `name="col_0_done" value="1" checked`) {
 		t.Error("the table shows the first column as done")
 	}
+}
+
+// Review: a board may have more than one done column, and keeps them.
+func TestTwoDoneColumnsStayDone(t *testing.T) {
+	b := newBoardSetup(t)
+	rows := []map[string]string{
+		{"id": id(b.cols[0].ID), "name": "Todo"},
+		{"id": id(b.cols[1].ID), "name": "Cancelled"},
+		{"id": id(b.cols[2].ID), "name": "Done"},
+	}
+	form := columnsForm(rows, 0, 2)
+	form.Set("col_1_done", "1")
+	if res := b.lead.Submit(b.path+"/settings?tab=columns", b.path+"/settings", form); res.Status != http.StatusSeeOther {
+		t.Fatalf("columns_save = %d", res.Status)
+	}
+	cols, _ := b.h.store.Columns(context.Background(), b.board.ID)
+	if cols[0].IsDone || !cols[1].IsDone || !cols[2].IsDone || !cols[0].AllowCreate {
+		t.Fatalf("columns = %+v", cols)
+	}
+	page := b.lead.Get(b.path + "/settings?tab=columns").Body
+	mustContain(t, page, `name="col_1_done" value="1" checked`, `name="col_2_done" value="1" checked`)
 }
 
 func TestABadColumnTableSavesNothing(t *testing.T) {

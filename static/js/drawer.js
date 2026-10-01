@@ -43,6 +43,7 @@ async function openCard(href, push) {
 
 function closed() {
   drawer.querySelector(".drawer__body").replaceChildren();
+  document.dispatchEvent(new CustomEvent("card:closed"));
   live()?.scan();
 }
 

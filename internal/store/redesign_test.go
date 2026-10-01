@@ -145,3 +145,33 @@ func TestRenameBoardRole(t *testing.T) {
 		t.Fatalf("through another board: %v", err)
 	}
 }
+
+// Review: a column added to a board with "only from" sentences is reachable
+// from everywhere and reaches every column not restricted, so the sentences
+// stay as they were.
+func TestANewColumnUnderRestrictedTransitionsIsFree(t *testing.T) {
+	f := newBoardFixture(t)
+	ctx := context.Background()
+	todo, doing, done := f.cols[0].ID, f.cols[1].ID, f.cols[2].ID
+	if err := f.s.AddFromSentence(ctx, f.board.ID, done, []int64{doing}); err != nil {
+		t.Fatal(err)
+	}
+	rows := []store.ColumnRow{{ID: todo, Name: "Todo", AllowCreate: true}, {ID: doing, Name: "Doing"},
+		{Name: "Review"}, {ID: done, Name: "Done", IsDone: true}}
+	if err := f.s.SaveColumns(ctx, f.board.ID, rows); err != nil {
+		t.Fatal(err)
+	}
+	ss, err := f.s.BoardSentences(ctx, f.board.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var from []store.Sentence
+	for _, s := range ss {
+		if s.Kind == store.SentenceFrom {
+			from = append(from, s)
+		}
+	}
+	if len(from) != 1 || from[0].ColumnID != done || len(from[0].Columns) != 1 || from[0].Columns[0] != doing {
+		t.Fatalf("from sentences = %+v", from)
+	}
+}

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	"kanban/internal/rules"
 )
 
 // ErrColumnNotEmpty refuses to delete a column that still holds cards.
@@ -239,6 +241,29 @@ func (s *Store) SaveColumns(ctx context.Context, boardID int64, rows []ColumnRow
 	if len(problems) > 0 {
 		return &ColumnsError{Rows: problems}
 	}
+	// Under restricted transitions a new column must be reachable, like a
+	// column no sentence restricts: from every column, and to every column
+	// that takes cards from everywhere. Which those are is read before the
+	// table changes.
+	var mode string
+	if err := tx.QueryRow(ctx, `SELECT transitions_mode FROM boards WHERE id = $1`, boardID).Scan(&mode); err != nil {
+		return err
+	}
+	var open []int64
+	if mode == rules.ModeRestricted {
+		rs, err := tx.Query(ctx, `
+			SELECT t.id FROM columns t WHERE t.board_id = $1 AND NOT EXISTS (
+				SELECT 1 FROM columns f WHERE f.board_id = $1 AND f.id <> t.id AND NOT EXISTS (
+					SELECT 1 FROM transitions x WHERE x.from_column_id = f.id AND x.to_column_id = t.id))`, boardID)
+		if err != nil {
+			return err
+		}
+		open, err = pgx.CollectRows(rs, pgx.RowTo[int64])
+		if err != nil {
+			return err
+		}
+	}
+	var added []int64
 	position := 0
 	for _, r := range rows {
 		switch {
@@ -248,12 +273,14 @@ func (s *Store) SaveColumns(ctx context.Context, boardID int64, rows []ColumnRow
 			}
 		case r.Delete:
 		case r.ID == 0:
-			if _, err := tx.Exec(ctx, `
+			var id int64
+			if err := tx.QueryRow(ctx, `
 				INSERT INTO columns (board_id, name, position, wip_limit, is_done, allow_create, counts_person_wip)
-				VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-				boardID, r.Name, position, r.WIPLimit, r.IsDone, r.AllowCreate, r.CountsPersonWIP); err != nil {
+				VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+				boardID, r.Name, position, r.WIPLimit, r.IsDone, r.AllowCreate, r.CountsPersonWIP).Scan(&id); err != nil {
 				return err
 			}
+			added = append(added, id)
 			position++
 		default:
 			if _, err := tx.Exec(ctx, `
@@ -263,6 +290,18 @@ func (s *Store) SaveColumns(ctx context.Context, boardID int64, rows []ColumnRow
 				return err
 			}
 			position++
+		}
+	}
+	if mode == rules.ModeRestricted {
+		for _, n := range added {
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO transitions (board_id, from_column_id, to_column_id)
+				SELECT $1, c.id, $2 FROM columns c WHERE c.board_id = $1 AND c.id <> $2
+				UNION ALL
+				SELECT $1, $2, c.id FROM columns c WHERE c.board_id = $1 AND c.id = ANY($3)
+				ON CONFLICT DO NOTHING`, boardID, n, open); err != nil {
+				return err
+			}
 		}
 	}
 	return tx.Commit(ctx)
