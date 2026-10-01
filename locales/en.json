@@ -309,5 +309,44 @@
       "due_date": "due date",
       "priority": "priority"
     }
+  },
+  "notify": {
+    "assigned": "{actor} assigned you to a card: {card}",
+    "mentioned": "{actor} mentioned you in a comment: {card}",
+    "commented": "{actor} commented on a card assigned to you: {card}",
+    "due_soon": "{card} is due soon ({due}).",
+    "overdue": "{card} is overdue ({due}).",
+    "unblocked": "Every card blocking {card} is done.",
+    "someone": "Someone",
+    "title": "Notifications",
+    "empty": "You have no notifications.",
+    "mark_read": "Mark read",
+    "mark_all": "Mark all read",
+    "unread": "unread",
+    "kinds": {
+      "assigned": "When I am assigned a card",
+      "mentioned": "When I am mentioned in a comment",
+      "commented": "When someone comments on my card",
+      "due_soon": "When a due date is near",
+      "overdue": "When a due date has passed",
+      "unblocked": "When my card is no longer blocked"
+    }
+  },
+  "mail": {
+    "greeting": "Hello {name},",
+    "open": "Open the card",
+    "prefs": "To change your e-mail preferences: {url}",
+    "board": "Board: {board}"
+  },
+  "me": {
+    "title": "My settings",
+    "locale": "Language of my e-mails",
+    "email_prefs": "E-mail notifications",
+    "save": "Save",
+    "saved": "Saved.",
+    "locales": {
+      "tr": "Türkçe",
+      "en": "English"
+    }
   }
 }

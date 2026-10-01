@@ -32,7 +32,7 @@ func (h *handlers) tasksPage() *collage.Page {
 		WithDataHandler(collage.Load(h.loadTasks)).
 		Required().
 		Build()
-	return paths(privatePage("tasks", content), "/me/tasks").Dynamic().Build()
+	return paths(h.privatePage("tasks", content), "/me/tasks").Dynamic().Build()
 }
 
 func (h *handlers) loadTasks(ctx context.Context, rc *collage.RenderContext) (tasksView, error) {

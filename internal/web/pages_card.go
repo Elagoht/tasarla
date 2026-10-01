@@ -109,7 +109,7 @@ func (h *handlers) cardPage() *collage.Page {
 		WithSlotFragment("panel", h.panel).
 		Required().
 		Build()
-	b := paths(privatePage("card", content), "/boards/{id}/cards/{card}")
+	b := paths(h.privatePage("card", content), "/boards/{id}/cards/{card}")
 	for _, l := range config.Locales {
 		b = b.WithFragmentPath(l, "/boards/{id}/cards/{card}/panel", h.panel)
 	}
@@ -306,6 +306,7 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		if err := h.store.ArchiveCard(ctx, cc.Board.ID, cc.Card.ID, cc.User.ID); err != nil {
 			return nil, err
 		}
+		h.notifyUnblocked(ctx, cc.boardContext, cc.Card.ID)
 		flash.Add(rc, flash.Success, i18n.T(rc, "card.archived"))
 		res, err := h.redirectTo(rc, "board", "id", strconv.FormatInt(cc.Board.ID, 10))
 		if res != nil {
@@ -422,7 +423,10 @@ func (h *handlers) updateCard(ctx context.Context, rc *collage.RenderContext, v 
 		prio := int16(n)
 		fields.Priority = &prio
 	}
-	_, err = h.store.UpdateCard(ctx, cc.Board.ID, cc.Card.ID, int(version), fields, cc.User.ID)
+	updated, err := h.store.UpdateCard(ctx, cc.Board.ID, cc.Card.ID, int(version), fields, cc.User.ID)
+	if err == nil {
+		h.notifyAssigned(ctx, cc.boardContext, cc.Card, updated)
+	}
 	if msgs := violationMessages(rc, err); msgs != nil {
 		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, msgs...)
 	}
@@ -471,7 +475,11 @@ func (h *handlers) commentOp(ctx context.Context, rc *collage.RenderContext, v *
 			return h.refuseCard(rc, v), nil
 		}
 		body := strings.TrimSpace(v.Value("comment"))
-		_, err = h.store.AddComment(ctx, cc.Board.ID, cc.Card.ID, cc.User.ID, body, store.ResolveMentions(body, members))
+		mentions := store.ResolveMentions(body, members)
+		_, err = h.store.AddComment(ctx, cc.Board.ID, cc.Card.ID, cc.User.ID, body, mentions)
+		if err == nil {
+			h.notifyComment(ctx, cc.boardContext, cc.Card, body, mentions)
+		}
 	case "comment_edit":
 		id, ok := formInt64(v, "comment_id")
 		if !ok {

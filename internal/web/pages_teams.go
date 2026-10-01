@@ -35,7 +35,7 @@ func (h *handlers) teamsPage() *collage.Page {
 		WithDataHandler(collage.Load(h.loadTeams)).
 		Required().
 		Build()
-	return paths(privatePage("teams", content), "/teams").
+	return paths(h.privatePage("teams", content), "/teams").
 		WithAction(http.MethodPost, h.teamsPost).
 		Dynamic().
 		Build()
@@ -88,7 +88,7 @@ func (h *handlers) teamPage() *collage.Page {
 		WithDataHandler(collage.Load(h.loadTeam)).
 		Required().
 		Build()
-	return paths(privatePage("team", content), "/teams/{id}").
+	return paths(h.privatePage("team", content), "/teams/{id}").
 		WithAction(http.MethodPost, h.teamPost).
 		Dynamic().
 		Build()

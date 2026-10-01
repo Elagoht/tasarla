@@ -21,6 +21,7 @@ import (
 	"kanban/internal/auth"
 	"kanban/internal/config"
 	"kanban/internal/files"
+	"kanban/internal/notify"
 	"kanban/internal/store"
 )
 
@@ -45,10 +46,21 @@ type handlers struct {
 	// Fragments that actions answer with; set when their pages are built.
 	columns *collage.Fragment
 	panel   *collage.Fragment
+	badge   *collage.Fragment
+
+	notifier *notify.Notifier
+}
+
+// App is the collage application and the notifier its actions and the
+// scheduler share.
+type App struct {
+	*collage.App
+	Notifier *notify.Notifier
 }
 
 // New builds the application: plugins, layouts, every page and action.
-func New(d Deps) (*collage.App, error) {
+func New(d Deps) (*App, error) {
+	translations := i18n.New(i18n.Options{FS: d.Files, Dir: "locales", Strict: true})
 	app, err := collage.New(&collage.Config{
 		DevMode: d.DevMode,
 		Logger:  d.Logger,
@@ -70,7 +82,7 @@ func New(d Deps) (*collage.App, error) {
 				// A proxy that terminates TLS may not say so; the site's own origin does.
 				Secure: strings.HasPrefix(d.Config.BaseURL, "https://"),
 			}),
-			i18n.New(i18n.Options{FS: d.Files, Dir: "locales", Strict: true}),
+			translations,
 			validate.New(validate.Options{LocaleMessages: validationMessages}),
 			flash.New(flash.Options{Key: d.Config.FlashKey}),
 			live.New(),
@@ -83,6 +95,13 @@ func New(d Deps) (*collage.App, error) {
 
 	notFound, serverError, authFailed := notFoundPage(), errorPage(), authFailedPage()
 	h := &handlers{store: d.Store, files: d.Attachments, log: d.Logger}
+	h.notifier = &notify.Notifier{
+		Store: d.Store, I18n: translations, BaseURL: d.Config.BaseURL,
+		URL: app.URL, Invalidate: app.InvalidateTags, Log: d.Logger,
+	}
+	h.badge = collage.NewFragment("notifications-badge", "fragments/badge.html").
+		WithDataHandler(collage.DataHandler(h.loadBadge)).
+		Build()
 	pages := append([]*collage.Page{notFound, serverError, authFailed}, h.pages()...)
 	for _, p := range pages {
 		if err := app.RegisterPage(p); err != nil {
@@ -122,7 +141,7 @@ func New(d Deps) (*collage.App, error) {
 	if err := app.Mount("/static/", static); err != nil {
 		return nil, fmt.Errorf("mount static files: %w", err)
 	}
-	return app, nil
+	return &App{App: app, Notifier: h.notifier}, nil
 }
 
 // pages is every page for signed-in readers.
@@ -130,6 +149,7 @@ func (h *handlers) pages() []*collage.Page {
 	return []*collage.Page{
 		h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
 		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(),
+		h.notificationsPage(), h.meSettingsPage(),
 	}
 }
 

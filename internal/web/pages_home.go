@@ -23,7 +23,7 @@ func (h *handlers) homePage() *collage.Page {
 		WithDataHandler(collage.Load(h.loadHome)).
 		Required().
 		Build()
-	return paths(privatePage("home", content), "/").Dynamic().Build()
+	return paths(h.privatePage("home", content), "/").Dynamic().Build()
 }
 
 func (h *handlers) loadHome(ctx context.Context, rc *collage.RenderContext) (homeView, error) {

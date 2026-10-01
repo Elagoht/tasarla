@@ -58,6 +58,7 @@ func buildAt(t *testing.T, s *store.Store, adminEmails, base string) *harness {
 			"OIDC_REDIRECT_URL": callback,
 			"ADMIN_EMAILS":      adminEmails, "SESSION_KEY": key, "CSRF_KEY": key, "FLASH_KEY": key,
 			"ATTACHMENTS_DIR": t.TempDir(),
+			"SMTP_HOST":       "smtp.invalid", "SMTP_FROM": "Kanban <noreply@kanban.test>",
 		}[k]
 	})
 	if err != nil {
@@ -89,7 +90,7 @@ func buildAt(t *testing.T, s *store.Store, adminEmails, base string) *harness {
 	if err := app.Start(); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	return &harness{t: t, app: app, issuer: issuer, store: s}
+	return &harness{t: t, app: app.App, issuer: issuer, store: s}
 }
 
 func (h *harness) browser() *webtest.Browser { return webtest.NewBrowser(h.t, h.app.Handler()) }

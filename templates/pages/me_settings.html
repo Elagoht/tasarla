@@ -1,0 +1,16 @@
+<h1>{{t "me.title"}}</h1>
+<form class="form" method="post" action="{{pageURL "me-settings"}}">
+  {{csrfToken}}
+  <input type="hidden" name="op" value="save">
+  <label for="me-locale">{{t "me.locale"}}</label>
+  <select id="me-locale" name="locale">
+    {{range .Locales}}<option value="{{.}}" {{if eq . $.Locale}}selected{{end}}>{{t (printf "me.locales.%s" .)}}</option>{{end}}
+  </select>
+  <fieldset>
+    <legend>{{t "me.email_prefs"}}</legend>
+    {{range .Prefs}}
+    <label><input type="checkbox" name="email_{{.Kind}}" value="1" {{if .Email}}checked{{end}}> {{t (printf "notify.kinds.%s" .Kind)}}</label><br>
+    {{end}}
+  </fieldset>
+  <button type="submit">{{t "me.save"}}</button>
+</form>

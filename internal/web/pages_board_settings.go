@@ -104,7 +104,7 @@ func (h *handlers) boardSettingsPage() *collage.Page {
 		WithDataHandler(collage.Load(h.loadBoardSettings)).
 		Required().
 		Build()
-	return paths(privatePage("board-settings", content), "/boards/{id}/settings").
+	return paths(h.privatePage("board-settings", content), "/boards/{id}/settings").
 		WithAction(http.MethodPost, h.boardSettingsPost).
 		Dynamic().
 		Build()

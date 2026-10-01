@@ -309,5 +309,44 @@
       "due_date": "son tarih",
       "priority": "öncelik"
     }
+  },
+  "notify": {
+    "assigned": "{actor} sizi bir karta atadı: {card}",
+    "mentioned": "{actor} sizi bir yorumda andı: {card}",
+    "commented": "{actor} atandığınız karta yorum yaptı: {card}",
+    "due_soon": "{card} kartının son tarihi yaklaşıyor ({due}).",
+    "overdue": "{card} kartının son tarihi geçti ({due}).",
+    "unblocked": "{card} kartını bloklayan kartların hepsi bitti.",
+    "someone": "Biri",
+    "title": "Bildirimler",
+    "empty": "Bildiriminiz yok.",
+    "mark_read": "Okundu",
+    "mark_all": "Hepsini okundu işaretle",
+    "unread": "okunmamış",
+    "kinds": {
+      "assigned": "Bir karta atandığımda",
+      "mentioned": "Bir yorumda anıldığımda",
+      "commented": "Atandığım karta yorum yapıldığında",
+      "due_soon": "Son tarih yaklaştığında",
+      "overdue": "Son tarih geçtiğinde",
+      "unblocked": "Kartımı bloklayanlar bittiğinde"
+    }
+  },
+  "mail": {
+    "greeting": "Merhaba {name},",
+    "open": "Kartı aç",
+    "prefs": "E-posta tercihlerinizi değiştirmek için: {url}",
+    "board": "Board: {board}"
+  },
+  "me": {
+    "title": "Ayarlarım",
+    "locale": "E-postalarımın dili",
+    "email_prefs": "E-posta bildirimleri",
+    "save": "Kaydet",
+    "saved": "Kaydedildi.",
+    "locales": {
+      "tr": "Türkçe",
+      "en": "English"
+    }
   }
 }

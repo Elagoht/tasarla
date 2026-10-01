@@ -53,8 +53,9 @@ type appView struct {
 
 // appLayout is every page for signed-in readers. Its guard sends anyone else
 // to /login; pages under it must be Dynamic (spec §2.1).
-func appLayout() *collage.Fragment {
+func appLayout(badge *collage.Fragment) *collage.Fragment {
 	return collage.NewFragment("app", "layouts/app.html").
+		WithSlotFragment("badge", badge).
 		WithGuard(session.RequireUser("/login")).
 		WithDataHandler(collage.Load(func(ctx context.Context, _ *collage.RenderContext) (appView, error) {
 			u, err := currentUser(ctx)
@@ -65,6 +66,6 @@ func appLayout() *collage.Fragment {
 }
 
 // privatePage starts a page under both layouts.
-func privatePage(name string, content *collage.Fragment) *collage.PageBuilder {
-	return collage.NewPage(name).WithLayouts(baseLayout(), appLayout()).WithContent(content)
+func (h *handlers) privatePage(name string, content *collage.Fragment) *collage.PageBuilder {
+	return collage.NewPage(name).WithLayouts(baseLayout(), appLayout(h.badge)).WithContent(content)
 }

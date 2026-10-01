@@ -1,0 +1,27 @@
+<h1>{{t "notify.title"}}</h1>
+{{if .Items}}
+<form method="post" action="{{pageURL "notifications"}}">
+  {{csrfToken}}
+  <input type="hidden" name="op" value="read_all">
+  <button type="submit">{{t "notify.mark_all"}}</button>
+</form>
+<ol class="notifications">
+  {{range .Items}}
+  <li class="notification{{if .Unread}} notification--unread{{end}}">
+    {{if .CardID}}<a href="{{pageURL "card" "id" .BoardID "card" .CardID}}">{{.Text}}</a>{{else}}{{.Text}}{{end}}
+    {{if .Unread}}<span class="muted">({{t "notify.unread"}})</span>{{end}}
+    <time class="muted" datetime="{{.ISO}}">{{.When}}</time>
+    {{if .Unread}}
+    <form class="inline" method="post" action="{{pageURL "notifications"}}">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="read">
+      <input type="hidden" name="notification_id" value="{{.ID}}">
+      <button type="submit">{{t "notify.mark_read"}}</button>
+    </form>
+    {{end}}
+  </li>
+  {{end}}
+</ol>
+{{else}}
+<p class="muted">{{t "notify.empty"}}</p>
+{{end}}

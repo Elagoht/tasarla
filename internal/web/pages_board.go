@@ -111,7 +111,7 @@ func (h *handlers) boardPage() *collage.Page {
 		WithSlotFragment("columns", h.columns).
 		Required().
 		Build()
-	b := paths(privatePage("board", content), "/boards/{id}")
+	b := paths(h.privatePage("board", content), "/boards/{id}")
 	for _, l := range config.Locales {
 		b = b.WithFragmentPath(l, "/boards/{id}/columns", h.columns)
 	}
@@ -252,7 +252,7 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 	if err != nil {
 		index = 1 << 30 // the fallback form sends none: the bottom of the column
 	}
-	_, err = h.store.MoveCard(ctx, store.Move{
+	moved, err := h.store.MoveCard(ctx, store.Move{
 		BoardID: bc.Board.ID, CardID: cardID, ToColumnID: to, ToIndex: index,
 		ExpectedFrom: from, ExpectedVersion: int(version), Actor: bc.actor(),
 	})
@@ -268,6 +268,9 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 		return nil, err
 	}
 	tags := []string{boardTag(bc.Board.ID), cardTag(cardID)}
+	if err == nil && moved.ColumnID != from && h.finishedBy(ctx, moved) {
+		h.notifyUnblocked(ctx, bc, moved.ID)
+	}
 	if isFetch(rc) {
 		rc.Set(noticeKey, notices)
 		res := collage.RenderFragment(h.columns)

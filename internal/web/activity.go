@@ -59,7 +59,7 @@ func (h *handlers) boardActivityPage() *collage.Page {
 		WithDataHandler(collage.Load(h.loadBoardActivity)).
 		Required().
 		Build()
-	return paths(privatePage("board-activity", content), "/boards/{id}/activity").Dynamic().Build()
+	return paths(h.privatePage("board-activity", content), "/boards/{id}/activity").Dynamic().Build()
 }
 
 func (h *handlers) loadBoardActivity(ctx context.Context, rc *collage.RenderContext) (boardActivityView, error) {

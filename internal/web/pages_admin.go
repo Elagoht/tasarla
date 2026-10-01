@@ -25,7 +25,7 @@ func (h *handlers) adminUsersPage() *collage.Page {
 		WithDataHandler(collage.Load(h.loadAdminUsers)).
 		Required().
 		Build()
-	return paths(privatePage("admin-users", content), "/admin/users").
+	return paths(h.privatePage("admin-users", content), "/admin/users").
 		WithAction(http.MethodPost, h.adminUsersPost).
 		Dynamic().
 		Build()
