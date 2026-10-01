@@ -27,13 +27,13 @@
     </div>
   </details>
   <label class="sr-only" for="filter-due">{{t "filter.due"}}</label>
-  <select class="input input--sm filter-bar__due" id="filter-due" name="due">
+  <select class="select filter-bar__select" id="filter-due" name="due">
     <option value="">{{t "filter.due_any"}}</option>
     {{range dueChoices}}<option value="{{.}}"{{if eq (printf "%s" .) (printf "%s" $.Filter.Due)}} selected{{end}}>{{t (printf "filter.due_%s" .)}}</option>{{end}}
   </select>
   {{if .ShowLane}}
   <label class="sr-only" for="filter-lane">{{t "lanes.by"}}</label>
-  <select class="input input--sm" id="filter-lane" name="lane" data-filter-setting>
+  <select class="select filter-bar__select" id="filter-lane" name="lane" data-filter-setting>
     <option value="">{{t "lanes.none"}}</option>
     <option value="assignee"{{if eq .Filter.Lane "assignee"}} selected{{end}}>{{t "lanes.assignee"}}</option>
     <option value="priority"{{if eq .Filter.Lane "priority"}} selected{{end}}>{{t "lanes.priority"}}</option>

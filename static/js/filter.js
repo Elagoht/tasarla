@@ -87,3 +87,36 @@ if (bar && target) {
     timer = setTimeout(apply, 300);
   });
 }
+
+// The pickers are dropdowns: one open at a time, closed by a click outside or
+// Escape, and opened towards the left when they would leave the screen.
+if (bar) {
+  const pickers = () => bar.querySelectorAll("details.filter-pick");
+  const closeAll = (except) => {
+    for (const p of pickers()) if (p !== except) p.open = false;
+  };
+  bar.addEventListener("toggle", (e) => {
+    const picker = e.target;
+    if (!(picker instanceof HTMLDetailsElement) || !picker.matches(".filter-pick") || !picker.open) return;
+    closeAll(picker);
+    const list = picker.querySelector(".filter-pick__list");
+    if (!list) return;
+    list.classList.remove("filter-pick__list--end");
+    if (list.getBoundingClientRect().right > document.documentElement.clientWidth - 16) {
+      list.classList.add("filter-pick__list--end");
+    }
+  }, true);
+  document.addEventListener("click", (e) => {
+    if (!(e.target instanceof Node)) return;
+    for (const p of pickers()) if (p.open && !p.contains(e.target)) p.open = false;
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    for (const p of pickers()) {
+      if (p.open) {
+        p.open = false;
+        p.querySelector("summary")?.focus();
+      }
+    }
+  });
+}

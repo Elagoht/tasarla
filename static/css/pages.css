@@ -75,8 +75,11 @@ a.notification__text:hover { color: var(--accent-strong); }
 .done-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--ok-soft); color: var(--ok); flex: none; }
 
 /* The board filter: a row of controls that wraps on a narrow screen. */
-.filter-bar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; margin: 0 0 var(--s4); }
+/* The board's main area has no right padding (its columns scroll to the
+   edge), so the bar keeps the same gutter as the page head. */
+.filter-bar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; margin: 0 0 var(--s4); padding-right: var(--s5); }
 .filter-bar__text { width: min(260px, 100%); }
+.filter-bar__select { width: auto; max-width: 100%; }
 .filter-pick { position: relative; }
 .filter-pick.is-on > summary { background: var(--accent-soft); color: var(--accent-ink, var(--ink)); }
 .filter-pick__list {
@@ -86,11 +89,13 @@ a.notification__text:hover { color: var(--accent-strong); }
 }
 .filter-pick__list label { display: flex; gap: var(--s2); align-items: center; padding: var(--s1); border-radius: var(--r-sm); cursor: pointer; }
 .filter-pick__list label:hover { background: var(--shelf); }
+/* Near the right edge the list opens towards the left (filter.js). */
+.filter-pick__list--end { left: auto; right: 0; }
 
 @media (max-width: 640px) {
   .filter-bar { position: relative; }
   .filter-pick { position: static; }
-  .filter-pick__list { left: 0; right: 0; min-width: 0; }
+  .filter-pick__list, .filter-pick__list--end { left: 0; right: var(--s5); min-width: 0; }
 }
 
 .search-hit__main { display: grid; gap: var(--s1); }
