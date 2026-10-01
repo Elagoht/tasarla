@@ -68,6 +68,21 @@ if (meMenu) {
   });
 }
 
+// A page going to a board or a card hands its title the tile or card the
+// reader clicked: both are named "target" for the view transition (base.css).
+// This page's own target, if it has one, stands aside so the name is unique.
+addEventListener("pageswap", (e) => {
+  const url = e.activation?.entry?.url;
+  if (!e.viewTransition || !url) return;
+  const to = new URL(url);
+  const link = [...document.querySelectorAll("a[href]")].find(
+    (a) => a.href === to.href && (a.matches(".tile, .card__title, .list-rows__title, .nav__item, .gantt__label a") || a.closest(".gantt__bar")),
+  );
+  if (!link) return;
+  for (const el of document.querySelectorAll(".board-head h1, .card-panel--page .cardp__title")) el.style.viewTransitionName = "none";
+  (link.closest(".card") ?? link).style.viewTransitionName = "target";
+});
+
 for (const toast of document.querySelectorAll("[data-toast]")) {
   setTimeout(() => {
     toast.classList.add("is-leaving");

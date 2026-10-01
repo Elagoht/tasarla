@@ -3,6 +3,7 @@
 .shell { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100vh; }
 
 .sidebar {
+  view-transition-name: sidebar;
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--s4);
   padding: var(--s4) var(--s3);
@@ -75,7 +76,7 @@ a.nav__heading:hover { color: var(--accent-strong); }
 .page { max-width: 980px; }
 .page--narrow { max-width: 640px; }
 
-.mobilebar { display: none; }
+.mobilebar { display: none; view-transition-name: mobilebar; }
 
 @media (max-width: 900px) {
   .shell { grid-template-columns: minmax(0, 1fr); }

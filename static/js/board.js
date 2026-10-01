@@ -38,6 +38,34 @@ function setupSortables() {
   }
 }
 
+// The board's own updates — a drop, a refused one, a new card — move the cards
+// to their new places in a view transition: each card is named by its id
+// before the update and again after it (the update drops the names with the
+// rest of what the server did not send), so a card slides rather than jumps.
+function nameCards(name) {
+  for (const c of board.querySelectorAll(".card")) c.style.viewTransitionName = name ? "card-" + c.dataset.card : "";
+}
+
+// inTransition puts html into the board and lets it go on: the board is held
+// while a card is dragged or added, and takes the answer on resume. It settles
+// once the board shows the answer.
+function inTransition(html) {
+  const update = () => {
+    live()?.put(board, html);
+    live()?.resume(board);
+    nameCards(true);
+  };
+  if (!document.startViewTransition || reduced()) {
+    update();
+    nameCards(false);
+    return Promise.resolve();
+  }
+  nameCards(true);
+  const t = document.startViewTransition(update);
+  t.finished.finally(() => nameCards(false));
+  return t.updateCallbackDone.catch(() => {});
+}
+
 // Completing: a card dropped into a done column is ticked off — a ring draws
 // round a tick — and, once the server agrees, folds away; the board's answer
 // no longer holds it. Refused, the mark goes and the card goes back.
@@ -69,6 +97,7 @@ function stopCompleting(card) {
 }
 
 async function onDrop(evt) {
+  let resumed = false;
   const card = evt.item;
   const form = new FormData();
   form.set("op", "move");
@@ -96,7 +125,8 @@ async function onDrop(evt) {
       const html = await res.text();
       if (completing && res.ok) await finishCompleting(card, started);
       else if (completing) stopCompleting(card);
-      live()?.put(board, html);
+      inTransition(html);
+      resumed = true;
     } else {
       if (completing) stopCompleting(card);
       live()?.refresh(board);
@@ -105,7 +135,7 @@ async function onDrop(evt) {
     if (completing) stopCompleting(card);
     live()?.refresh(board);
   } finally {
-    live()?.resume(board);
+    if (!resumed) live()?.resume(board);
     setupSortables();
   }
 }
@@ -125,8 +155,7 @@ async function addCard(form) {
       credentials: "same-origin",
     });
     if (res.ok || res.status === 422) {
-      live()?.put(board, await res.text());
-      live()?.resume(board);
+      await inTransition(await res.text());
       const again = board.querySelector(`.add-card__form input[name="column"][value="${CSS.escape(column ?? "")}"]`)?.closest("details");
       if (again) {
         const area = again.querySelector("textarea");

@@ -1,7 +1,7 @@
 /* Board: columns of paper cards on the desk. */
 
 .board-head { padding-right: var(--s5); }
-.board-head h1 { font-size: var(--text-2xl); font-weight: 700; }
+.board-head h1 { font-size: var(--text-2xl); font-weight: 700; view-transition-name: target; width: fit-content; }
 
 .board { position: relative; }
 .board-alert { margin: 0 var(--s5) var(--s4) 0; max-width: 720px; transition: opacity 250ms var(--ease); }

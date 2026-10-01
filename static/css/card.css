@@ -13,6 +13,7 @@
 .cardp__crumbs .icon { width: 14px; height: 14px; color: var(--ink-faint); }
 .cardp__close { margin-left: auto; }
 .card-panel--page .cardp__close { display: none; }
+.card-panel--page .cardp__title { view-transition-name: target; }
 
 .cardp__title-form { display: grid; gap: var(--s1); }
 .cardp__title {
