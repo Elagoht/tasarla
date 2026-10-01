@@ -114,7 +114,16 @@ async function onDrop(evt) {
   form.set("expected_from", card.dataset.column);
   form.set("expected_version", card.dataset.version);
   form.set("_csrf", csrfToken());
-  const completing = evt.from !== evt.to && evt.to.closest(".column")?.hasAttribute("data-done");
+  const lanes = board.querySelector(".columns--lanes");
+  if (lanes) {
+    // A cell is a lane's part of a column: the server places the card by the
+    // card below it, and gives it the lane's value.
+    form.set("lane", lanes.dataset.lane);
+    form.set("lane_value", evt.to.dataset.laneValue);
+    const below = card.nextElementSibling;
+    form.set("before_card_id", below && below.matches(".card") ? below.dataset.card : "");
+  }
+  const completing = evt.from !== evt.to && evt.to.hasAttribute("data-done");
   try {
     // Dropped where it started: nothing to tell the server.
     if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
@@ -182,6 +191,21 @@ async function addCard(form) {
   }
 }
 
+// A lane folded by the reader stays folded through the pushes that follow:
+// the server sends every lane open.
+const folded = new Set();
+board?.addEventListener("toggle", (e) => {
+  const lane = e.target;
+  if (!(lane instanceof HTMLDetailsElement) || !lane.dataset.laneKey) return;
+  if (lane.open) folded.delete(lane.dataset.laneKey);
+  else folded.add(lane.dataset.laneKey);
+}, true);
+function refold() {
+  for (const lane of board.querySelectorAll("details.lane[data-lane-key]")) {
+    if (folded.has(lane.dataset.laneKey)) lane.open = false;
+  }
+}
+
 // A refused move is explained above the columns for a few seconds.
 function dismissAlerts() {
   for (const alert of board.querySelectorAll("[data-board-alert]")) {
@@ -201,6 +225,7 @@ if (board) {
     addCard(form);
   });
   board.addEventListener("collage:swap", () => {
+    refold();
     setupSortables();
     dismissAlerts();
   });

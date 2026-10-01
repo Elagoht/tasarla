@@ -23,6 +23,20 @@ function query() {
   return params.toString();
 }
 
+// The bar's settings (the lanes, the Gantt chart's scale…) are not the filter:
+// they stay in the URL, but do not count towards "a filter is on" and survive
+// Clear.
+function params(settingsOnly) {
+  const out = new URLSearchParams();
+  for (const el of bar.elements) {
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement) || !el.name) continue;
+    if (settingsOnly !== el.hasAttribute("data-filter-setting")) continue;
+    if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio") && !el.checked) continue;
+    if (el.value.trim() !== "") out.append(el.name, el.value.trim());
+  }
+  return out;
+}
+
 function withQuery(url, q) {
   const base = url.split("?")[0];
   return q ? base + "?" + q : base;
@@ -31,8 +45,11 @@ function withQuery(url, q) {
 // The bar sits outside the live fragment, so the server's rendering of it is
 // that of the page load: the Clear link and the pickers' marks follow the form.
 const clear = bar?.querySelector("[data-filter-clear]");
-function syncBar(q) {
-  if (clear) clear.hidden = q === "";
+function syncBar() {
+  if (clear) {
+    clear.hidden = params(false).toString() === "";
+    clear.href = withQuery(location.pathname, params(true).toString());
+  }
   for (const pick of bar.querySelectorAll(".filter-pick")) {
     pick.classList.toggle("is-on", pick.querySelector("input:checked") !== null);
   }
@@ -43,7 +60,7 @@ function apply() {
   clearTimeout(timer);
   const q = query();
   history.replaceState(history.state, "", withQuery(location.pathname, q));
-  syncBar(q);
+  syncBar();
   target.dataset.collageFragment = withQuery(target.dataset.collageFragment, q);
   if (target.dataset.moveUrl) target.dataset.moveUrl = withQuery(target.dataset.moveUrl, q);
   const live = window.collageLive;
