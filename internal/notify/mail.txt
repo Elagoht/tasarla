@@ -1,0 +1,11 @@
+{{t "mail.greeting" "name" .Name}}
+
+{{.Sentence}}
+{{with .Board}}{{t "mail.board" "board" .}}
+{{end}}{{with .Excerpt}}
+> {{.}}
+{{end}}
+{{t "mail.open"}}: {{.CardURL}}
+
+--
+{{t "mail.prefs" "url" .SettingsURL}}

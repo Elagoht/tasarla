@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="{{.Locale}}">
+<body style="font-family: system-ui, sans-serif; line-height: 1.5">
+  <p>{{t "mail.greeting" "name" .Name}}</p>
+  <p>{{.Sentence}}</p>
+  {{with .Board}}<p>{{t "mail.board" "board" .}}</p>{{end}}
+  {{with .Excerpt}}<blockquote>{{.}}</blockquote>{{end}}
+  <p><a href="{{.CardURL}}">{{t "mail.open"}}</a><br>{{.CardURL}}</p>
+  <hr>
+  <p style="color: #6b7280; font-size: 0.9em">{{t "mail.prefs" "url" .SettingsURL}}</p>
+</body>
+</html>
