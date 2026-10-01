@@ -59,7 +59,8 @@
     "removed": "{name} takımdan çıkarıldı.",
     "role_changed": "{name} için rol güncellendi.",
     "user_not_found": "Bu e-postayla kayıtlı bir kullanıcı yok. Kullanıcının önce bir kez giriş yapması gerekir.",
-    "user_ambiguous": "Bu e-posta birden fazla kullanıcıya ait."
+    "user_ambiguous": "Bu e-posta birden fazla kullanıcıya ait.",
+    "self_change": "Kendi rolünüzü değiştiremezsiniz."
   },
   "users": {
     "title": "Kullanıcılar",
@@ -76,7 +77,8 @@
     "enable": "Etkinleştir",
     "saved": "Kaydedildi.",
     "last_admin": "En az bir aktif admin kalmalı.",
-    "self_disable": "Kendi hesabınızı devre dışı bırakamazsınız."
+    "self_disable": "Kendi hesabınızı devre dışı bırakamazsınız.",
+    "self_change": "Kendi rolünüzü değiştiremezsiniz."
   },
   "board": {
     "default_columns": {

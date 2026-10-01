@@ -15,9 +15,9 @@
           <input type="hidden" name="op" value="set_admin">
           <input type="hidden" name="user_id" value="{{.ID}}">
           {{if .IsAdmin}}
-          <input type="hidden" name="value" value="0"><button type="submit">{{t "users.revoke_admin"}}</button>
+          <input type="hidden" name="value" value="0"><button type="submit" {{if eq .ID $.Me}}disabled title="{{t "users.self_change"}}"{{end}}>{{t "users.revoke_admin"}}</button>
           {{else}}
-          <input type="hidden" name="value" value="1"><button type="submit">{{t "users.make_admin"}}</button>
+          <input type="hidden" name="value" value="1"><button type="submit" {{if eq .ID $.Me}}disabled title="{{t "users.self_change"}}"{{end}}>{{t "users.make_admin"}}</button>
           {{end}}
         </form>
       </td>
@@ -28,9 +28,9 @@
           <input type="hidden" name="op" value="set_disabled">
           <input type="hidden" name="user_id" value="{{.ID}}">
           {{if .Disabled}}
-          <input type="hidden" name="value" value="0"><button type="submit">{{t "users.enable"}}</button>
+          <input type="hidden" name="value" value="0"><button type="submit" {{if eq .ID $.Me}}disabled title="{{t "users.self_change"}}"{{end}}>{{t "users.enable"}}</button>
           {{else}}
-          <input type="hidden" name="value" value="1"><button type="submit">{{t "users.disable"}}</button>
+          <input type="hidden" name="value" value="1"><button type="submit" {{if eq .ID $.Me}}disabled title="{{t "users.self_change"}}"{{end}}>{{t "users.disable"}}</button>
           {{end}}
         </form>
       </td>

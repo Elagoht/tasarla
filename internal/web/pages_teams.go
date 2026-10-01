@@ -23,6 +23,7 @@ type teamsView struct {
 }
 
 type teamView struct {
+	Me        int64
 	Team      store.Team
 	Boards    []store.Board
 	Members   []store.Member
@@ -135,7 +136,8 @@ func (h *handlers) loadTeam(ctx context.Context, rc *collage.RenderContext) (tea
 		return teamView{}, err
 	}
 	members, err := h.store.Members(ctx, team.ID)
-	return teamView{Team: team, Boards: boards, Members: members, Roles: store.Roles, CanManage: access.CanManage}, err
+	user, _ := currentUser(ctx)
+	return teamView{Me: user.ID, Team: team, Boards: boards, Members: members, Roles: store.Roles, CanManage: access.CanManage}, err
 }
 
 func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*collage.ActionResult, error) {
@@ -195,6 +197,9 @@ func (h *handlers) changeMember(ctx context.Context, rc *collage.RenderContext, 
 	userID, err := strconv.ParseInt(v.Value("user_id"), 10, 64)
 	if err != nil {
 		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	if me, err := currentUser(ctx); err == nil && me.ID == userID {
+		return collage.NoContent(http.StatusForbidden), nil // nobody changes their own role
 	}
 	target, err := h.store.UserByID(ctx, userID)
 	if errors.Is(err, store.ErrNotFound) {

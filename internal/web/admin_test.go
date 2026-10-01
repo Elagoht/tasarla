@@ -29,22 +29,23 @@ func TestADMIN_EMAILSMakesTheFirstAdmin(t *testing.T) {
 	}
 }
 
+// The only admin cannot step down: their own role is not theirs to change.
+// (The store's last-admin guard is tested in internal/store.)
 func TestTheOnlyAdminCannotStepDown(t *testing.T) {
 	h := newHarness(t, "admin@example.com")
 	admin := h.signedIn("admin", "admin@example.com")
 	id := strconv.FormatInt(h.user("admin@example.com").ID, 10)
-
-	res := admin.Submit("/admin/users", "/admin/users", url.Values{"op": {"set_admin"}, "user_id": {id}, "value": {"0"}})
-	if res.Status != http.StatusSeeOther {
-		t.Fatalf("status = %d", res.Status)
+	for _, value := range []url.Values{
+		{"op": {"set_admin"}, "user_id": {id}, "value": {"0"}},
+		{"op": {"set_disabled"}, "user_id": {id}, "value": {"1"}},
+	} {
+		if res := admin.Submit("/admin/users", "/admin/users", value); res.Status != http.StatusForbidden {
+			t.Fatalf("%s on myself = %d, want 403", value.Get("op"), res.Status)
+		}
 	}
-	mustContain(t, admin.Get("/admin/users").Body, "En az bir aktif admin kalmalı.")
-	if !h.user("admin@example.com").IsAdmin {
-		t.Fatal("the only admin was demoted")
+	if u := h.user("admin@example.com"); !u.IsAdmin || u.Disabled() {
+		t.Fatal("the only admin changed their own role")
 	}
-
-	res = admin.Submit("/admin/users", "/admin/users", url.Values{"op": {"set_disabled"}, "user_id": {id}, "value": {"1"}})
-	mustContain(t, admin.Get("/admin/users").Body, "Kendi hesabınızı devre dışı bırakamazsınız.")
 }
 
 func TestDisablingAUserSignsThemOut(t *testing.T) {

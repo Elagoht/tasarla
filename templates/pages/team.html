@@ -37,10 +37,10 @@
           <input type="hidden" name="op" value="set_role">
           <input type="hidden" name="user_id" value="{{.User.ID}}">
           {{$current := .Role}}
-          <select name="role" aria-label="{{t "team.role"}}">
+          <select name="role" aria-label="{{t "team.role"}}" {{if eq .User.ID $.Me}}disabled title="{{t "team.self_change"}}"{{end}}>
             {{range $.Roles}}<option value="{{.}}" {{if eq . $current}}selected{{end}}>{{t (printf "team.roles.%s" .)}}</option>{{end}}
           </select>
-          <button type="submit">{{t "team.save"}}</button>
+          <button type="submit" {{if eq .User.ID $.Me}}disabled{{end}}>{{t "team.save"}}</button>
         </form>
         {{else}}
         {{t (printf "team.roles.%s" .Role)}}
@@ -52,7 +52,7 @@
           {{csrfToken}}
           <input type="hidden" name="op" value="remove_member">
           <input type="hidden" name="user_id" value="{{.User.ID}}">
-          <button type="submit">{{t "team.remove"}}</button>
+          <button type="submit" {{if eq .User.ID $.Me}}disabled title="{{t "team.self_change"}}"{{end}}>{{t "team.remove"}}</button>
         </form>
       </td>
       {{end}}

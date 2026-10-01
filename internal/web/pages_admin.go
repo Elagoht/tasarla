@@ -68,15 +68,16 @@ func (h *handlers) adminUsersPost(ctx context.Context, rc *collage.RenderContext
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
 	on := v.Value("value") == "1"
+	// Nobody changes their own role or locks themselves out; the page shows
+	// those buttons disabled, and a crafted post is refused.
+	if userID == admin.ID {
+		return collage.NoContent(http.StatusForbidden), nil
+	}
 
 	switch v.Value("op") {
 	case "set_admin":
 		err = h.store.SetAdmin(ctx, userID, on)
 	case "set_disabled":
-		if on && userID == admin.ID {
-			flash.Add(rc, flash.Error, i18n.T(rc, "users.self_disable"))
-			return h.redirectTo(rc, "admin-users")
-		}
 		err = h.store.SetDisabled(ctx, userID, on)
 	default:
 		return collage.NoContent(http.StatusBadRequest), nil

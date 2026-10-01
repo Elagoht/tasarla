@@ -59,7 +59,8 @@
     "removed": "{name} was removed from the team.",
     "role_changed": "Role updated for {name}.",
     "user_not_found": "No user has this email. They need to sign in once first.",
-    "user_ambiguous": "More than one user has this email."
+    "user_ambiguous": "More than one user has this email.",
+    "self_change": "You cannot change your own role."
   },
   "users": {
     "title": "Users",
@@ -76,7 +77,8 @@
     "enable": "Enable",
     "saved": "Saved.",
     "last_admin": "At least one active admin must remain.",
-    "self_disable": "You cannot disable your own account."
+    "self_disable": "You cannot disable your own account.",
+    "self_change": "You cannot change your own role."
   },
   "board": {
     "default_columns": {
