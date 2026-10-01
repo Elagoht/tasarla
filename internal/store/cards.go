@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	"kanban/internal/rules"
 )
 
 // ErrConflict reports that a card changed since the reader loaded it.
@@ -59,6 +61,16 @@ func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, title s
 	if err := lockBoard(ctx, tx, boardID); err != nil {
 		return Card{}, err
 	}
+	snap, err := loadSnapshot(ctx, tx, boardID, Card{})
+	if err != nil {
+		return Card{}, err
+	}
+	if _, ok := snap.Columns[columnID]; !ok {
+		return Card{}, ErrNotFound
+	}
+	if err := ruleError(rules.EvaluateCreate(columnID, snap)); err != nil {
+		return Card{}, err
+	}
 	return scanCard(tx.QueryRow(ctx, `
 		INSERT INTO cards (board_id, column_id, position, title, created_by)
 		SELECT $1, c.id,
@@ -94,21 +106,48 @@ type CardFields struct {
 	Priority    *int16
 }
 
-// UpdateCard changes a card's fields if it is still at expectedVersion.
+// UpdateCard changes a card's fields if it is still at expectedVersion. Giving
+// the card to someone new checks their WIP (spec §5.2).
 func (s *Store) UpdateCard(ctx context.Context, boardID, cardID int64, expectedVersion int, f CardFields) (Card, error) {
-	card, err := scanCard(s.pool.QueryRow(ctx, `
-		UPDATE cards SET title = $4, description = $5, assignee_id = $6, estimate = $7,
-		       due_date = $8, priority = $9, version = version + 1
-		WHERE id = $2 AND board_id = $1 AND version = $3
-		RETURNING `+cardColumns,
-		boardID, cardID, expectedVersion, f.Title, f.Description, f.AssigneeID, f.Estimate, f.DueDate, f.Priority))
-	if errors.Is(err, ErrNotFound) {
-		if _, err := s.Card(ctx, boardID, cardID); err != nil {
-			return Card{}, err
-		}
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return Card{}, err
+	}
+	defer tx.Rollback(ctx)
+	if err := lockBoard(ctx, tx, boardID); err != nil {
+		return Card{}, err
+	}
+	card, err := scanCard(tx.QueryRow(ctx,
+		`SELECT `+cardColumns+` FROM cards WHERE id = $2 AND board_id = $1`, boardID, cardID))
+	if err != nil {
+		return Card{}, err
+	}
+	if card.Version != expectedVersion {
 		return Card{}, ErrConflict
 	}
-	return card, err
+	if f.AssigneeID != nil && (card.AssigneeID == nil || *card.AssigneeID != *f.AssigneeID) && card.ArchivedAt == nil {
+		snap, err := loadSnapshot(ctx, tx, boardID, card)
+		if err != nil {
+			return Card{}, err
+		}
+		snap.Card.AssigneeID = *f.AssigneeID
+		if err := assigneeWIP(ctx, tx, &snap, boardID, card.ID); err != nil {
+			return Card{}, err
+		}
+		if err := ruleError(rules.EvaluateAssign(card.ColumnID, snap)); err != nil {
+			return Card{}, err
+		}
+	}
+	card, err = scanCard(tx.QueryRow(ctx, `
+		UPDATE cards SET title = $3, description = $4, assignee_id = $5, estimate = $6,
+		       due_date = $7, priority = $8, version = version + 1
+		WHERE id = $2 AND board_id = $1
+		RETURNING `+cardColumns,
+		boardID, cardID, f.Title, f.Description, f.AssigneeID, f.Estimate, f.DueDate, f.Priority))
+	if err != nil {
+		return Card{}, err
+	}
+	return card, tx.Commit(ctx)
 }
 
 // ArchiveCard takes a card off the board.

@@ -5,6 +5,8 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+
+	"kanban/internal/rules"
 )
 
 // Move is a request to put a card at an index of a column, made by a reader
@@ -16,6 +18,7 @@ type Move struct {
 	ToIndex         int
 	ExpectedFrom    int64
 	ExpectedVersion int
+	Actor           rules.Actor
 }
 
 // MoveCard moves a card inside one transaction that holds the board's lock, so
@@ -53,6 +56,20 @@ func moveCard(ctx context.Context, tx pgx.Tx, m Move) (Card, error) {
 	}
 	if card.ColumnID != m.ExpectedFrom || card.Version != m.ExpectedVersion {
 		return Card{}, ErrConflict
+	}
+	if card.ColumnID != m.ToColumnID {
+		snap, err := loadSnapshot(ctx, tx, m.BoardID, card)
+		if err != nil {
+			return Card{}, err
+		}
+		actor, err := actorRoles(ctx, tx, m.BoardID, m.Actor)
+		if err != nil {
+			return Card{}, err
+		}
+		move := rules.Move{CardID: card.ID, FromColumnID: card.ColumnID, ToColumnID: m.ToColumnID, ToIndex: m.ToIndex}
+		if err := ruleError(rules.Evaluate(actor, move, snap)); err != nil {
+			return Card{}, err
+		}
 	}
 	return placeCard(ctx, tx, card, m.ToColumnID, m.ToIndex)
 }
