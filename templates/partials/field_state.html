@@ -1,0 +1,2 @@
+{{/* field-state: what a card field shows beside it after a save — why it was refused, or that it was saved. The mark is shown by panel.js, which keeps it through the pushes that follow. */}}
+{{define "field-state"}}{{range .Notices}}<p class="field__error" role="alert">{{.}}</p>{{end}}<span class="saved-mark" data-saved-for="{{.Name}}"{{if .Saved}} data-just-saved{{end}} role="status">{{template "icon" "check"}} {{t "card.saved_mark"}}</span>{{end}}

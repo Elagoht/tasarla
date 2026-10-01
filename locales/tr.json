@@ -102,7 +102,10 @@
     "over_limit": "Limit aşıldı",
     "blocked": "Bloklu",
     "unassigned": "Atanmamış",
-    "open_card": "Kartı aç"
+    "open_card": "Kartı aç",
+    "no_cards": "Kart yok",
+    "wip_limit": "Kart sayısı / WIP limiti",
+    "dismiss": "Kapat"
   },
   "card": {
     "title": "Başlık",
@@ -149,7 +152,14 @@
     "done": "tamamlandı",
     "title_invalid": "Başlık boş olamaz ve en fazla 200 karakter olabilir.",
     "description_invalid": "Açıklama en fazla 10000 karakter olabilir.",
-    "priority_invalid": "Geçerli bir öncelik seçin."
+    "priority_invalid": "Geçerli bir öncelik seçin.",
+    "sections": "Kart bölümleri",
+    "tab_details": "Detay",
+    "edit_description": "Açıklamayı düzenle",
+    "add_description": "Açıklama eklemek için tıklayın…",
+    "no_description": "Açıklama yok.",
+    "no_blockers": "Bu kartı bloklayan kart yok.",
+    "saved_mark": "Kaydedildi"
   },
   "tasks": {
     "title": "Bana atananlar",

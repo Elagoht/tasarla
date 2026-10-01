@@ -51,15 +51,15 @@ func baseLayout() *collage.Fragment {
 }
 
 type appView struct {
-	User     store.User
-	Hue      int64
-	Initial  string
-	Locale   string
-	Page     string // the registered name of the page being shown
-	Wide     bool   // the board: no reading-width limit
-	Teams    []navTeam
-	BoardID  int64
-	Flashes  []flashView
+	User    store.User
+	Hue     int64
+	Initial string
+	Locale  string
+	Page    string // the registered name of the page being shown
+	Wide    bool   // the board: no reading-width limit
+	Teams   []navTeam
+	BoardID int64
+	Flashes []flashView
 }
 
 type navTeam struct {

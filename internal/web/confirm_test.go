@@ -31,4 +31,3 @@ func TestDestructiveActionsAskFirst(t *testing.T) {
 		t.Fatal("not archived after confirmation")
 	}
 }
-

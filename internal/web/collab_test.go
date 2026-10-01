@@ -107,7 +107,7 @@ func TestActivityShowsWhoDidWhatAndWhen(t *testing.T) {
 	c := b.card(t, 0, "Card")
 	b.lead.SubmitFetch(b.path, b.path, moveForm(c, b.cols[1].ID, 0, b.cols[0].ID, c.Version))
 	moved, _ := b.h.store.Card(context.Background(), b.board.ID, c.ID)
-	b.member.Submit(b.cardPath(c), b.cardPath(c), updateForm(moved, map[string]string{"title": "Renamed"}))
+	b.member.Submit(b.cardPath(c), b.cardPath(c), fieldForm(moved, "title", "Renamed"))
 
 	page := b.member.Get(b.cardPath(c)).Body
 	mustContain(t, page, "Lead kartı Todo kolonundan Doing kolonuna taşıdı", "Member kartı düzenledi: başlık", `datetime="`)

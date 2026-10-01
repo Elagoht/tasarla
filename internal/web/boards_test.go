@@ -92,7 +92,7 @@ func TestBoardShowsItsCards(t *testing.T) {
 		t.Fatalf("GET board = %d", res.Status)
 	}
 	mustContain(t, res.Body, "Sprint", "Todo", "Doing", "Done", "Write the spec",
-		`data-collage-fragment="`+b.path+`/columns"`, `data-collage-push`, `data-collage-swap="morph"`, `src="/static/board.`, `src="/static/vendor/Sortable.min.`)
+		`data-collage-fragment="`+b.path+`/columns"`, `data-collage-push`, `data-collage-swap="morph"`, `src="/static/js/board.`, `src="/static/vendor/Sortable.min.`)
 	frag := b.member.Get(b.path + "/columns")
 	if frag.Status != http.StatusOK || !strings.Contains(frag.Body, "Write the spec") || strings.Contains(frag.Body, "<html") {
 		t.Fatalf("columns fragment = %d:\n%s", frag.Status, frag.Body)
@@ -189,4 +189,32 @@ func TestMoveWithoutScriptRedirectsToTheCard(t *testing.T) {
 		t.Fatalf("stale fallback move = %d", res.Status)
 	}
 	mustContain(t, b.member.Get(res.Location()).Body, "Bu kart başka biri tarafından değiştirildi.")
+}
+
+func TestAddingACardInAColumn(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	if err := b.h.store.UpdateColumn(ctx, b.board.ID, b.cols[1].ID, store.ColumnUpdate{Name: "Doing", AllowCreate: true}); err != nil {
+		t.Fatal(err)
+	}
+	page := b.member.Get(b.path).Body
+	mustContain(t, page, `name="column" value="`+id(b.cols[1].ID)+`"`)
+	if strings.Contains(page, `name="column" value="`+id(b.cols[2].ID)+`"`) {
+		t.Error("a column cards are not made in offers to add one")
+	}
+	res := b.member.Submit(b.path, b.path, url.Values{"op": {"create_card"}, "column": {id(b.cols[1].ID)}, "title": {"Here"}})
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("create in column = %d:\n%s", res.Status, res.Body)
+	}
+	cards, _ := b.h.store.BoardCards(ctx, b.board.ID)
+	if len(cards) != 1 || cards[0].Card.ColumnID != b.cols[1].ID {
+		t.Fatalf("cards = %+v", cards)
+	}
+	// A column of no board, or one cards are not made in, is refused.
+	if res := b.member.Submit(b.path, b.path, url.Values{"op": {"create_card"}, "column": {"999999"}, "title": {"X"}}); res.Status != http.StatusBadRequest {
+		t.Errorf("unknown column = %d, want 400", res.Status)
+	}
+	if res := b.member.Submit(b.path, b.path, url.Values{"op": {"create_card"}, "column": {id(b.cols[2].ID)}, "title": {"X"}}); res.Status != http.StatusBadRequest {
+		t.Errorf("a column cards are not made in = %d, want 400", res.Status)
+	}
 }

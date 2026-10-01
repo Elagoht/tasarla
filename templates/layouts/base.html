@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   {{hoist "head"}}
+  <link rel="icon" href="{{asset "/static/favicon.svg"}}" type="image/svg+xml">
   <link rel="preload" href="/static/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{asset "/static/css/tokens.css"}}">
   <link rel="stylesheet" href="{{asset "/static/css/base.css"}}">
@@ -16,6 +17,7 @@
   <link rel="stylesheet" href="{{asset "/static/css/settings.css"}}">
   {{liveClient}}
   <script type="module" src="{{asset "/static/js/app.js"}}"></script>
+  <script type="module" src="{{asset "/static/js/confirm.js"}}"></script>
 </head>
 
 <body>

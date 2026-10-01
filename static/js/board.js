@@ -1,9 +1,8 @@
-// board.js: drag and drop between columns, and the card dialog (spec §8).
-// Sortable is loaded before this module as a classic script (window.Sortable);
-// collage-live's client provides window.collageLive.
+// board.js: drag and drop between columns (spec §8). Sortable is loaded
+// before this module as a classic script (window.Sortable); collage-live's
+// client provides window.collageLive.
 
 const board = document.getElementById("board");
-const dialog = document.getElementById("card-dialog");
 
 function csrfToken() {
   const input = document.querySelector('input[name="_csrf"]');
@@ -25,7 +24,11 @@ function setupSortables() {
     if (window.Sortable.get(list)) continue;
     window.Sortable.create(list, {
       group: "cards",
-      animation: 120,
+      animation: 150,
+      draggable: ".card",
+      ghostClass: "card--ghost",
+      chosenClass: "card--chosen",
+      dragClass: "card--drag",
       onStart: () => live()?.pause(board),
       onEnd: onDrop,
     });
@@ -66,42 +69,26 @@ async function onDrop(evt) {
   }
 }
 
-// openCard loads a card's panel into the dialog and puts its URL in the
-// address bar. Without a script the link opens the card page.
-async function openCard(href, push) {
-  const res = await fetch(href.replace(/\/?$/, "/panel"), { credentials: "same-origin" });
-  if (!res.ok) {
-    window.location.href = href;
-    return;
+// A refused move is explained above the columns for a few seconds.
+function dismissAlerts() {
+  for (const alert of board.querySelectorAll("[data-board-alert]")) {
+    setTimeout(() => {
+      alert.classList.add("is-leaving");
+      setTimeout(() => alert.remove(), 250);
+    }, 6000);
   }
-  const body = dialog.querySelector(".card-dialog__body");
-  body.innerHTML = "";
-  const panel = document.createElement("div");
-  panel.id = "card-panel";
-  panel.className = "card-panel";
-  panel.dataset.collageFragment = new URL(href.replace(/\/?$/, "/panel"), window.location.href).pathname;
-  panel.dataset.collagePush = "";
-  panel.dataset.collageSwap = "morph";
-  panel.innerHTML = await res.text();
-  body.append(panel);
-  live()?.scan();
-  if (push) history.pushState({ card: href }, "", href);
-  if (!dialog.open) dialog.showModal();
 }
 
-if (board && dialog) {
-  board.addEventListener("click", (e) => {
-    const link = e.target.closest("a.card__title");
-    if (!link || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    e.preventDefault();
-    openCard(link.href, true);
+if (board) {
+  board.addEventListener("collage:swap", () => {
+    setupSortables();
+    dismissAlerts();
   });
-  dialog.addEventListener("close", () => {
-    if (history.state && history.state.card) history.back();
-  });
-  window.addEventListener("popstate", () => {
-    if (dialog.open && !(history.state && history.state.card)) dialog.close();
-  });
-  board.addEventListener("collage:swap", setupSortables);
+  // A column's "Add card" opens with the title field ready.
+  board.addEventListener("toggle", (e) => {
+    const details = e.target;
+    if (details instanceof HTMLDetailsElement && details.open) details.querySelector("textarea")?.focus();
+  }, true);
   setupSortables();
+  dismissAlerts();
 }

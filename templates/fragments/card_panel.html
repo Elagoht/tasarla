@@ -1,234 +1,375 @@
 {{$self := pageURL "card" "id" .Board.ID "card" .Card.ID}}
 {{$edit := and .Access.CanEdit (not .Archived)}}
-{{if .Notices}}<ul class="board-notice" role="alert">{{range .Notices}}<li>{{.}}</li>{{end}}</ul>{{end}}
-<article class="card-detail">
-  <h1>{{.Card.Title}}</h1>
-  <p class="muted">{{t "card.column"}}: {{.Column.Name}}</p>
-  {{if .Archived}}<p class="board-notice">{{t "card.is_archived"}}</p>{{end}}
-
-  {{if $edit}}
-  <form class="form" method="post" action="{{$self}}" data-collage-target="#card-panel">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="update">
-    <input type="hidden" name="expected_version" value="{{.Card.Version}}">
-    <label for="card-title">{{t "card.title"}}</label>
-    <input id="card-title" name="title" value="{{fieldValue "title" .Card.Title}}" required maxlength="200">
-    {{with fieldError "title"}}<p class="error">{{.}}</p>{{end}}
-    <label for="card-description">{{t "card.description"}}</label>
-    <textarea id="card-description" name="description" rows="5" maxlength="10000">{{fieldValue "description" .Card.Description}}</textarea>
-    {{with fieldError "description"}}<p class="error">{{.}}</p>{{end}}
-    <label for="card-assignee">{{t "card.assignee"}}</label>
-    {{$assignee := fieldValue "assignee_id" .Assignee}}
-    <select id="card-assignee" name="assignee_id">
-      <option value="">{{t "card.unassigned"}}</option>
-      {{range .Members}}<option value="{{.User.ID}}" {{if eq (printf "%d" .User.ID) $assignee}}selected{{end}}>{{.User.Name}}</option>{{end}}
-    </select>
-    {{with fieldError "assignee_id"}}<p class="error">{{.}}</p>{{end}}
-    <label for="card-estimate">{{t "card.estimate"}}</label>
-    <input id="card-estimate" name="estimate" inputmode="decimal" value="{{fieldValue "estimate" .Estimate}}">
-    {{with fieldError "estimate"}}<p class="error">{{.}}</p>{{end}}
-    <label for="card-due">{{t "card.due_date"}}</label>
-    <input id="card-due" name="due_date" type="date" value="{{fieldValue "due_date" .DueDate}}">
-    {{with fieldError "due_date"}}<p class="error">{{.}}</p>{{end}}
-    <label for="card-priority">{{t "card.priority"}}</label>
-    {{$priority := fieldValue "priority" .Priority}}
-    <select id="card-priority" name="priority">
-      <option value="">{{t "card.none"}}</option>
-      {{range .Priorities}}<option value="{{.}}" {{if eq . $priority}}selected{{end}}>{{t (printf "card.priorities.%s" .)}}</option>{{end}}
-    </select>
-    <button type="submit">{{t "card.save"}}</button>
-  </form>
-
-  <form class="inline" method="post" action="{{pageURL "board" "id" .Board.ID}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="move">
-    <input type="hidden" name="card" value="{{.Card.ID}}">
-    <input type="hidden" name="expected_from" value="{{.Card.ColumnID}}">
-    <input type="hidden" name="expected_version" value="{{.Card.Version}}">
-    <label for="card-move">{{t "card.move"}}</label>
-    <select id="card-move" name="to_column">
-      {{range .Columns}}<option value="{{.ID}}" {{if eq .ID $.Card.ColumnID}}selected{{end}}>{{.Name}}</option>{{end}}
-    </select>
-    <button type="submit">{{t "card.move_button"}}</button>
-  </form>
-  {{else}}
-  {{with .Card.Description}}<p class="card-detail__description">{{richText .}}</p>{{end}}
-  {{end}}
-
-  <h2>{{t "card.labels"}}</h2>
-  {{if .Labels}}
-  <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="labels">
-    {{range .Labels}}
-    <label class="label-choice"><input type="checkbox" name="label" value="{{.Label.ID}}" {{if .Checked}}checked{{end}} {{if not $edit}}disabled{{end}}> <span class="label" data-color="{{.Label.Color}}">{{.Label.Name}}</span></label>
+<article class="cardp">
+  <header class="cardp__head">
+    <div class="cardp__crumbs">
+      <a href="{{pageURL "board" "id" .Board.ID}}">{{.Board.Name}}</a>
+      {{template "icon" "chevron-right"}}
+      <span class="chip" data-column-chip>{{.Column.Name}}</span>
+      <a class="btn btn--quiet btn--sm btn--icon cardp__close" href="{{pageURL "board" "id" .Board.ID}}" data-drawer-close aria-label="{{t "card.close"}}" title="{{t "card.close"}}">{{template "icon" "close"}}</a>
+    </div>
+    {{if $edit}}
+    {{$f := .Field "title"}}
+    <form class="cardp__title-form autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
+      {{csrfToken}}
+      <input type="hidden" name="op" value="set_field">
+      <input type="hidden" name="field" value="title">
+      <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+      <label class="sr-only" for="card-title">{{t "card.title"}}</label>
+      <textarea id="card-title" class="cardp__title" name="value" rows="1" required maxlength="200" data-submit-on-enter{{if $f.Notices}} aria-invalid="true"{{end}}>{{.Card.Title}}</textarea>
+      {{template "field-state" $f}}
+      <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
+    </form>
+    {{else}}
+    <h1 class="cardp__title cardp__title--static">{{.Card.Title}}</h1>
     {{end}}
-    {{if $edit}}<button type="submit">{{t "card.save"}}</button>{{end}}
-  </form>
-  {{else}}
-  <p class="muted">{{t "card.no_labels"}}</p>
-  {{end}}
+  </header>
 
-  <h2>{{t "card.checklist"}}</h2>
-  <ul class="checklist">
-    {{range .Checklist}}
-    <li class="checklist__item{{if .Done}} checklist__item--done{{end}}">
-      <span>{{.Text}}</span>
-      {{if $edit}}
-      <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
-        {{csrfToken}}
-        <input type="hidden" name="op" value="checklist_toggle">
-        <input type="hidden" name="item_id" value="{{.ID}}">
-        <input type="hidden" name="done" value="{{if .Done}}0{{else}}1{{end}}">
-        <button type="submit">{{if .Done}}{{t "card.mark_undone"}}{{else}}{{t "card.mark_done"}}{{end}}</button>
-      </form>
-      <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
-        {{csrfToken}}
-        <input type="hidden" name="op" value="checklist_delete">
-        <input type="hidden" name="item_id" value="{{.ID}}">
-        <button type="submit">{{t "card.delete"}}</button>
-      </form>
-      {{end}}
-    </li>
-    {{end}}
-  </ul>
-  {{if $edit}}
-  <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="checklist_add">
-    <input name="item_text" value="{{fieldValue "item_text"}}" placeholder="{{t "card.checklist_item"}}" aria-label="{{t "card.checklist_item"}}" maxlength="500">
-    <button type="submit">{{t "card.checklist_add"}}</button>
-    {{with fieldError "item_text"}}<p class="error">{{.}}</p>{{end}}
-  </form>
-  {{end}}
+  {{if .Archived}}<p class="alert alert--info">{{template "icon" "archive"}} {{t "card.is_archived"}}</p>{{end}}
+  {{with .TopNotices}}<div class="alert" role="alert">{{template "icon" "flag"}}<ul>{{range .}}<li>{{.}}</li>{{end}}</ul></div>{{end}}
 
-  <h2>{{t "card.dependencies"}}</h2>
-  <h3>{{t "card.blockers"}}</h3>
-  <ul class="deps">
-    {{range .Deps.Blockers}}
-    <li>
-      <a href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted">({{t "card.done"}})</span>{{end}}
-      {{if $edit}}
-      <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
-        {{csrfToken}}
-        <input type="hidden" name="op" value="dep_remove">
-        <input type="hidden" name="blocker_id" value="{{.ID}}">
-        <button type="submit">{{t "card.remove"}}</button>
-      </form>
-      {{end}}
-    </li>
-    {{end}}
-  </ul>
-  {{if and $edit .Candidates}}
-  <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="dep_add">
-    <select name="blocker_id" aria-label="{{t "card.add_blocker"}}">
-      {{range .Candidates}}<option value="{{.Card.ID}}">{{.Card.Title}}</option>{{end}}
-    </select>
-    <button type="submit">{{t "card.add_blocker"}}</button>
-  </form>
-  {{end}}
-  {{if .Deps.Blocking}}
-  <h3>{{t "card.blocking"}}</h3>
-  <ul class="deps">
-    {{range .Deps.Blocking}}<li><a href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted">({{t "card.done"}})</span>{{end}}</li>{{end}}
-  </ul>
-  {{end}}
-
-  <h2>{{t "attachments.title"}}</h2>
-  {{if .Attachments}}
-  <ul class="attachments">
-    {{range .Attachments}}
-    <li>
-      <a href="/files/{{.Attachment.ID}}" rel="noopener">{{.Attachment.Filename}}</a>
-      <span class="muted">{{.Size}} · {{.Attachment.UploaderName}}</span>
-      {{if and $edit .CanDelete}}
-      <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
-        {{csrfToken}}
-        <input type="hidden" name="op" value="attachment_delete">
-        <input type="hidden" name="attachment_id" value="{{.Attachment.ID}}">
-        <button type="submit">{{t "attachments.delete"}}</button>
-      </form>
-      {{end}}
-    </li>
-    {{end}}
-  </ul>
-  {{else}}
-  <p class="muted">{{t "attachments.empty"}}</p>
-  {{end}}
-  {{if $edit}}
-  <form class="inline" method="post" action="{{$self}}" enctype="multipart/form-data">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="attachment_add">
-    <input type="file" name="file" aria-label="{{t "attachments.file"}}" required>
-    <button type="submit">{{t "attachments.upload"}}</button>
-    {{with fieldError "file"}}<p class="error">{{.}}</p>{{end}}
-  </form>
-  {{end}}
-
-  <h2>{{t "comments.title"}}</h2>
-  {{if .Comments}}
-  <ol class="comments">
-    {{range .Comments}}
-    <li class="comment" id="comment-{{.Comment.ID}}">
-      <p class="comment__meta"><strong>{{.Comment.AuthorName}}</strong> <time class="muted" datetime="{{.Comment.CreatedAt.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Comment.CreatedAt.Local.Format "2006-01-02 15:04"}}</time>{{if .Comment.EditedAt}} <span class="muted">({{t "comments.edited"}})</span>{{end}}</p>
-      {{if .Comment.DeletedAt}}
-      <p class="muted">{{t "comments.deleted"}}</p>
-      {{else}}
-      <p class="comment__body">{{richText .Comment.Body}}</p>
-      {{if and $edit .Mine}}
-      <details>
-        <summary>{{t "comments.edit"}}</summary>
-        <form class="form" method="post" action="{{$self}}" data-collage-target="#card-panel">
+  <dl class="props">
+    <div class="prop">
+      <dt class="prop__label">{{template "icon" "board"}} {{t "card.column"}}</dt>
+      <dd class="prop__value">
+        {{if $edit}}
+        {{$f := .Field "column"}}
+        <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
           {{csrfToken}}
-          <input type="hidden" name="op" value="comment_edit">
-          <input type="hidden" name="comment_id" value="{{.Comment.ID}}">
-          <textarea name="comment_body" rows="3" maxlength="10000" aria-label="{{t "comments.edit"}}">{{.Comment.Body}}</textarea>
-          <button type="submit">{{t "comments.save"}}</button>
+          <input type="hidden" name="op" value="move_to">
+          <input type="hidden" name="expected_from" value="{{.Card.ColumnID}}">
+          <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+          <select class="select prop__control" name="to_column" aria-label="{{t "card.move"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>
+            {{range .Columns}}<option value="{{.ID}}" {{if eq .ID $.Card.ColumnID}}selected{{end}}>{{.Name}}</option>{{end}}
+          </select>
+          <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.move_button"}}</button>
+          {{template "field-state" $f}}
         </form>
-      </details>
-      {{end}}
-      {{if and $edit .CanDelete}}
-      <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
+        {{else}}{{.Column.Name}}{{end}}
+      </dd>
+    </div>
+
+    <div class="prop">
+      <dt class="prop__label">{{template "icon" "user"}} {{t "card.assignee"}}</dt>
+      <dd class="prop__value">
+        {{if $edit}}
+        {{$f := .Field "assignee"}}
+        <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_field">
+          <input type="hidden" name="field" value="assignee">
+          <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+          <select class="select prop__control" name="value" aria-label="{{t "card.assignee"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>
+            <option value="">{{t "card.unassigned"}}</option>
+            {{range .Members}}<option value="{{.User.ID}}" {{if eq (printf "%d" .User.ID) $.Assignee}}selected{{end}}>{{.User.Name}}</option>{{end}}
+          </select>
+          <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
+          {{template "field-state" $f}}
+        </form>
+        {{else}}{{range .Members}}{{if eq (printf "%d" .User.ID) $.Assignee}}{{.User.Name}}{{end}}{{end}}{{if not .Assignee}}<span class="muted">{{t "card.unassigned"}}</span>{{end}}{{end}}
+      </dd>
+    </div>
+
+    <div class="prop">
+      <dt class="prop__label">{{template "icon" "calendar"}} {{t "card.due_date"}}</dt>
+      <dd class="prop__value">
+        {{if $edit}}
+        {{$f := .Field "due_date"}}
+        <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_field">
+          <input type="hidden" name="field" value="due_date">
+          <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+          <input class="input prop__control" type="date" name="value" value="{{.DueDate}}" aria-label="{{t "card.due_date"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>
+          <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
+          {{template "field-state" $f}}
+        </form>
+        {{else}}{{with .DueDate}}{{.}}{{else}}<span class="muted">{{t "card.none"}}</span>{{end}}{{end}}
+      </dd>
+    </div>
+
+    <div class="prop">
+      <dt class="prop__label">{{template "icon" "flag"}} {{t "card.priority"}}</dt>
+      <dd class="prop__value">
+        {{if $edit}}
+        {{$f := .Field "priority"}}
+        <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_field">
+          <input type="hidden" name="field" value="priority">
+          <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+          <select class="select prop__control" name="value" aria-label="{{t "card.priority"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>
+            <option value="">{{t "card.none"}}</option>
+            {{range .Priorities}}<option value="{{.}}" {{if eq . $.Priority}}selected{{end}}>{{t (printf "card.priorities.%s" .)}}</option>{{end}}
+          </select>
+          <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
+          {{template "field-state" $f}}
+        </form>
+        {{else}}{{with .Priority}}{{t (printf "card.priorities.%s" .)}}{{else}}<span class="muted">{{t "card.none"}}</span>{{end}}{{end}}
+      </dd>
+    </div>
+
+    <div class="prop">
+      <dt class="prop__label">{{template "icon" "clock"}} {{t "card.estimate"}}</dt>
+      <dd class="prop__value">
+        {{if $edit}}
+        {{$f := .Field "estimate"}}
+        <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_field">
+          <input type="hidden" name="field" value="estimate">
+          <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+          <input class="input prop__control" name="value" inputmode="decimal" value="{{.Estimate}}" placeholder="—" aria-label="{{t "card.estimate"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>
+          <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
+          {{template "field-state" $f}}
+        </form>
+        {{else}}{{with .Estimate}}{{.}}{{else}}<span class="muted">{{t "card.none"}}</span>{{end}}{{end}}
+      </dd>
+    </div>
+
+    <div class="prop prop--wide">
+      <dt class="prop__label">{{template "icon" "link"}} {{t "card.labels"}}</dt>
+      <dd class="prop__value">
+        {{if .Labels}}
+        {{$f := .Field "labels"}}
+        <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
+          {{csrfToken}}
+          <input type="hidden" name="op" value="labels">
+          <div class="checks">
+            {{range .Labels}}
+            <label class="label-pick" data-color="{{.Label.Color}}"><input type="checkbox" name="label" value="{{.Label.ID}}" {{if .Checked}}checked{{end}} {{if not $edit}}disabled{{end}}><span class="label-pick__dot" aria-hidden="true"></span>{{.Label.Name}}</label>
+            {{end}}
+          </div>
+          {{if $edit}}<button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>{{end}}
+          {{template "field-state" $f}}
+        </form>
+        {{else}}
+        <span class="muted">{{t "card.no_labels"}}</span>
+        {{end}}
+      </dd>
+    </div>
+  </dl>
+
+  <nav class="tabs cardp__tabs" aria-label="{{t "card.sections"}}">
+    <a class="tabs__tab" href="#card-details" data-tab-link="details">{{t "card.tab_details"}}</a>
+    <a class="tabs__tab" href="#card-comments" data-tab-link="comments">{{t "comments.title"}}<span class="tabs__count">{{.Live}}</span></a>
+    <a class="tabs__tab" href="#card-activity" data-tab-link="activity">{{t "activity.title"}}</a>
+  </nav>
+
+  <section class="cardp__section" id="card-details" data-tab-name="details">
+    <div class="block">
+      {{if $edit}}
+      <h2 class="block__title">{{t "card.description"}}<button type="button" class="btn btn--quiet btn--sm btn--icon desc__edit" data-desc-open aria-label="{{t "card.edit_description"}}" title="{{t "card.edit_description"}}">{{template "icon" "pencil"}}</button></h2>
+      {{$f := .Field "description"}}
+      <div class="desc__view rich" data-desc-open>
+        {{with .Card.Description}}{{richText .}}{{else}}<p class="muted">{{t "card.add_description"}}</p>{{end}}
+      </div>
+      <form class="desc__form autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
         {{csrfToken}}
-        <input type="hidden" name="op" value="comment_delete">
-        <input type="hidden" name="comment_id" value="{{.Comment.ID}}">
-        <button type="submit">{{t "comments.delete"}}</button>
+        <input type="hidden" name="op" value="set_field">
+        <input type="hidden" name="field" value="description">
+        <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+        <textarea class="input" id="card-description" name="value" rows="6" maxlength="10000" aria-label="{{t "card.description"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>{{.Card.Description}}</textarea>
+        <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
+      </form>
+      {{template "field-state" $f}}
+      {{else}}
+      <h2 class="block__title">{{t "card.description"}}</h2>
+      {{with .Card.Description}}<div class="rich">{{richText .}}</div>{{else}}<p class="muted">{{t "card.no_description"}}</p>{{end}}
+      {{end}}
+    </div>
+
+    <div class="block">
+      <h2 class="block__title">{{template "icon" "checklist"}} {{t "card.checklist"}}{{if .Checklist}} <span class="muted small">{{.ChecklistDone}}/{{len .Checklist}}</span>{{end}}</h2>
+      {{if .Checklist}}<progress class="progress" max="{{len .Checklist}}" value="{{.ChecklistDone}}"></progress>{{end}}
+      <ul class="checklist">
+        {{range .Checklist}}
+        <li class="checklist__item{{if .Done}} checklist__item--done{{end}}">
+          {{if $edit}}
+          <form method="post" action="{{$self}}" data-collage-target="#card-panel">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="checklist_toggle">
+            <input type="hidden" name="item_id" value="{{.ID}}">
+            <input type="hidden" name="done" value="{{if .Done}}0{{else}}1{{end}}">
+            <button type="submit" class="tick" aria-pressed="{{if .Done}}true{{else}}false{{end}}" aria-label="{{if .Done}}{{t "card.mark_undone"}}{{else}}{{t "card.mark_done"}}{{end}}">{{template "icon" "check"}}</button>
+          </form>
+          {{else}}
+          <span class="tick" aria-hidden="true">{{template "icon" "check"}}</span>
+          {{end}}
+          <span class="checklist__text">{{.Text}}</span>
+          {{if $edit}}
+          <form method="post" action="{{$self}}" data-collage-target="#card-panel">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="checklist_delete">
+            <input type="hidden" name="item_id" value="{{.ID}}">
+            <button type="submit" class="btn btn--quiet btn--sm btn--icon btn--danger-text" aria-label="{{t "card.delete"}}" title="{{t "card.delete"}}">{{template "icon" "trash"}}</button>
+          </form>
+          {{end}}
+        </li>
+        {{end}}
+      </ul>
+      {{if $edit}}
+      <form class="inline-add" method="post" action="{{$self}}" data-collage-target="#card-panel">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="checklist_add">
+        <input class="input" name="item_text" value="{{fieldValue "item_text"}}" placeholder="{{t "card.checklist_item"}}" aria-label="{{t "card.checklist_item"}}" maxlength="500">
+        <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "plus"}} {{t "card.checklist_add"}}</button>
+        {{with fieldError "item_text"}}<p class="field__error">{{.}}</p>{{end}}
       </form>
       {{end}}
+    </div>
+
+    <div class="block">
+      <h2 class="block__title">{{template "icon" "lock"}} {{t "card.dependencies"}}</h2>
+      <h3 class="block__sub">{{t "card.blockers"}}</h3>
+      {{if .Deps.Blockers}}
+      <ul class="deps">
+        {{range .Deps.Blockers}}
+        <li class="deps__item">
+          <span class="deps__state{{if .Done}} is-done{{end}}" aria-hidden="true">{{if .Done}}{{template "icon" "check"}}{{else}}{{template "icon" "lock"}}{{end}}</span>
+          <a data-card-link href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted small">({{t "card.done"}})</span>{{end}}
+          {{if $edit}}
+          <form method="post" action="{{$self}}" data-collage-target="#card-panel">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="dep_remove">
+            <input type="hidden" name="blocker_id" value="{{.ID}}">
+            <button type="submit" class="btn btn--quiet btn--sm">{{t "card.remove"}}</button>
+          </form>
+          {{end}}
+        </li>
+        {{end}}
+      </ul>
+      {{else}}<p class="muted small">{{t "card.no_blockers"}}</p>{{end}}
+      {{if and $edit .Candidates}}
+      <form class="inline-add" method="post" action="{{$self}}" data-collage-target="#card-panel">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="dep_add">
+        <select class="select" name="blocker_id" aria-label="{{t "card.add_blocker"}}">
+          {{range .Candidates}}<option value="{{.Card.ID}}">{{.Card.Title}}</option>{{end}}
+        </select>
+        <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "plus"}} {{t "card.add_blocker"}}</button>
+      </form>
       {{end}}
-    </li>
+      {{if .Deps.Blocking}}
+      <h3 class="block__sub">{{t "card.blocking"}}</h3>
+      <ul class="deps">
+        {{range .Deps.Blocking}}<li class="deps__item"><span class="deps__state" aria-hidden="true">{{template "icon" "arrow-left"}}</span><a data-card-link href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted small">({{t "card.done"}})</span>{{end}}</li>{{end}}
+      </ul>
+      {{end}}
+    </div>
+
+    <div class="block">
+      <h2 class="block__title">{{template "icon" "paperclip"}} {{t "attachments.title"}}</h2>
+      {{if .Attachments}}
+      <ul class="files">
+        {{range .Attachments}}
+        <li class="files__item">
+          <span class="files__icon" aria-hidden="true">{{template "icon" "paperclip"}}</span>
+          <span class="files__main">
+            <a href="/files/{{.Attachment.ID}}" rel="noopener">{{.Attachment.Filename}}</a>
+            <span class="muted small">{{.Size}} · {{.Attachment.UploaderName}}</span>
+          </span>
+          {{if and $edit .CanDelete}}
+          <form method="post" action="{{$self}}" data-collage-target="#card-panel" data-confirm="{{t "confirm.attachment_delete"}}">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="attachment_delete">
+            <input type="hidden" name="attachment_id" value="{{.Attachment.ID}}">
+            <button type="submit" class="btn btn--quiet btn--sm btn--icon btn--danger-text" aria-label="{{t "attachments.delete"}}" title="{{t "attachments.delete"}}">{{template "icon" "trash"}}</button>
+          </form>
+          {{end}}
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="muted small">{{t "attachments.empty"}}</p>
+      {{end}}
+      {{if $edit}}
+      <form class="inline-add" method="post" action="{{$self}}" enctype="multipart/form-data" data-collage-target="#card-panel">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="attachment_add">
+        <input class="input input--file" type="file" name="file" aria-label="{{t "attachments.file"}}" required>
+        <button type="submit" class="btn btn--secondary btn--sm">{{t "attachments.upload"}}</button>
+        {{with fieldError "file"}}<p class="field__error">{{.}}</p>{{end}}
+      </form>
+      {{end}}
+    </div>
+  </section>
+
+  <section class="cardp__section" id="card-comments" data-tab-name="comments">
+    <h2 class="block__title cardp__section-title">{{t "comments.title"}}</h2>
+    {{if .Comments}}
+    <ol class="comments">
+      {{range .Comments}}
+      <li class="comment{{if .Comment.DeletedAt}} comment--deleted{{end}}" id="comment-{{.Comment.ID}}">
+        <span class="avatar avatar--lg" data-hue="{{.Hue}}" aria-hidden="true">{{.Initial}}</span>
+        <div class="comment__main">
+          <p class="comment__meta"><strong>{{.Comment.AuthorName}}</strong> <time class="muted" datetime="{{.Comment.CreatedAt.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Comment.CreatedAt.Local.Format "2006-01-02 15:04"}}</time>{{if .Comment.EditedAt}} <span class="muted">({{t "comments.edited"}})</span>{{end}}</p>
+          {{if .Comment.DeletedAt}}
+          <p class="muted">{{t "comments.deleted"}}</p>
+          {{else}}
+          <div class="comment__body rich">{{richText .Comment.Body}}</div>
+          {{if $edit}}
+          <div class="comment__actions">
+            {{if .Mine}}
+            <details class="comment__edit">
+              <summary class="btn btn--quiet btn--sm">{{template "icon" "pencil"}} {{t "comments.edit"}}</summary>
+              <form class="stack stack--sm" method="post" action="{{$self}}" data-collage-target="#card-panel">
+                {{csrfToken}}
+                <input type="hidden" name="op" value="comment_edit">
+                <input type="hidden" name="comment_id" value="{{.Comment.ID}}">
+                <textarea class="input" name="comment_body" rows="3" maxlength="10000" aria-label="{{t "comments.edit"}}">{{.Comment.Body}}</textarea>
+                <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{t "comments.save"}}</button></div>
+              </form>
+            </details>
+            {{end}}
+            {{if .CanDelete}}
+            <form method="post" action="{{$self}}" data-collage-target="#card-panel" data-confirm="{{t "confirm.comment_delete"}}">
+              {{csrfToken}}
+              <input type="hidden" name="op" value="comment_delete">
+              <input type="hidden" name="comment_id" value="{{.Comment.ID}}">
+              <button type="submit" class="btn btn--quiet btn--sm btn--danger-text">{{template "icon" "trash"}} {{t "comments.delete"}}</button>
+            </form>
+            {{end}}
+          </div>
+          {{end}}
+          {{end}}
+        </div>
+      </li>
+      {{end}}
+    </ol>
+    {{else}}
+    <p class="muted small">{{t "comments.empty"}}</p>
     {{end}}
-  </ol>
-  {{else}}
-  <p class="muted">{{t "comments.empty"}}</p>
-  {{end}}
-  {{if $edit}}
-  <form class="form" method="post" action="{{$self}}" data-collage-target="#card-panel">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="comment_add">
-    <textarea name="comment" rows="3" maxlength="10000" placeholder="{{t "comments.placeholder"}}" aria-label="{{t "comments.title"}}" list="mention-handles">{{fieldValue "comment"}}</textarea>
-    <datalist id="mention-handles">{{range .Handles}}<option value="{{.}}">{{end}}</datalist>
-    {{with fieldError "comment"}}<p class="error">{{.}}</p>{{end}}
-    <button type="submit">{{t "comments.add"}}</button>
-  </form>
-  {{end}}
+    {{if $edit}}
+    <form class="comment-new stack stack--sm" method="post" action="{{$self}}" data-collage-target="#card-panel">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="comment_add">
+      <textarea class="input" name="comment" rows="3" maxlength="10000" placeholder="{{t "comments.placeholder"}}" aria-label="{{t "comments.title"}}" list="mention-handles">{{fieldValue "comment"}}</textarea>
+      <datalist id="mention-handles">{{range .Handles}}<option value="{{.}}">{{end}}</datalist>
+      {{with fieldError "comment"}}<p class="field__error">{{.}}</p>{{end}}
+      <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{template "icon" "comment"}} {{t "comments.add"}}</button></div>
+    </form>
+    {{end}}
+  </section>
 
-  <h2>{{t "activity.title"}}</h2>
-  {{if .Activity}}
-  <ol class="activity">
-    {{range .Activity}}<li>{{.Text}} <time class="muted" datetime="{{.ISO}}">{{.When}}</time></li>{{end}}
-  </ol>
-  {{else}}
-  <p class="muted">{{t "activity.empty"}}</p>
-  {{end}}
+  <section class="cardp__section" id="card-activity" data-tab-name="activity">
+    <h2 class="block__title cardp__section-title">{{t "activity.title"}}</h2>
+    {{if .Activity}}
+    <ol class="timeline">
+      {{range .Activity}}<li class="timeline__item"><span class="timeline__text">{{.Text}}</span> <time class="muted small" datetime="{{.ISO}}">{{.When}}</time></li>{{end}}
+    </ol>
+    {{else}}
+    <p class="muted small">{{t "activity.empty"}}</p>
+    {{end}}
+  </section>
 
   {{if $edit}}
-  <form class="danger" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="archive">
-    <button type="submit">{{t "card.archive"}}</button>
-  </form>
+  <footer class="cardp__foot">
+    <form method="post" action="{{$self}}" data-confirm="{{t "confirm.archive"}}">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="archive">
+      <button type="submit" class="btn btn--danger btn--sm">{{template "icon" "archive"}} {{t "card.archive"}}</button>
+    </form>
+  </footer>
   {{end}}
 </article>

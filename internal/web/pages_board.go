@@ -88,10 +88,17 @@ type columnsView struct {
 }
 
 type columnView struct {
-	Column    store.Column
-	Limit     int
+	Column store.Column
+	Color  string
+	Limit  int
+	// State is how full the column is against its limit: ok, full or over.
+	State     string
 	OverLimit bool
-	Cards     []cardView
+	// CanCreate: a card may be added here; FirstCreate marks the first such
+	// column, where a refused title without a column is shown again.
+	CanCreate   bool
+	FirstCreate bool
+	Cards       []cardView
 }
 
 type cardView struct {
@@ -99,6 +106,8 @@ type cardView struct {
 	Due      string
 	Overdue  bool
 	Priority string
+	Hue      int
+	Initial  string
 }
 
 func (h *handlers) boardPage() *collage.Page {
@@ -145,8 +154,16 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 	view := columnsView{CanEdit: bc.Access.CanEdit}
 	view.Notices, _ = collage.Get[[]string](rc, noticeKey)
 	byColumn := map[int64]int{}
-	for _, c := range cols {
-		cv := columnView{Column: c}
+	creatable := map[int64]bool{}
+	if len(cols) > 0 {
+		for _, c := range creatableColumns(cols) {
+			creatable[c.ID] = true
+		}
+	}
+	first := true
+	for i, c := range cols {
+		cv := columnView{Column: c, Color: boardColor(i), CanCreate: bc.Access.CanEdit && creatable[c.ID]}
+		cv.FirstCreate, first = cv.CanCreate && first, first && !cv.CanCreate
 		if c.WIPLimit != nil {
 			cv.Limit = *c.WIPLimit
 		}
@@ -159,7 +176,10 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 		if !ok {
 			continue
 		}
-		cv := cardView{Summary: s}
+		cv := cardView{Summary: s, Initial: initial(s.AssigneeName)}
+		if s.Card.AssigneeID != nil {
+			cv.Hue = int(*s.Card.AssigneeID % 8)
+		}
 		if s.Card.DueDate != nil {
 			cv.Due = s.Card.DueDate.Format(time.DateOnly)
 			cv.Overdue = cv.Due < today && !view.Columns[i].Column.IsDone
@@ -172,6 +192,14 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 	for i := range view.Columns {
 		c := &view.Columns[i]
 		c.OverLimit = c.Limit > 0 && len(c.Cards) > c.Limit
+		switch {
+		case c.OverLimit:
+			c.State = "over"
+		case c.Limit > 0 && len(c.Cards) == c.Limit:
+			c.State = "full"
+		default:
+			c.State = "ok"
+		}
 	}
 	return view, tags, nil
 }
@@ -209,11 +237,19 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 	if len(cols) == 0 {
 		return collage.NoContent(http.StatusConflict), nil
 	}
-	target := cols[0]
-	for _, c := range cols {
-		if c.AllowCreate {
-			target = c
-			break
+	// A card goes into the column it was added in, which must be one cards
+	// are made in; without one, into the first such column.
+	creatable := creatableColumns(cols)
+	target := creatable[0]
+	if raw := v.Value("column"); raw != "" {
+		found := false
+		for _, c := range creatable {
+			if strconv.FormatInt(c.ID, 10) == raw {
+				target, found = c, true
+			}
+		}
+		if !found {
+			return collage.NoContent(http.StatusBadRequest), nil
 		}
 	}
 	_, err = h.store.CreateCard(ctx, bc.Board.ID, target.ID, strings.TrimSpace(v.Value("title")), bc.User.ID)
@@ -231,6 +267,21 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 		res.InvalidateTags = []string{boardTag(bc.Board.ID)}
 	}
 	return res, err
+}
+
+// creatableColumns are the columns a card is made in: those marked so, or the
+// first column when none is (spec §5). cols must not be empty.
+func creatableColumns(cols []store.Column) []store.Column {
+	var out []store.Column
+	for _, c := range cols {
+		if c.AllowCreate {
+			out = append(out, c)
+		}
+	}
+	if len(out) == 0 {
+		out = cols[:1]
+	}
+	return out
 }
 
 // formInt64 reads a whole number from the form; ok is false when it is missing

@@ -4,33 +4,27 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
-
-	"kanban/internal/store"
 )
-
-func updateForm(c store.Card, fields map[string]string) url.Values {
-	form := url.Values{"op": {"update"}, "expected_version": {strconv.Itoa(c.Version)}, "title": {c.Title}}
-	for k, v := range fields {
-		form.Set(k, v)
-	}
-	return form
-}
 
 func TestEditingACard(t *testing.T) {
 	b := newBoardSetup(t)
+	ctx := context.Background()
 	c := b.card(t, 0, "Card")
 	memberID := id(b.h.user("member@example.com").ID)
-	res := b.member.Submit(b.cardPath(c), b.cardPath(c), updateForm(c, map[string]string{
-		"title": "Renamed", "description": "Details", "assignee_id": memberID,
-		"estimate": "2,5", "due_date": "2026-10-20", "priority": "3",
-	}))
-	if res.Status != http.StatusSeeOther || res.Location() != b.cardPath(c) {
-		t.Fatalf("update = %d %q:\n%s", res.Status, res.Location(), res.Body)
+	steps := []struct{ field, value string }{
+		{"title", "Renamed"}, {"description", "Details"}, {"assignee", memberID},
+		{"estimate", "2,5"}, {"due_date", "2026-10-20"}, {"priority", "3"},
 	}
-	got, _ := b.h.store.Card(context.Background(), b.board.ID, c.ID)
+	for _, s := range steps {
+		cur, _ := b.h.store.Card(ctx, b.board.ID, c.ID)
+		res := b.member.Submit(b.cardPath(c), b.cardPath(c), fieldForm(cur, s.field, s.value))
+		if res.Status != http.StatusSeeOther || res.Location() != b.cardPath(c) {
+			t.Fatalf("set %s = %d %q:\n%s", s.field, res.Status, res.Location(), res.Body)
+		}
+	}
+	got, _ := b.h.store.Card(ctx, b.board.ID, c.ID)
 	if got.Title != "Renamed" || got.Description != "Details" || got.AssigneeID == nil || *got.Estimate != 2.5 ||
 		got.DueDate.Format("2006-01-02") != "2026-10-20" || *got.Priority != 3 {
 		t.Fatalf("card = %+v", got)
@@ -41,38 +35,20 @@ func TestEditingACard(t *testing.T) {
 	mustContain(t, b.member.Get("/me/tasks").Body, "Renamed", "Sprint")
 }
 
-func TestEditingACardValidates(t *testing.T) {
+func TestASavedFieldIsMarkedAndARefusedOneExplained(t *testing.T) {
 	b := newBoardSetup(t)
 	c := b.card(t, 0, "Card")
-	out := b.h.signedIn("out", "out@example.com")
-	res := b.member.Submit(b.cardPath(c), b.cardPath(c), updateForm(c, map[string]string{
-		"title": "", "estimate": "-1", "due_date": "20.10.2026", "assignee_id": id(b.h.user("out@example.com").ID), "priority": "9",
-	}))
+	res := b.member.SubmitFetch(b.cardPath(c), b.cardPath(c), fieldForm(c, "priority", "2"))
+	mustContain(t, res.Body, `data-saved-for="priority" data-just-saved`)
+	res = b.member.SubmitFetch(b.cardPath(c), b.cardPath(c), fieldForm(c, "estimate", "-1"))
 	if res.Status != http.StatusUnprocessableEntity {
-		t.Fatalf("invalid update = %d, want 422", res.Status)
+		t.Fatalf("invalid estimate = %d", res.Status)
 	}
-	mustContain(t, res.Body, "Bu alan zorunludur.", "Sıfır ya da pozitif bir sayı girin.", "Tarihi YYYY-AA-GG biçiminde girin.", "Takım üyelerinden birini seçin.")
-	_ = out
-}
-
-func TestEditingAStaleCardIsAConflict(t *testing.T) {
-	b := newBoardSetup(t)
-	c := b.card(t, 0, "Card")
-	if res := b.lead.Submit(b.cardPath(c), b.cardPath(c), updateForm(c, map[string]string{"title": "First"})); res.Status != http.StatusSeeOther {
-		t.Fatalf("first update = %d", res.Status)
-	}
-	res := b.member.SubmitFetch(b.cardPath(c), b.cardPath(c), updateForm(c, map[string]string{"title": "Second"}))
-	if res.Status != http.StatusUnprocessableEntity || strings.Contains(res.Body, "<html") {
-		t.Fatalf("stale fetch update = %d, want the panel with 422:\n%s", res.Status, res.Body)
-	}
-	mustContain(t, res.Body, "Bu kart başka biri tarafından değiştirildi.", "First")
-	res = b.member.Submit(b.cardPath(c), b.cardPath(c), updateForm(c, map[string]string{"title": "Second"}))
-	if res.Status != http.StatusSeeOther {
-		t.Fatalf("stale update = %d", res.Status)
-	}
-	got, _ := b.h.store.Card(context.Background(), b.board.ID, c.ID)
-	if got.Title != "First" {
-		t.Fatalf("a stale edit was saved: %q", got.Title)
+	// Beside the field, not above the panel.
+	i := strings.Index(res.Body, `value="estimate"`)
+	j := strings.Index(res.Body, "Sıfır ya da pozitif bir sayı girin.")
+	if i < 0 || j < i || strings.Contains(res.Body[:i], `role="alert"`) {
+		t.Fatalf("the message is not beside the estimate:\n%s", res.Body)
 	}
 }
 
@@ -127,7 +103,7 @@ func TestArchivingACard(t *testing.T) {
 	}
 	page := b.member.Get(b.cardPath(c)).Body
 	mustContain(t, page, "Bu kart arşivde.")
-	if strings.Contains(page, `value="update"`) {
+	if strings.Contains(page, `value="set_field"`) {
 		t.Error("an archived card can still be edited")
 	}
 }

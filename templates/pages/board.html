@@ -1,26 +1,21 @@
-<header class="board-head">
-  <h1>{{.Board.Name}}</h1>
-  <a class="muted" href="{{pageURL "team" "id" .Board.TeamID}}">{{.Team.Name}}</a>
-  <a href="{{pageURL "board-activity" "id" .Board.ID}}">{{t "activity.title"}}</a>
-  {{if .Access.CanManage}}<a href="{{pageURL "board-settings" "id" .Board.ID}}">{{t "board.settings"}}</a>{{end}}
+<header class="page-head board-head">
+  <div>
+    <a class="crumb" href="{{pageURL "team" "id" .Board.TeamID}}">{{template "icon" "team"}} {{.Team.Name}}</a>
+    <h1>{{.Board.Name}}</h1>
+  </div>
+  <div class="actions">
+    <a class="btn btn--quiet" href="{{pageURL "board-activity" "id" .Board.ID}}">{{template "icon" "activity"}} {{t "activity.title"}}</a>
+    {{if .Access.CanManage}}<a class="btn btn--secondary" href="{{pageURL "board-settings" "id" .Board.ID}}">{{template "icon" "settings"}} {{t "board.settings"}}</a>{{end}}
+  </div>
 </header>
-{{if .Notices}}<ul class="board-notice" role="alert">{{range .Notices}}<li>{{.}}</li>{{end}}</ul>{{end}}
-{{if .Access.CanEdit}}
-<form class="new-card" method="post" action="{{pageURL "board" "id" .Board.ID}}">
-  {{csrfToken}}
-  <input type="hidden" name="op" value="create_card">
-  <input name="title" value="{{fieldValue "title"}}" placeholder="{{t "board.new_card"}}" aria-label="{{t "board.new_card"}}" required maxlength="200">
-  <button type="submit">{{t "board.add_card"}}</button>
-  {{with fieldError "title"}}<p class="error">{{.}}</p>{{end}}
-</form>
-{{end}}
 <div id="board" class="board" data-move-url="{{pageURL "board" "id" .Board.ID}}"
   data-collage-fragment="{{fragmentURL "board" "board-columns" "id" .Board.ID}}" data-collage-push data-collage-swap="morph">
   {{slot "columns"}}
 </div>
-<dialog id="card-dialog" class="card-dialog" aria-label="{{t "board.open_card"}}">
-  <form method="dialog"><button class="card-dialog__close" type="submit">{{t "card.close"}}</button></form>
-  <div class="card-dialog__body"></div>
+<dialog id="card-drawer" class="drawer" aria-label="{{t "board.open_card"}}">
+  <div class="drawer__body"></div>
 </dialog>
 <script src="{{asset "/static/vendor/Sortable.min.js"}}"></script>
-<script type="module" src="{{asset "/static/board.js"}}"></script>
+<script type="module" src="{{asset "/static/js/board.js"}}"></script>
+<script type="module" src="{{asset "/static/js/drawer.js"}}"></script>
+<script type="module" src="{{asset "/static/js/panel.js"}}"></script>

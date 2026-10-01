@@ -67,10 +67,9 @@ func TestAssigningOverPersonalWIPIsRefused(t *testing.T) {
 	if _, err := b.h.store.UpdateCard(ctx, b.board.ID, first.ID, first.Version, store.CardFields{Title: "First", AssigneeID: &memberID}, 0); err != nil {
 		t.Fatal(err)
 	}
-	res := b.member.SubmitFetch(b.cardPath(second), b.cardPath(second), updateForm(second, map[string]string{"assignee_id": id(memberID)}))
+	res := b.member.SubmitFetch(b.cardPath(second), b.cardPath(second), fieldForm(second, "assignee", id(memberID)))
 	if res.Status != http.StatusUnprocessableEntity {
 		t.Fatalf("assign = %d, want 422", res.Status)
 	}
 	mustContain(t, res.Body, "Atanan kişinin WIP limiti (1) dolu.")
 }
-

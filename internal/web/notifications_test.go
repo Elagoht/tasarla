@@ -32,7 +32,7 @@ func TestAssigningNotifiesTheAssignee(t *testing.T) {
 	b := newBoardSetup(t)
 	c := b.card(t, 0, "Payments")
 	memberID := id(b.h.user("member@example.com").ID)
-	res := b.lead.Submit(b.cardPath(c), b.cardPath(c), updateForm(c, map[string]string{"assignee_id": memberID}))
+	res := b.lead.Submit(b.cardPath(c), b.cardPath(c), fieldForm(c, "assignee", memberID))
 	if res.Status != http.StatusSeeOther {
 		t.Fatalf("assign = %d (the action must succeed even with SMTP down)", res.Status)
 	}
@@ -111,7 +111,7 @@ func TestMySettings(t *testing.T) {
 
 	// The e-mail now goes in English, while the lead works in Turkish.
 	c := b.card(t, 0, "Report")
-	b.lead.Submit(b.cardPath(c), b.cardPath(c), updateForm(c, map[string]string{"assignee_id": id(member.ID)}))
+	b.lead.Submit(b.cardPath(c), b.cardPath(c), fieldForm(c, "assignee", id(member.ID)))
 	mails := pendingMails(t, b.h)
 	if len(mails) != 1 || !strings.Contains(mails[0].Subject, "Lead assigned you to a card: Report") || !strings.Contains(mails[0].Text, "/en/boards/") {
 		t.Fatalf("mails = %+v", mails)

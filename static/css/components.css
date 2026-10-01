@@ -167,8 +167,7 @@ a.list-rows__title:hover { color: var(--accent-strong); }
 .toast.is-leaving { opacity: 0; transform: translateY(6px); transition: opacity 200ms, transform 200ms; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 
-.saved-mark { font-size: var(--text-xs); color: var(--ok); font-weight: 700; opacity: 0; transition: opacity 200ms; }
-.saved-mark.is-on { opacity: 1; }
+.saved-mark { font-size: var(--text-xs); color: var(--ok); font-weight: 700; }
 
 /* ---- Dialog ------------------------------------------------------------- */
 .dialog {

@@ -102,7 +102,10 @@
     "over_limit": "Over the limit",
     "blocked": "Blocked",
     "unassigned": "Unassigned",
-    "open_card": "Open card"
+    "open_card": "Open card",
+    "no_cards": "No cards",
+    "wip_limit": "Cards / WIP limit",
+    "dismiss": "Dismiss"
   },
   "card": {
     "title": "Title",
@@ -149,7 +152,14 @@
     "done": "done",
     "title_invalid": "The title cannot be empty or longer than 200 characters.",
     "description_invalid": "The description can be at most 10000 characters.",
-    "priority_invalid": "Choose a valid priority."
+    "priority_invalid": "Choose a valid priority.",
+    "sections": "Card sections",
+    "tab_details": "Details",
+    "edit_description": "Edit the description",
+    "add_description": "Click to add a description…",
+    "no_description": "No description.",
+    "no_blockers": "No card blocks this one.",
+    "saved_mark": "Saved"
   },
   "tasks": {
     "title": "My tasks",

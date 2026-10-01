@@ -78,12 +78,55 @@ type panelView struct {
 	DueDate  string
 	Priority string
 	Assignee string
+
+	// NoticeField is the field the notices are about, shown beside it rather
+	// than above the panel; SavedField is the field just saved.
+	NoticeField string
+	SavedField  string
+	// Live counts the comments not deleted, for the Comments tab.
+	Live int
+	// ChecklistDone counts the items done.
+	ChecklistDone int
 }
+
+// fieldState is what the panel shows beside one field: the notices about it
+// and whether it was just saved.
+type fieldState struct {
+	Name    string
+	Notices []string
+	Saved   bool
+}
+
+// Field is the state of one field; notices about no field stay above the
+// panel (TopNotices).
+func (v panelView) Field(name string) fieldState {
+	f := fieldState{Name: name, Saved: v.SavedField == name}
+	if v.NoticeField == name {
+		f.Notices = v.Notices
+	}
+	return f
+}
+
+// TopNotices are the notices not shown beside a field.
+func (v panelView) TopNotices() []string {
+	if v.NoticeField != "" {
+		return nil
+	}
+	return v.Notices
+}
+
+// Keys for the field a panel answer is about (spec §2.2).
+const (
+	noticeFieldKey = "notice_field"
+	savedFieldKey  = "saved_field"
+)
 
 type commentView struct {
 	Comment   store.Comment
 	Mine      bool
 	CanDelete bool
+	Hue       int
+	Initial   string
 }
 
 type attachmentView struct {
@@ -147,6 +190,8 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 		Priorities: []string{"1", "2", "3", "4"},
 	}
 	v.Notices, _ = collage.Get[[]string](rc, noticeKey)
+	v.NoticeField, _ = collage.Get[string](rc, noticeFieldKey)
+	v.SavedField, _ = collage.Get[string](rc, savedFieldKey)
 	if card.Estimate != nil {
 		v.Estimate = strconv.FormatFloat(*card.Estimate, 'f', -1, 64)
 	}
@@ -188,6 +233,11 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 	if v.Checklist, err = h.store.ChecklistItems(ctx, card.ID); err != nil {
 		return v, tags, err
 	}
+	for _, it := range v.Checklist {
+		if it.Done {
+			v.ChecklistDone++
+		}
+	}
 	if v.Deps, err = h.store.CardDependencies(ctx, card.ID); err != nil {
 		return v, tags, err
 	}
@@ -201,7 +251,11 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 	}
 	for _, c := range comments {
 		mine := c.AuthorID == cc.User.ID
-		v.Comments = append(v.Comments, commentView{Comment: c, Mine: mine, CanDelete: mine || cc.Access.CanManage})
+		v.Comments = append(v.Comments, commentView{Comment: c, Mine: mine, CanDelete: mine || cc.Access.CanManage,
+			Hue: int(c.AuthorID % 8), Initial: initial(c.AuthorName)})
+		if c.DeletedAt == nil {
+			v.Live++
+		}
 	}
 	for _, m := range v.Members {
 		v.Handles = append(v.Handles, "@"+store.MentionHandle(m.User))
@@ -247,8 +301,6 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return res, nil
 	}
 	switch v.Value("op") {
-	case "update":
-		return h.updateCard(ctx, rc, v, cc)
 	case "set_field":
 		return h.setField(ctx, rc, v, cc)
 	case "move_to":
@@ -264,7 +316,10 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		if err == nil {
 			err = h.store.LogActivity(ctx, cc.Board.ID, &cc.Card.ID, cc.User.ID, store.ActivityLabelsChanged, store.ActivityPayload{})
 		}
-		return h.cardChanged(rc, cc, err)
+		if err != nil {
+			return h.cardChanged(rc, cc, err)
+		}
+		return h.fieldSaved(rc, cc, "labels")
 	case "checklist_add":
 		v.Field("item_text").Required().MaxLen(500)
 		if !v.Valid() {
@@ -346,6 +401,21 @@ func (h *handlers) cardChanged(rc *collage.RenderContext, cc cardContext, err er
 	return res, err
 }
 
+// fieldSaved answers a saved field: the panel marking it saved for a script,
+// back to the card with a message otherwise.
+func (h *handlers) fieldSaved(rc *collage.RenderContext, cc cardContext, field string) (*collage.ActionResult, error) {
+	rc.Set(savedFieldKey, field)
+	var msgs []string
+	if !isFetch(rc) {
+		msgs = append(msgs, i18n.T(rc, "card.saved"))
+	}
+	res, err := h.cardNotice(rc, cc, http.StatusOK, msgs...)
+	if res != nil {
+		res.InvalidateTags = []string{boardTag(cc.Board.ID), cardTag(cc.Card.ID)}
+	}
+	return res, err
+}
+
 // cardNotice answers with the panel carrying notice, or redirects to the card
 // with notice as a flash message.
 func (h *handlers) cardNotice(rc *collage.RenderContext, cc cardContext, status int, notices ...string) (*collage.ActionResult, error) {
@@ -376,91 +446,6 @@ func (h *handlers) refuseCard(rc *collage.RenderContext, v *validate.Validator) 
 		return res
 	}
 	return validate.Refuse(rc, v, rc.Page)
-}
-
-func (h *handlers) updateCard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
-	var fields store.CardFields
-	v.Field("title").Required().MaxLen(200)
-	v.Field("description").MaxLen(10000)
-	v.Field("priority").OneOf("1", "2", "3", "4")
-	v.Field("estimate").Custom(func(s string) string {
-		if s == "" {
-			return ""
-		}
-		f, err := strconv.ParseFloat(strings.ReplaceAll(s, ",", "."), 64)
-		if err != nil || f < 0 {
-			return i18n.T(rc, "card.estimate_invalid")
-		}
-		fields.Estimate = &f
-		return ""
-	})
-	v.Field("due_date").Custom(func(s string) string {
-		if s == "" {
-			return ""
-		}
-		d, err := time.Parse(time.DateOnly, s)
-		if err != nil {
-			return i18n.T(rc, "card.date_invalid")
-		}
-		fields.DueDate = &d
-		return ""
-	})
-	members, err := h.store.Members(ctx, cc.Team.ID)
-	if err != nil {
-		return nil, err
-	}
-	v.Field("assignee_id").Custom(func(s string) string {
-		if s == "" {
-			return ""
-		}
-		for _, m := range members {
-			if strconv.FormatInt(m.User.ID, 10) == s {
-				id := m.User.ID
-				fields.AssigneeID = &id
-				return ""
-			}
-		}
-		return i18n.T(rc, "card.assignee_invalid")
-	})
-	version, ok := formInt64(v, "expected_version")
-	if !ok {
-		return collage.NoContent(http.StatusBadRequest), nil
-	}
-	if !v.Valid() {
-		return h.refuseCard(rc, v), nil
-	}
-	fields.Title = strings.TrimSpace(v.Value("title"))
-	fields.Description = strings.TrimSpace(v.Value("description"))
-	if p := v.Value("priority"); p != "" {
-		n, _ := strconv.Atoi(p)
-		prio := int16(n)
-		fields.Priority = &prio
-	}
-	updated, err := h.store.UpdateCard(ctx, cc.Board.ID, cc.Card.ID, int(version), fields, cc.User.ID)
-	if err == nil {
-		h.notifyAssigned(ctx, cc.boardContext, cc.Card, updated)
-	}
-	if msgs := violationMessages(rc, err); msgs != nil {
-		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, msgs...)
-	}
-	if errors.Is(err, store.ErrConflict) {
-		// The panel shows the card as it now is; what the reader typed is lost,
-		// which the notice says. collage-live puts a form's answer in only on
-		// success or 422, so a script is told 422 rather than 409.
-		status := http.StatusConflict
-		if isFetch(rc) {
-			status = http.StatusUnprocessableEntity
-		}
-		return h.cardNotice(rc, cc, status, i18n.T(rc, "board.conflict"))
-	}
-	if err != nil {
-		return nil, err
-	}
-	res, err := h.cardNotice(rc, cc, http.StatusOK, i18n.T(rc, "card.saved"))
-	if res != nil {
-		res.InvalidateTags = []string{boardTag(cc.Board.ID), cardTag(cc.Card.ID)}
-	}
-	return res, err
 }
 
 func (h *handlers) logChecklistChecked(ctx context.Context, cc cardContext, item int64) error {
@@ -659,6 +644,7 @@ func (h *handlers) setField(ctx context.Context, rc *collage.RenderContext, v *v
 	default:
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
+	rc.Set(noticeFieldKey, string(field))
 	if problem != "" {
 		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, problem)
 	}
@@ -675,7 +661,7 @@ func (h *handlers) setField(ctx context.Context, rc *collage.RenderContext, v *v
 	if field == store.FieldAssignee {
 		h.notifyAssigned(ctx, cc.boardContext, cc.Card, updated)
 	}
-	return h.cardChanged(rc, cc, nil)
+	return h.fieldSaved(rc, cc, string(field))
 }
 
 // moveFromPanel moves the card to the bottom of another column from its
@@ -687,6 +673,7 @@ func (h *handlers) moveFromPanel(ctx context.Context, rc *collage.RenderContext,
 	if !ok1 || !ok2 || !ok3 {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
+	rc.Set(noticeFieldKey, "column")
 	moved, err := h.store.MoveCard(ctx, store.Move{
 		BoardID: cc.Board.ID, CardID: cc.Card.ID, ToColumnID: to, ToIndex: 1 << 30,
 		ExpectedFrom: from, ExpectedVersion: int(version), Actor: cc.actor(),
@@ -706,5 +693,5 @@ func (h *handlers) moveFromPanel(ctx context.Context, rc *collage.RenderContext,
 	if moved.ColumnID != from && h.finishedBy(ctx, moved) {
 		h.notifyUnblocked(ctx, cc.boardContext, moved.ID)
 	}
-	return h.cardChanged(rc, cc, nil)
+	return h.fieldSaved(rc, cc, "column")
 }

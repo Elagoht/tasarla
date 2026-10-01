@@ -274,6 +274,7 @@ type CardSummary struct {
 	Labels         []Label
 	ChecklistDone  int
 	ChecklistTotal int
+	Attachments    int
 	Blocked        bool
 }
 
@@ -285,6 +286,7 @@ func (s *Store) BoardCards(ctx context.Context, boardID int64) ([]CardSummary, e
 		       coalesce(u.name, ''),
 		       (SELECT count(*) FILTER (WHERE done) FROM checklist_items i WHERE i.card_id = k.id),
 		       (SELECT count(*) FROM checklist_items i WHERE i.card_id = k.id),
+		       (SELECT count(*) FROM attachments a WHERE a.card_id = k.id),
 		       EXISTS (SELECT 1 FROM card_dependencies d
 		               JOIN cards b ON b.id = d.blocker_id
 		               JOIN columns bc ON bc.id = b.column_id
@@ -305,7 +307,7 @@ func (s *Store) BoardCards(ctx context.Context, boardID int64) ([]CardSummary, e
 		c := &cs.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
 			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt,
-			&cs.AssigneeName, &cs.ChecklistDone, &cs.ChecklistTotal, &cs.Blocked); err != nil {
+			&cs.AssigneeName, &cs.ChecklistDone, &cs.ChecklistTotal, &cs.Attachments, &cs.Blocked); err != nil {
 			return nil, err
 		}
 		index[c.ID] = len(cards)
