@@ -15,12 +15,15 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"kanban/internal/auth"
 	"kanban/internal/config"
 	"kanban/internal/db"
 	"kanban/internal/files"
+	"kanban/internal/mail"
+	"kanban/internal/notify"
 	"kanban/internal/store"
 	"kanban/internal/web"
 )
@@ -69,6 +72,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	st := store.New(pool)
 	attachments, err := files.Open(cfg.AttachmentsDir)
 	if err != nil {
 		return err
@@ -76,12 +80,29 @@ func run() error {
 	app, err := web.New(web.Deps{
 		Files: assets, Attachments: attachments, DevMode: devMode,
 		Host: envString("HOST", "localhost"), Port: envInt("PORT", 6060),
-		Config: cfg, Store: store.New(pool), OIDC: client, Logger: logger,
+		Config: cfg, Store: st, OIDC: client, Logger: logger,
 	})
 	if err != nil {
 		return err
 	}
-	return app.ListenAndServe()
+
+	// The outbox worker and the due-date scheduler run beside the server and
+	// stop with it; an e-mail being sent at that moment is finished.
+	background, stop := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	sender := mail.Sender{Host: cfg.SMTP.Host, Port: cfg.SMTP.Port, User: cfg.SMTP.User, Password: cfg.SMTP.Password, From: cfg.SMTP.From}
+	worker := notify.Worker{Store: st, Log: logger, Send: func(ctx context.Context, m store.OutboxMessage) error {
+		return sender.Send(ctx, m.To, m.Subject, m.Text, m.HTML)
+	}}
+	scheduler := notify.Scheduler{Store: st, Notifier: app.Notifier}
+	wg.Add(2)
+	go func() { defer wg.Done(); worker.Run(background) }()
+	go func() { defer wg.Done(); scheduler.Run(background) }()
+
+	err = app.ListenAndServe()
+	stop()
+	wg.Wait()
+	return err
 }
 
 // appFiles is the embedded copy, or in development the working directory, so
