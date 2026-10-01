@@ -38,32 +38,39 @@ function setupSortables() {
   }
 }
 
-// The board's own updates — a drop, a refused one, a new card — move the cards
-// to their new places in a view transition: each card is named by its id
-// before the update and again after it (the update drops the names with the
-// rest of what the server did not send), so a card slides rather than jumps.
+// Every change to the board — a drop, a refused one, a new card, and what
+// someone else did, arriving by push — moves the cards to their new places in
+// a view transition. collage-live asks first (collage:before-swap); the board
+// takes the swap over, names each card by its id on both sides of it (the
+// swap drops the names with the rest of what the server did not send; the
+// CSP keeps them out of the markup), and runs it inside the transition.
 function nameCards(name) {
   for (const c of board.querySelectorAll(".card")) c.style.viewTransitionName = name ? "card-" + c.dataset.card : "";
 }
 
-// inTransition puts html into the board and lets it go on: the board is held
-// while a card is dragged or added, and takes the answer on resume. It settles
-// once the board shows the answer.
-function inTransition(html) {
-  const update = () => {
-    live()?.put(board, html);
-    live()?.resume(board);
-    nameCards(true);
-  };
-  if (!document.startViewTransition || reduced()) {
-    update();
-    nameCards(false);
-    return Promise.resolve();
-  }
+function swapInTransition(e) {
+  if (e.target !== board || !document.startViewTransition || reduced()) return;
+  e.preventDefault();
   nameCards(true);
-  const t = document.startViewTransition(update);
+  const t = document.startViewTransition(() => {
+    e.detail.swap();
+    nameCards(true);
+  });
+  t.ready.catch(() => {});
   t.finished.finally(() => nameCards(false));
-  return t.updateCallbackDone.catch(() => {});
+}
+
+// inTransition puts html into the board and lets it go on: the board is held
+// while a card is dragged or added, and takes the answer on resume — through
+// swapInTransition. It settles once the board shows the answer.
+function inTransition(html) {
+  const shown = new Promise((resolve) => {
+    board.addEventListener("collage:swap", resolve, { once: true });
+    setTimeout(resolve, 1500);
+  });
+  live()?.put(board, html);
+  live()?.resume(board);
+  return shown;
 }
 
 // Completing: a card dropped into a done column is ticked off — a ring draws
@@ -186,6 +193,7 @@ function dismissAlerts() {
 }
 
 if (board) {
+  board.addEventListener("collage:before-swap", swapInTransition);
   board.addEventListener("submit", (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || !form.matches(".add-card__form")) return;

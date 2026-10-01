@@ -1,5 +1,11 @@
 # 004 — collage-live: a swap cannot be wrapped in a view transition
 
+> **Resolved in collage-live v0.4.0** (2026-10-01): `collage:before-swap` (cancelable,
+> `detail.swap()`) and `data-collage-transition`. The app is on v0.4.0; the board
+> takes every swap over in `collage:before-swap`, names its cards by id on both
+> sides (the CSP keeps the names out of the markup) and runs the swap in a view
+> transition, so cards moved by someone else slide into place.
+
 - **Type:** feature request (nothing documented is broken)
 - **Packages:** `github.com/Elagoht/collage-live` v0.3.0
 - **Found while:** Kanban, animating the board. When another reader moves a card, the board's push puts in the new columns; the cards should slide to their new places (View Transitions API) rather than jump.
@@ -27,4 +33,4 @@ Option 2 or 3 also lets the page name the elements that should move (for a board
 ## Where the app stands
 
 - Cross-document transitions (`@view-transition`) and the transitions around the board's own `put` calls (a refused drop, a new card) are in place.
-- Cards moved by someone else still jump into place. No workaround is written: the app waits for one of the above.
+- Cards moved by someone else still jumped into place until v0.4.0; no workaround was written.
