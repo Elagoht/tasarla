@@ -32,6 +32,8 @@ type Config struct {
 	SessionKey    []byte
 	CSRFKey       []byte
 	FlashKey      []byte
+
+	AttachmentsDir string
 }
 
 // Load reads the configuration through getenv and reports every missing or
@@ -125,6 +127,7 @@ func Load(getenv func(string) string) (Config, error) {
 	cfg.SessionKey = key("SESSION_KEY")
 	cfg.CSRFKey = key("CSRF_KEY")
 	cfg.FlashKey = key("FLASH_KEY")
+	cfg.AttachmentsDir = required("ATTACHMENTS_DIR")
 
 	return cfg, errors.Join(errs...)
 }

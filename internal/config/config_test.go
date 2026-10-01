@@ -22,6 +22,7 @@ func env(overrides map[string]string) func(string) string {
 		"SESSION_KEY":        hexKey,
 		"CSRF_KEY":           hexKey,
 		"FLASH_KEY":          hexKey,
+		"ATTACHMENTS_DIR":    "/data/attachments",
 	}
 	for k, v := range overrides {
 		base[k] = v
@@ -46,6 +47,9 @@ func TestLoadValid(t *testing.T) {
 	if cfg.OIDC.CallbackPath != "/auth/openid/authentik" {
 		t.Errorf("CallbackPath = %q", cfg.OIDC.CallbackPath)
 	}
+	if cfg.AttachmentsDir != "/data/attachments" {
+		t.Errorf("AttachmentsDir = %q", cfg.AttachmentsDir)
+	}
 	if len(cfg.SessionKey) != 32 {
 		t.Errorf("SessionKey is %d bytes, want 32", len(cfg.SessionKey))
 	}
@@ -66,7 +70,7 @@ func TestLoadReportsEveryProblemByName(t *testing.T) {
 	if err == nil {
 		t.Fatal("Load with an empty environment succeeded")
 	}
-	for _, name := range []string{"BASE_URL", "DATABASE_URL", "OIDC_ISSUER", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET", "OIDC_REDIRECT_URL", "SESSION_KEY", "CSRF_KEY", "FLASH_KEY"} {
+	for _, name := range []string{"BASE_URL", "DATABASE_URL", "OIDC_ISSUER", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET", "OIDC_REDIRECT_URL", "SESSION_KEY", "CSRF_KEY", "FLASH_KEY", "ATTACHMENTS_DIR"} {
 		if !strings.Contains(err.Error(), name) {
 			t.Errorf("error does not name %s:\n%v", name, err)
 		}
