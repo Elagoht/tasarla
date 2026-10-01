@@ -238,7 +238,59 @@
     "role_exists": "Bu adla bir rol zaten var.",
     "none": "Henüz yok.",
     "role_in_use": "Bu rolü kullanan bir yetki var; önce yetkiyi silin.",
-    "column_in_use": "Bu kolondan başlayan bir taşıma yetkisi var; önce yetkiyi silin."
+    "column_in_use": "Bu kolondan başlayan bir taşıma yetkisi var; önce yetkiyi silin.",
+    "tabs": {
+      "general": "Genel",
+      "columns": "Kolonlar",
+      "labels": "Etiketler",
+      "roles": "Roller",
+      "rules": "Kurallar"
+    },
+    "order": "Sıra",
+    "drag": "Sürükleyerek sırala",
+    "unsaved": "Kaydedilmemiş değişiklikler var",
+    "save_columns": "Kolonları kaydet",
+    "new_row": "Yeni kolon adı",
+    "columns_hint": "Değişiklikler \"Kolonları kaydet\" ile birlikte uygulanır. Kartı olan bir kolon silinemez.",
+    "column_one_left": "En az bir kolon kalmalı.",
+    "role_rename": "Yeniden adlandır",
+    "role_members_hint": "Bu rolü taşıyan takım üyeleri",
+    "rules_hint": "Kurallar kartların nasıl ilerleyeceğini belirler. Hiç kural yoksa takımın her üyesi kartı her kolona taşıyabilir.",
+    "add_rule": "Kural ekle",
+    "no_rules": "Henüz kural yok.",
+    "who": "Kim",
+    "sources": "Kaynak kolonlar",
+    "limit": "Sınır",
+    "counted": "Sayılan kolonlar",
+    "sentence_types": {
+      "permission": "Kimler taşıyabilir",
+      "from": "Nereden gelinebilir",
+      "condition": "Giriş/çıkış şartı",
+      "wip": "Kolon sınırı",
+      "person_wip": "Kişi başına sınır"
+    },
+    "sentence": {
+      "permission": "{column} kolonuna yalnızca {who} kart taşıyabilir.",
+      "permission_from": "{column} kolonuna {from} kolonundan yalnızca {who} taşıyabilir.",
+      "from": "{column} kolonuna yalnızca {sources} kolonlarından gelinebilir.",
+      "from_none": "{column} kolonuna hiçbir yerden gelinemiyor.",
+      "enter": "{column} kolonuna girerken kartın {condition} olmalı.",
+      "exit": "{column} kolonundan çıkarken kartın {condition} olmalı.",
+      "wip": "{column} kolonunda aynı anda en fazla {limit} kart olabilir.",
+      "person_wip": "Bir kişinin {columns} kolonlarında en fazla {limit} kartı olabilir."
+    },
+    "phrase": {
+      "has_assignee": "atanan bir kişisi",
+      "has_estimate": "bir tahmini",
+      "has_due_date": "bir son tarihi",
+      "has_description": "bir açıklaması",
+      "has_label": "şu etiketlerden biri ({labels})",
+      "has_any_label": "bir etiketi",
+      "checklist_complete": "kontrol listesi tamamlanmış",
+      "blockers_done": "bloklayan kartları bitmiş",
+      "min_attachments": "en az {count} dosya eki"
+    },
+    "rule_invalid": "Kural eksik ya da hatalı; alanları kontrol edin."
   },
   "rules": {
     "transition": "{from} kolonundan {to} kolonuna geçiş tanımlı değil.",

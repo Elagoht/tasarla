@@ -68,7 +68,7 @@ func New(d Deps) (*App, error) {
 		Server:  collage.ServerConfig{Host: d.Host, Port: d.Port},
 		Template: collage.TemplateConfig{
 			FS: d.Files, Root: "templates", Extension: ".html",
-			Funcs: template.FuncMap{"richText": richText},
+			Funcs: template.FuncMap{"richText": richText, "inc": func(n int) int { return n + 1 }},
 		},
 		Locale: collage.LocaleConfig{Default: d.Config.DefaultLocale, Supported: config.Locales},
 		Cache:  collage.CacheConfig{Enabled: true, Type: "memory", DefaultTTL: 5 * time.Minute},

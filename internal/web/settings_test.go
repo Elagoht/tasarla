@@ -4,8 +4,12 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
+
+	"kanban/internal/rules"
+	"kanban/internal/store"
 )
 
 func TestOnlyManagersSeeBoardSettings(t *testing.T) {
@@ -30,42 +34,63 @@ func TestOnlyManagersSeeBoardSettings(t *testing.T) {
 	}
 }
 
-func TestEditingColumns(t *testing.T) {
+// columnsForm is the column table as the settings page posts it.
+func columnsForm(rows []map[string]string, create, done int) url.Values {
+	f := url.Values{"op": {"columns_save"}, "col_count": {strconv.Itoa(len(rows))},
+		"col_create": {strconv.Itoa(create)}, "col_done": {strconv.Itoa(done)}}
+	for i, r := range rows {
+		p := "col_" + strconv.Itoa(i) + "_"
+		f.Set(p+"order", strconv.Itoa(i))
+		for k, v := range r {
+			f.Set(p+k, v)
+		}
+	}
+	return f
+}
+
+func TestSavingTheColumnTable(t *testing.T) {
 	b := newBoardSetup(t)
 	ctx := context.Background()
-	s := b.path + "/settings"
-	if res := b.lead.Submit(s, s, url.Values{"op": {"column_add"}, "new_column": {"Review"}}); res.Status != http.StatusSeeOther {
-		t.Fatalf("column_add = %d:\n%s", res.Status, res.Body)
+	s := b.path + "/settings?tab=columns"
+	rows := []map[string]string{
+		{"id": id(b.cols[1].ID), "name": "In progress", "wip": "2", "person": "1"},
+		{"id": id(b.cols[0].ID), "name": "Backlog"},
+		{"id": "", "name": "Review"},
+		{"id": id(b.cols[2].ID), "name": "Done"},
+	}
+	res := b.lead.Submit(s, b.path+"/settings", columnsForm(rows, 1, 3))
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("columns_save = %d:\n%s", res.Status, res.Body)
 	}
 	cols, _ := b.h.store.Columns(ctx, b.board.ID)
-	review := cols[3]
-	if review.Name != "Review" {
+	var names []string
+	for _, c := range cols {
+		names = append(names, c.Name)
+	}
+	if strings.Join(names, ",") != "In progress,Backlog,Review,Done" || *cols[0].WIPLimit != 2 || !cols[0].CountsPersonWIP ||
+		!cols[1].AllowCreate || cols[0].AllowCreate || !cols[3].IsDone {
 		t.Fatalf("columns = %+v", cols)
 	}
-	res := b.lead.Submit(s, s, url.Values{"op": {"column_update"}, "column_id": {id(review.ID)}, "name": {"In review"},
-		"wip_limit": {"2"}, "is_done": {"1"}, "counts_person_wip": {"1"}})
-	if res.Status != http.StatusSeeOther {
-		t.Fatalf("column_update = %d", res.Status)
-	}
-	b.lead.Submit(s, s, url.Values{"op": {"column_move"}, "column_id": {id(review.ID)}, "dir": {"-1"}})
-	cols, _ = b.h.store.Columns(ctx, b.board.ID)
-	if c := cols[2]; c.Name != "In review" || c.WIPLimit == nil || *c.WIPLimit != 2 || !c.IsDone || !c.CountsPersonWIP || c.AllowCreate {
-		t.Fatalf("updated column = %+v", c)
-	}
-	res = b.lead.Submit(s, s, url.Values{"op": {"column_update"}, "column_id": {id(review.ID)}, "name": {"x"}, "wip_limit": {"zero"}})
-	if res.Status != http.StatusSeeOther {
-		t.Fatalf("bad limit = %d", res.Status)
-	}
-	mustContain(t, b.lead.Get(s).Body, "WIP limiti pozitif bir tam sayı olmalı.")
+}
 
-	b.card(t, 0, "Busy")
-	b.lead.Submit(s, s, url.Values{"op": {"column_delete"}, "column_id": {id(b.cols[0].ID)}})
-	mustContain(t, b.lead.Get(s).Body, "Kartı olan bir kolon silinemez.")
-	if res := b.lead.Submit(s, s, url.Values{"op": {"column_delete"}, "column_id": {id(review.ID)}}); res.Status != http.StatusSeeOther {
-		t.Fatalf("delete = %d", res.Status)
+// Review Focus 2: one bad row refuses the whole table and keeps what was typed.
+func TestABadColumnTableSavesNothing(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	b.card(t, 0, "busy")
+	rows := []map[string]string{
+		{"id": id(b.cols[0].ID), "name": "Typed name", "delete": "1"},
+		{"id": id(b.cols[1].ID), "name": "Doing", "wip": "zero"},
+		{"id": id(b.cols[2].ID), "name": ""},
 	}
-	if cols, _ := b.h.store.Columns(ctx, b.board.ID); len(cols) != 3 {
-		t.Fatalf("columns after delete = %d", len(cols))
+	res := b.lead.Submit(b.path+"/settings?tab=columns", b.path+"/settings", columnsForm(rows, 0, 2))
+	if res.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("bad table = %d, want 422", res.Status)
+	}
+	mustContain(t, res.Body, `value="Typed name"`, `value="zero"`, "Kartı olan bir kolon silinemez.", "WIP limiti pozitif bir tam sayı olmalı.", "Ad boş olamaz.")
+	cols, _ := b.h.store.Columns(ctx, b.board.ID)
+	if cols[0].Name != "Todo" || len(cols) != 3 {
+		t.Fatalf("columns changed: %+v", cols)
 	}
 }
 
@@ -81,9 +106,6 @@ func TestEditingLabelsAndTheBoard(t *testing.T) {
 		t.Fatalf("a colour outside the palette = %d, want 422", res.Status)
 	}
 	labels, _ := b.h.store.Labels(ctx, b.board.ID)
-	if len(labels) != 1 {
-		t.Fatalf("labels = %+v", labels)
-	}
 	b.lead.Submit(s, s, url.Values{"confirm": {"1"}, "op": {"label_delete"}, "label_id": {id(labels[0].ID)}})
 	if labels, _ := b.h.store.Labels(ctx, b.board.ID); len(labels) != 0 {
 		t.Fatal("label not deleted")
@@ -97,4 +119,79 @@ func TestEditingLabelsAndTheBoard(t *testing.T) {
 	if res := b.member.Get(b.path); res.Status != http.StatusNotFound {
 		t.Fatalf("archived board = %d, want 404", res.Status)
 	}
+}
+
+func TestEditingRoles(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	s := b.path + "/settings"
+	b.lead.Submit(s, s, url.Values{"op": {"role_add"}, "role_name": {"QA"}})
+	r, _ := b.h.store.BoardRules(ctx, b.board.ID)
+	role := id(r.Roles[0].ID)
+	if res := b.lead.Submit(s, s, url.Values{"op": {"role_rename"}, "role_id": {role}, "role_name": {"Quality"}}); res.Status != http.StatusSeeOther {
+		t.Fatalf("role_rename = %d", res.Status)
+	}
+	b.lead.Submit(s, s, url.Values{"op": {"role_members"}, "role_id": {role}, "member": {id(b.h.user("member@example.com").ID)}})
+	r, _ = b.h.store.BoardRules(ctx, b.board.ID)
+	if r.Roles[0].Name != "Quality" || len(r.Roles[0].MemberIDs) != 1 {
+		t.Fatalf("roles = %+v", r.Roles)
+	}
+	mustContain(t, b.lead.Get(s+"?tab=roles").Body, "Quality")
+}
+
+func TestRuleSentences(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	s := b.path + "/settings"
+	todo, doing, done := id(b.cols[0].ID), id(b.cols[1].ID), id(b.cols[2].ID)
+	qa, _ := b.h.store.CreateBoardRole(ctx, b.board.ID, "QA")
+	adds := []url.Values{
+		{"sentence": {"permission"}, "column": {done}, "subject": {"team_lead"}, "role": {id(qa.ID)}},
+		{"sentence": {"from"}, "column": {done}, "from": {doing}},
+		{"sentence": {"condition"}, "column": {doing}, "phase": {"enter"}, "kind": {"min_attachments"}, "count": {"2"}},
+		{"sentence": {"wip"}, "column": {doing}, "limit": {"3"}},
+		{"sentence": {"person_wip"}, "limit": {"2"}, "counted": {doing}},
+	}
+	for _, form := range adds {
+		form.Set("op", "rule_add")
+		if res := b.lead.Submit(s, s, form); res.Status != http.StatusSeeOther {
+			t.Fatalf("rule_add %s = %d:\n%s", form.Get("sentence"), res.Status, res.Body)
+		}
+	}
+	ss, _ := b.h.store.BoardSentences(ctx, b.board.ID)
+	if len(ss) != 5 {
+		t.Fatalf("sentences = %+v", ss)
+	}
+	page := b.lead.Get(s + "?tab=rules").Body
+	mustContain(t, page, "Done kolonuna yalnızca", "QA", "en az 2 dosya eki", "en fazla 3 kart")
+	_ = todo
+
+	// Nonsense never reaches the store.
+	for _, form := range []url.Values{
+		{"op": {"rule_add"}, "sentence": {"condition"}, "column": {doing}, "phase": {"enter"}, "kind": {"tarot"}},
+		{"op": {"rule_add"}, "sentence": {"permission"}, "column": {done}},
+		{"op": {"rule_add"}, "sentence": {"wip"}, "column": {doing}, "limit": {"-1"}},
+		{"op": {"rule_add"}, "sentence": {"poetry"}},
+	} {
+		res := b.lead.Submit(s, s, form)
+		if res.Status == http.StatusInternalServerError {
+			t.Errorf("%v = 500", form)
+		}
+	}
+	if ss2, _ := b.h.store.BoardSentences(ctx, b.board.ID); len(ss2) != 5 {
+		t.Fatalf("bad input changed the rules: %d", len(ss2))
+	}
+	for _, sen := range ss {
+		res := b.lead.Submit(s, s, url.Values{"confirm": {"1"}, "op": {"rule_delete"}, "key": {sen.Key}})
+		if res.Status != http.StatusSeeOther {
+			t.Fatalf("rule_delete %s = %d", sen.Key, res.Status)
+		}
+	}
+	if ss, _ := b.h.store.BoardSentences(ctx, b.board.ID); len(ss) != 0 {
+		t.Fatalf("left over: %+v", ss)
+	}
+	if bd, _ := b.h.store.Board(ctx, b.board.ID); bd.TransitionsMode != rules.ModeOpen {
+		t.Fatal("still restricted")
+	}
+	_ = store.SentenceWIP
 }

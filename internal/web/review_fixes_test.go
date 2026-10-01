@@ -70,7 +70,7 @@ func TestDeletingARoleInUseSaysWhy(t *testing.T) {
 	if res := b.lead.Submit(s, s, url.Values{"confirm": {"1"}, "op": {"role_delete"}, "role_id": {id(qa.ID)}}); res.Status != http.StatusSeeOther {
 		t.Fatalf("role_delete = %d", res.Status)
 	}
-	page := b.lead.Get(s).Body
+	page := b.lead.Get(s + "?tab=roles").Body
 	mustContain(t, page, "Bu rolü kullanan bir yetki var; önce yetkiyi silin.")
 	if !strings.Contains(page, "QA") {
 		t.Fatal("the role was deleted")

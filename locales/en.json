@@ -238,7 +238,59 @@
     "role_exists": "A role with this name already exists.",
     "none": "None yet.",
     "role_in_use": "A permission uses this role; delete the permission first.",
-    "column_in_use": "A move permission starts from this column; delete the permission first."
+    "column_in_use": "A move permission starts from this column; delete the permission first.",
+    "tabs": {
+      "general": "General",
+      "columns": "Columns",
+      "labels": "Labels",
+      "roles": "Roles",
+      "rules": "Rules"
+    },
+    "order": "Order",
+    "drag": "Drag to reorder",
+    "unsaved": "There are unsaved changes",
+    "save_columns": "Save columns",
+    "new_row": "New column name",
+    "columns_hint": "Changes apply together with \"Save columns\". A column with cards cannot be deleted.",
+    "column_one_left": "At least one column must remain.",
+    "role_rename": "Rename",
+    "role_members_hint": "Team members holding this role",
+    "rules_hint": "Rules decide how cards move. With no rules, every team member may move any card to any column.",
+    "add_rule": "Add rule",
+    "no_rules": "No rules yet.",
+    "who": "Who",
+    "sources": "Source columns",
+    "limit": "Limit",
+    "counted": "Counted columns",
+    "sentence_types": {
+      "permission": "Who may move",
+      "from": "Where cards come from",
+      "condition": "Entry/exit condition",
+      "wip": "Column limit",
+      "person_wip": "Per-person limit"
+    },
+    "sentence": {
+      "permission": "Only {who} may move cards into {column}.",
+      "permission_from": "Only {who} may move cards from {from} into {column}.",
+      "from": "Cards may enter {column} only from {sources}.",
+      "from_none": "Cards cannot enter {column} from anywhere.",
+      "enter": "A card entering {column} needs {condition}.",
+      "exit": "A card leaving {column} needs {condition}.",
+      "wip": "{column} holds at most {limit} cards at a time.",
+      "person_wip": "A person may have at most {limit} cards in {columns}."
+    },
+    "phrase": {
+      "has_assignee": "an assignee",
+      "has_estimate": "an estimate",
+      "has_due_date": "a due date",
+      "has_description": "a description",
+      "has_label": "one of these labels ({labels})",
+      "has_any_label": "a label",
+      "checklist_complete": "a complete checklist",
+      "blockers_done": "every blocking card done",
+      "min_attachments": "at least {count} attachments"
+    },
+    "rule_invalid": "The rule is incomplete or wrong; check the fields."
   },
   "rules": {
     "transition": "Moving from {from} to {to} is not allowed.",

@@ -1,221 +1,276 @@
 {{$self := pageURL "board-settings" "id" .Board.ID}}
-<p><a href="{{pageURL "board" "id" .Board.ID}}">← {{t "card.back"}}: {{.Board.Name}}</a></p>
-<h1>{{t "settings.title"}}</h1>
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{pageURL "board" "id" .Board.ID}}">{{template "icon" "arrow-left"}} {{.Board.Name}}</a>
+    <h1>{{t "settings.title"}}</h1>
+  </div>
+</header>
 
-<section>
-  <h2>{{t "settings.board"}}</h2>
-  <form class="inline" method="post" action="{{$self}}">
+<nav class="tabs" aria-label="{{t "settings.title"}}">
+  {{range .Tabs}}<a class="tabs__tab{{if eq . $.Tab}} is-active{{end}}" href="{{$self}}?tab={{.}}" {{if eq . $.Tab}}aria-current="page"{{end}}>{{t (printf "settings.tabs.%s" .)}}</a>{{end}}
+</nav>
+
+{{if eq .Tab "general"}}
+<section class="panel stack">
+  <form class="field-row" method="post" action="{{$self}}?tab=general">
     {{csrfToken}}
     <input type="hidden" name="op" value="rename">
-    <input name="board_name" value="{{fieldValue "board_name" .Board.Name}}" aria-label="{{t "board.name"}}" required maxlength="100">
-    <button type="submit">{{t "settings.rename"}}</button>
-    {{with fieldError "board_name"}}<p class="error">{{.}}</p>{{end}}
+    <label class="field">
+      <span class="field__label">{{t "board.name"}}</span>
+      <input class="input" name="board_name" value="{{fieldValue "board_name" .Board.Name}}" required maxlength="100">
+      {{with fieldError "board_name"}}<span class="field__error">{{.}}</span>{{end}}
+    </label>
+    <button type="submit" class="btn btn--primary">{{t "settings.rename"}}</button>
   </form>
 </section>
-
-<section>
-  <h2>{{t "settings.columns"}}</h2>
-  <table class="table">
-    <thead>
-      <tr><th>{{t "settings.column_name"}}</th><th>{{t "settings.wip_limit"}}</th><th>{{t "settings.allow_create"}}</th><th>{{t "settings.is_done"}}</th><th>{{t "settings.counts_person_wip"}}</th><th></th></tr>
-    </thead>
-    <tbody>
-      {{range .Columns}}
-      <tr>
-        <td colspan="5">
-          <form class="inline" method="post" action="{{$self}}">
-            {{csrfToken}}
-            <input type="hidden" name="op" value="column_update">
-            <input type="hidden" name="column_id" value="{{.Column.ID}}">
-            <input name="name" value="{{.Column.Name}}" aria-label="{{t "settings.column_name"}}" required maxlength="60">
-            <input name="wip_limit" value="{{.Limit}}" inputmode="numeric" size="3" aria-label="{{t "settings.wip_limit"}}">
-            <label><input type="checkbox" name="allow_create" value="1" {{if .Column.AllowCreate}}checked{{end}}> {{t "settings.allow_create"}}</label>
-            <label><input type="checkbox" name="is_done" value="1" {{if .Column.IsDone}}checked{{end}}> {{t "settings.is_done"}}</label>
-            <label><input type="checkbox" name="counts_person_wip" value="1" {{if .Column.CountsPersonWIP}}checked{{end}}> {{t "settings.counts_person_wip"}}</label>
-            <button type="submit">{{t "card.save"}}</button>
-          </form>
-        </td>
-        <td>
-          {{if not .First}}<form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="column_move"><input type="hidden" name="column_id" value="{{.Column.ID}}"><input type="hidden" name="dir" value="-1"><button type="submit">{{t "settings.left"}}</button></form>{{end}}
-          {{if not .Last}}<form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="column_move"><input type="hidden" name="column_id" value="{{.Column.ID}}"><input type="hidden" name="dir" value="1"><button type="submit">{{t "settings.right"}}</button></form>{{end}}
-          <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="column_delete"><input type="hidden" name="column_id" value="{{.Column.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
-        </td>
-      </tr>
-      {{end}}
-    </tbody>
-  </table>
-  <form class="inline" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="column_add">
-    <input name="new_column" value="{{fieldValue "new_column"}}" placeholder="{{t "settings.new_column"}}" aria-label="{{t "settings.new_column"}}" required maxlength="60">
-    <button type="submit">{{t "settings.add_column"}}</button>
-    {{with fieldError "new_column"}}<p class="error">{{.}}</p>{{end}}
-  </form>
-</section>
-
-<section>
-  <h2>{{t "settings.labels"}}</h2>
-  <ul class="list">
-    {{range .Labels}}
-    <li>
-      <span class="label" data-color="{{.Color}}">{{.Name}}</span>
-      <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="label_delete"><input type="hidden" name="label_id" value="{{.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
-    </li>
-    {{end}}
-  </ul>
-  <form class="inline" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="label_add">
-    <input name="label_name" value="{{fieldValue "label_name"}}" placeholder="{{t "settings.label_name"}}" aria-label="{{t "settings.label_name"}}" required maxlength="40">
-    {{$color := fieldValue "label_color"}}
-    <select name="label_color" aria-label="{{t "settings.label_color"}}">
-      {{range .Palette}}<option value="{{.}}" {{if eq . $color}}selected{{end}}>{{t (printf "settings.colors.%s" (slice . 1))}}</option>{{end}}
-    </select>
-    <button type="submit">{{t "settings.add_label"}}</button>
-    {{with fieldError "label_name"}}<p class="error">{{.}}</p>{{end}}
-    {{with fieldError "label_color"}}<p class="error">{{.}}</p>{{end}}
-  </form>
-</section>
-
-<h2>{{t "settings.rules"}}</h2>
-
-<section>
-  <h3>{{t "settings.policy"}}</h3>
-  <form class="form" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="policy">
-    <label for="transitions-mode">{{t "settings.transitions_mode"}}</label>
-    <select id="transitions-mode" name="transitions_mode">
-      <option value="open" {{if eq .Board.TransitionsMode "open"}}selected{{end}}>{{t "settings.modes.open"}}</option>
-      <option value="restricted" {{if eq .Board.TransitionsMode "restricted"}}selected{{end}}>{{t "settings.modes.restricted"}}</option>
-    </select>
-    <label for="person-wip">{{t "settings.person_wip_limit"}}</label>
-    <input id="person-wip" name="person_wip_limit" value="{{.PersonLimit}}" inputmode="numeric">
-    <button type="submit">{{t "card.save"}}</button>
-  </form>
-</section>
-
-<section>
-  <h3>{{t "settings.matrix"}}</h3>
-  <form method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="transitions">
-    <table class="table matrix">
-      <thead><tr><th>{{t "settings.from"}} \ {{t "settings.to"}}</th>{{range .Columns}}<th>{{.Column.Name}}</th>{{end}}</tr></thead>
-      <tbody>
-        {{range .Matrix}}
-        <tr>
-          <th>{{.From.Name}}</th>
-          {{range .Cells}}<td>{{if not .Self}}<input type="checkbox" name="t" value="{{.Value}}" aria-label="{{$.Board.Name}}: {{.To.Name}}" {{if .Allowed}}checked{{end}}>{{end}}</td>{{end}}
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
-    <button type="submit">{{t "card.save"}}</button>
-  </form>
-</section>
-
-<section>
-  <h3>{{t "settings.roles"}}</h3>
-  {{range .Roles}}
-  <form class="inline" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="role_members">
-    <input type="hidden" name="role_id" value="{{.Role.ID}}">
-    <strong>{{.Role.Name}}</strong>
-    {{range .Members}}<label><input type="checkbox" name="member" value="{{.User.ID}}" {{if .Member}}checked{{end}}> {{.User.Name}}</label>{{end}}
-    <button type="submit">{{t "settings.save_members"}}</button>
-  </form>
-  <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="role_delete"><input type="hidden" name="role_id" value="{{.Role.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
-  {{else}}
-  <p class="muted">{{t "settings.none"}}</p>
-  {{end}}
-  <form class="inline" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="role_add">
-    <input name="role_name" value="{{fieldValue "role_name"}}" placeholder="{{t "settings.role_name"}}" aria-label="{{t "settings.role_name"}}" required maxlength="40">
-    <button type="submit">{{t "settings.add_role"}}</button>
-    {{with fieldError "role_name"}}<p class="error">{{.}}</p>{{end}}
-  </form>
-</section>
-
-<section>
-  <h3>{{t "settings.permissions"}}</h3>
-  <p class="muted">{{t "settings.permissions_hint"}}</p>
-  <ul class="list">
-    {{range .Permissions}}
-    <li>
-      {{if .From}}{{.From}}{{else}}{{t "settings.any_column"}}{{end}} → {{.To}}:
-      {{t (printf "settings.subjects.%s" .Subject)}}{{with .Role}} ({{.}}){{end}}
-      <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="permission_delete"><input type="hidden" name="permission_id" value="{{.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
-    </li>
-    {{else}}
-    <li class="muted">{{t "settings.none"}}</li>
-    {{end}}
-  </ul>
-  <form class="inline" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="permission_add">
-    <select name="from_column" aria-label="{{t "settings.from"}}">
-      <option value="">{{t "settings.any_column"}}</option>
-      {{range .Columns}}<option value="{{.Column.ID}}">{{.Column.Name}}</option>{{end}}
-    </select>
-    →
-    <select name="to_column" aria-label="{{t "settings.to"}}">
-      {{range .Columns}}<option value="{{.Column.ID}}">{{.Column.Name}}</option>{{end}}
-    </select>
-    <select name="subject" aria-label="{{t "settings.subject"}}">
-      {{range .Subjects}}<option value="{{.}}">{{t (printf "settings.subjects.%s" .)}}</option>{{end}}
-    </select>
-    {{if .Roles}}
-    <select name="board_role" aria-label="{{t "settings.board_role"}}">
-      {{range .Roles}}<option value="{{.Role.ID}}">{{.Role.Name}}</option>{{end}}
-    </select>
-    {{end}}
-    <button type="submit">{{t "settings.add_permission"}}</button>
-  </form>
-</section>
-
-<section>
-  <h3>{{t "settings.conditions"}}</h3>
-  <ul class="list">
-    {{range .Conditions}}
-    <li>
-      {{.Column}} · {{t (printf "settings.phases.%s" .Phase)}} · {{t (printf "settings.kinds.%s" .Kind) "count" .Count}}{{with .Labels}}: {{.}}{{end}}
-      <form class="inline" method="post" action="{{$self}}">{{csrfToken}}<input type="hidden" name="op" value="condition_delete"><input type="hidden" name="condition_id" value="{{.ID}}"><button type="submit">{{t "settings.delete"}}</button></form>
-    </li>
-    {{else}}
-    <li class="muted">{{t "settings.none"}}</li>
-    {{end}}
-  </ul>
-  <form class="inline" method="post" action="{{$self}}">
-    {{csrfToken}}
-    <input type="hidden" name="op" value="condition_add">
-    <select name="column_id" aria-label="{{t "settings.column_name"}}">
-      {{range .Columns}}<option value="{{.Column.ID}}">{{.Column.Name}}</option>{{end}}
-    </select>
-    <select name="phase" aria-label="{{t "settings.phase"}}">
-      <option value="enter">{{t "settings.phases.enter"}}</option>
-      <option value="exit">{{t "settings.phases.exit"}}</option>
-    </select>
-    <select name="kind" aria-label="{{t "settings.kind"}}">
-      {{range .Kinds}}<option value="{{.}}">{{t (printf "settings.kinds.%s" .) "count" "n"}}</option>{{end}}
-    </select>
-    <input name="count" inputmode="numeric" size="3" placeholder="{{t "settings.count"}}" aria-label="{{t "settings.count"}}">
-    {{if .Labels}}
-    <select name="label" multiple aria-label="{{t "settings.labels"}}">
-      {{range .Labels}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
-    </select>
-    <span class="muted">{{t "settings.labels_hint"}}</span>
-    {{end}}
-    <button type="submit">{{t "settings.add_condition"}}</button>
-  </form>
-</section>
-
-<section class="danger">
-  <form method="post" action="{{$self}}">
+<section class="panel panel--danger stack">
+  <h2 class="h3">{{t "settings.archive"}}</h2>
+  <form method="post" action="{{$self}}?tab=general" data-confirm="{{t "confirm.archive_board"}}">
     {{csrfToken}}
     <input type="hidden" name="op" value="archive_board">
-    <button type="submit">{{t "settings.archive"}}</button>
+    <button type="submit" class="btn btn--danger">{{template "icon" "archive"}} {{t "settings.archive"}}</button>
   </form>
 </section>
+{{end}}
+
+{{if eq .Tab "columns"}}
+<form class="panel stack" method="post" action="{{$self}}?tab=columns" data-columns-editor>
+  {{csrfToken}}
+  <input type="hidden" name="op" value="columns_save">
+  <input type="hidden" name="col_count" value="{{len .Columns | inc}}" data-col-count>
+  <p class="muted">{{t "settings.columns_hint"}}</p>
+  <div class="table-wrap">
+    <table class="table table--columns">
+      <thead>
+        <tr>
+          <th class="table__grip"><span class="sr-only">{{t "settings.order"}}</span></th>
+          <th>{{t "settings.column_name"}}</th>
+          <th>{{t "settings.wip_limit"}}</th>
+          <th>{{t "settings.allow_create"}}</th>
+          <th>{{t "settings.is_done"}}</th>
+          <th>{{t "settings.counts_person_wip"}}</th>
+          <th>{{t "settings.delete"}}</th>
+        </tr>
+      </thead>
+      <tbody data-col-rows>
+        {{range .Columns}}
+        {{$p := printf "col_%d_" .Index}}
+        <tr class="{{if .Problem}}has-error{{end}}" data-col-row>
+          <td class="table__grip">
+            <span class="grip" title="{{t "settings.drag"}}">{{template "icon" "grip"}}</span>
+            <input class="input input--tiny" name="{{$p}}order" value="{{.Index}}" inputmode="numeric" aria-label="{{t "settings.order"}}" data-col-order>
+            <input type="hidden" name="{{$p}}id" value="{{.ID}}">
+          </td>
+          <td>
+            <input class="input" name="{{$p}}name" value="{{.Name}}" maxlength="60" aria-label="{{t "settings.column_name"}}">
+            {{with .Problem}}<span class="field__error">{{.}}</span>{{end}}
+          </td>
+          <td><input class="input input--small" name="{{$p}}wip" value="{{.WIP}}" inputmode="numeric" placeholder="–" aria-label="{{t "settings.wip_limit"}}"></td>
+          <td><input type="radio" class="check" name="col_create" value="{{.Index}}" {{if eq .Index $.Create}}checked{{end}} aria-label="{{t "settings.allow_create"}}"></td>
+          <td><input type="radio" class="check" name="col_done" value="{{.Index}}" {{if eq .Index $.Done}}checked{{end}} aria-label="{{t "settings.is_done"}}"></td>
+          <td><input type="checkbox" class="check" name="{{$p}}person" value="1" {{if .Person}}checked{{end}} aria-label="{{t "settings.counts_person_wip"}}"></td>
+          <td>
+            {{if .Cards}}<span class="muted" title="{{t "settings.column_not_empty"}}">{{.Cards}}</span>
+            {{else}}<label class="delete-toggle"><input type="checkbox" class="check" name="{{$p}}delete" value="1" {{if .Delete}}checked{{end}}> <span class="sr-only">{{t "settings.delete"}}</span>{{template "icon" "trash"}}</label>{{end}}
+          </td>
+        </tr>
+        {{end}}
+        {{$n := len .Columns}}
+        {{$p := printf "col_%d_" $n}}
+        <tr class="table__new" data-col-row data-col-template>
+          <td class="table__grip">
+            <span class="grip">{{template "icon" "plus"}}</span>
+            <input class="input input--tiny" name="{{$p}}order" value="{{$n}}" inputmode="numeric" aria-label="{{t "settings.order"}}" data-col-order>
+            <input type="hidden" name="{{$p}}id" value="">
+          </td>
+          <td><input class="input" name="{{$p}}name" value="" maxlength="60" placeholder="{{t "settings.new_row"}}" aria-label="{{t "settings.new_row"}}"></td>
+          <td><input class="input input--small" name="{{$p}}wip" value="" inputmode="numeric" placeholder="–" aria-label="{{t "settings.wip_limit"}}"></td>
+          <td><input type="radio" class="check" name="col_create" value="{{$n}}" aria-label="{{t "settings.allow_create"}}"></td>
+          <td><input type="radio" class="check" name="col_done" value="{{$n}}" aria-label="{{t "settings.is_done"}}"></td>
+          <td><input type="checkbox" class="check" name="{{$p}}person" value="1" aria-label="{{t "settings.counts_person_wip"}}"></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn btn--secondary" data-col-add hidden>{{template "icon" "plus"}} {{t "settings.add_column"}}</button>
+    <span class="actions__spacer"></span>
+    <span class="muted" data-col-dirty hidden>{{t "settings.unsaved"}}</span>
+    <button type="submit" class="btn btn--primary">{{t "settings.save_columns"}}</button>
+  </div>
+</form>
+{{end}}
+
+{{if eq .Tab "labels"}}
+<section class="panel stack">
+  {{if .Labels}}
+  <ul class="list-rows">
+    {{range .Labels}}
+    <li class="list-rows__row">
+      <span class="chip" data-color="{{.Color}}">{{.Name}}</span>
+      <form method="post" action="{{$self}}?tab=labels" data-confirm="{{t "confirm.label_delete"}}">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="label_delete">
+        <input type="hidden" name="label_id" value="{{.ID}}">
+        <button type="submit" class="btn btn--danger btn--sm">{{template "icon" "trash"}} {{t "settings.delete"}}</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="empty">{{t "card.no_labels"}}</p>
+  {{end}}
+  <form class="field-row" method="post" action="{{$self}}?tab=labels">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="label_add">
+    <label class="field">
+      <span class="field__label">{{t "settings.label_name"}}</span>
+      <input class="input" name="label_name" value="{{fieldValue "label_name"}}" required maxlength="40">
+      {{with fieldError "label_name"}}<span class="field__error">{{.}}</span>{{end}}
+    </label>
+    <fieldset class="field">
+      <legend class="field__label">{{t "settings.label_color"}}</legend>
+      <div class="swatches">
+        {{$color := fieldValue "label_color" "#e03131"}}
+        {{range .Palette}}<label class="swatch" data-color="{{.}}"><input type="radio" name="label_color" value="{{.}}" {{if eq . $color}}checked{{end}}><span class="sr-only">{{t (printf "settings.colors.%s" (slice . 1))}}</span></label>{{end}}
+      </div>
+      {{with fieldError "label_color"}}<span class="field__error">{{.}}</span>{{end}}
+    </fieldset>
+    <button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "settings.add_label"}}</button>
+  </form>
+</section>
+{{end}}
+
+{{if eq .Tab "roles"}}
+<section class="stack">
+  {{range .Roles}}
+  <article class="panel stack">
+    <div class="split">
+      <form class="field-row" method="post" action="{{$self}}?tab=roles">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="role_rename">
+        <input type="hidden" name="role_id" value="{{.Role.ID}}">
+        <input class="input" name="role_name" value="{{.Role.Name}}" required maxlength="40" aria-label="{{t "settings.role_name"}}">
+        <button type="submit" class="btn btn--secondary">{{t "settings.role_rename"}}</button>
+      </form>
+      <form method="post" action="{{$self}}?tab=roles" data-confirm="{{t "confirm.role_delete"}}">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="role_delete">
+        <input type="hidden" name="role_id" value="{{.Role.ID}}">
+        <button type="submit" class="btn btn--danger btn--sm">{{template "icon" "trash"}} {{t "settings.delete"}}</button>
+      </form>
+    </div>
+    <form class="stack" method="post" action="{{$self}}?tab=roles">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="role_members">
+      <input type="hidden" name="role_id" value="{{.Role.ID}}">
+      <fieldset>
+        <legend class="field__label">{{t "settings.role_members_hint"}}</legend>
+        <div class="checks">
+          {{range .Members}}<label class="check-pill"><input type="checkbox" name="member" value="{{.User.ID}}" {{if .Member}}checked{{end}}> {{.User.Name}}</label>{{end}}
+        </div>
+      </fieldset>
+      <div><button type="submit" class="btn btn--primary btn--sm">{{t "settings.save_members"}}</button></div>
+    </form>
+  </article>
+  {{else}}
+  <p class="empty">{{t "settings.none"}}</p>
+  {{end}}
+  <form class="panel field-row" method="post" action="{{$self}}?tab=roles">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="role_add">
+    <label class="field">
+      <span class="field__label">{{t "settings.role_name"}}</span>
+      <input class="input" name="role_name" value="{{fieldValue "role_name"}}" required maxlength="40">
+      {{with fieldError "role_name"}}<span class="field__error">{{.}}</span>{{end}}
+    </label>
+    <button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "settings.add_role"}}</button>
+  </form>
+</section>
+{{end}}
+
+{{if eq .Tab "rules"}}
+<section class="stack">
+  <p class="muted">{{t "settings.rules_hint"}}</p>
+  {{if .Sentences}}
+  <ul class="rules">
+    {{range .Sentences}}
+    <li class="rule{{if .Warning}} rule--warning{{end}}">
+      <span class="rule__text">{{.Text}}</span>
+      <form method="post" action="{{$self}}?tab=rules" data-confirm="{{t "confirm.rule_delete"}}">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="rule_delete">
+        <input type="hidden" name="key" value="{{.Key}}">
+        <button type="submit" class="btn btn--quiet btn--sm btn--danger-text" aria-label="{{t "settings.delete"}}">{{template "icon" "trash"}}</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="empty">{{t "settings.no_rules"}}</p>
+  {{end}}
+
+  <h2 class="h3">{{t "settings.add_rule"}}</h2>
+  <div class="rule-builders">
+    <details class="panel rule-builder">
+      <summary>{{t "settings.sentence_types.permission"}}</summary>
+      <form class="sentence" method="post" action="{{$self}}?tab=rules">
+        {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="permission">
+        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
+        <span>{{t "settings.to"}} ·</span>
+        <select class="select" name="from_column" aria-label="{{t "settings.from"}}"><option value="">{{t "settings.any_column"}}</option>{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
+        <span>· {{t "settings.who"}}:</span>
+        <div class="checks">
+          {{range .Subjects}}<label class="check-pill"><input type="checkbox" name="subject" value="{{.}}"> {{t (printf "settings.subjects.%s" .)}}</label>{{end}}
+          {{range .Roles}}<label class="check-pill"><input type="checkbox" name="role" value="{{.Role.ID}}"> {{.Role.Name}}</label>{{end}}
+        </div>
+        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+      </form>
+    </details>
+    <details class="panel rule-builder">
+      <summary>{{t "settings.sentence_types.from"}}</summary>
+      <form class="sentence" method="post" action="{{$self}}?tab=rules">
+        {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="from">
+        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
+        <span>← {{t "settings.sources"}}:</span>
+        <div class="checks">{{range .AllCols}}<label class="check-pill"><input type="checkbox" name="from" value="{{.ID}}"> {{.Name}}</label>{{end}}</div>
+        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+      </form>
+    </details>
+    <details class="panel rule-builder">
+      <summary>{{t "settings.sentence_types.condition"}}</summary>
+      <form class="sentence" method="post" action="{{$self}}?tab=rules" data-rule-condition>
+        {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="condition">
+        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
+        <select class="select" name="phase" aria-label="{{t "settings.phase"}}"><option value="enter">{{t "settings.phases.enter"}}</option><option value="exit">{{t "settings.phases.exit"}}</option></select>
+        <select class="select" name="kind" aria-label="{{t "settings.kind"}}" data-rule-kind>{{range .Kinds}}<option value="{{.}}">{{t (printf "settings.kinds.%s" .) "count" "N"}}</option>{{end}}</select>
+        <input class="input input--small" name="count" inputmode="numeric" placeholder="N" aria-label="{{t "settings.count"}}" data-rule-for="min_attachments">
+        {{if .Labels}}<div class="checks" data-rule-for="has_label">{{range .Labels}}<label class="check-pill"><input type="checkbox" name="label" value="{{.ID}}"> <span class="chip" data-color="{{.Color}}">{{.Name}}</span></label>{{end}}</div>{{end}}
+        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+      </form>
+    </details>
+    <details class="panel rule-builder">
+      <summary>{{t "settings.sentence_types.wip"}}</summary>
+      <form class="sentence" method="post" action="{{$self}}?tab=rules">
+        {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="wip">
+        <select class="select" name="column" aria-label="{{t "settings.column_name"}}">{{range .AllCols}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>
+        <span>≤</span>
+        <input class="input input--small" name="limit" inputmode="numeric" placeholder="N" aria-label="{{t "settings.limit"}}" required>
+        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+      </form>
+    </details>
+    <details class="panel rule-builder">
+      <summary>{{t "settings.sentence_types.person_wip"}}</summary>
+      <form class="sentence" method="post" action="{{$self}}?tab=rules">
+        {{csrfToken}}<input type="hidden" name="op" value="rule_add"><input type="hidden" name="sentence" value="person_wip">
+        <span>{{t "settings.limit"}}</span>
+        <input class="input input--small" name="limit" inputmode="numeric" placeholder="N" aria-label="{{t "settings.limit"}}" required>
+        <span>· {{t "settings.counted"}}:</span>
+        <div class="checks">{{range .AllCols}}<label class="check-pill"><input type="checkbox" name="counted" value="{{.ID}}" {{if .CountsPersonWIP}}checked{{end}}> {{.Name}}</label>{{end}}</div>
+        <button type="submit" class="btn btn--primary btn--sm">{{t "settings.add_rule"}}</button>
+      </form>
+    </details>
+  </div>
+</section>
+{{end}}

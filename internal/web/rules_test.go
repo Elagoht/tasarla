@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -75,72 +74,3 @@ func TestAssigningOverPersonalWIPIsRefused(t *testing.T) {
 	mustContain(t, res.Body, "Atanan kişinin WIP limiti (1) dolu.")
 }
 
-func TestLeadConfiguresRules(t *testing.T) {
-	b := newBoardSetup(t)
-	ctx := context.Background()
-	s := b.path + "/settings"
-	todo, doing, done := id(b.cols[0].ID), id(b.cols[1].ID), id(b.cols[2].ID)
-	steps := []url.Values{
-		{"op": {"policy"}, "transitions_mode": {"restricted"}, "person_wip_limit": {"3"}},
-		{"op": {"transitions"}, "t": {todo + "-" + doing, doing + "-" + done}},
-		{"op": {"role_add"}, "role_name": {"QA"}},
-	}
-	for _, form := range steps {
-		if res := b.lead.Submit(s, s, form); res.Status != http.StatusSeeOther {
-			t.Fatalf("%s = %d:\n%s", form.Get("op"), res.Status, res.Body)
-		}
-	}
-	r, _ := b.h.store.BoardRules(ctx, b.board.ID)
-	role := id(r.Roles[0].ID)
-	more := []url.Values{
-		{"op": {"role_members"}, "role_id": {role}, "member": {id(b.h.user("member@example.com").ID)}},
-		{"op": {"permission_add"}, "to_column": {done}, "from_column": {""}, "subject": {"board_role"}, "board_role": {role}},
-		{"op": {"condition_add"}, "column_id": {doing}, "phase": {"enter"}, "kind": {"min_attachments"}, "count": {"2"}},
-		{"op": {"condition_add"}, "column_id": {doing}, "phase": {"exit"}, "kind": {"has_label"}},
-	}
-	for _, form := range more {
-		if res := b.lead.Submit(s, s, form); res.Status != http.StatusSeeOther {
-			t.Fatalf("%s = %d:\n%s", form.Get("op"), res.Status, res.Body)
-		}
-	}
-	r, _ = b.h.store.BoardRules(ctx, b.board.ID)
-	if len(r.Transitions) != 2 || len(r.Roles[0].MemberIDs) != 1 || len(r.Permissions) != 1 || len(r.Conditions) != 2 || r.Conditions[0].Params.Count != 2 {
-		t.Fatalf("rules = %+v", r)
-	}
-	board, _ := b.h.store.Board(ctx, b.board.ID)
-	if board.TransitionsMode != "restricted" || board.PersonWIPLimit == nil || *board.PersonWIPLimit != 3 {
-		t.Fatalf("board = %+v", board)
-	}
-	page := b.lead.Get(s).Body
-	mustContain(t, page, "QA", "En az 2 dosya eki")
-
-	// Bad input does not reach the store.
-	for _, form := range []url.Values{
-		{"op": {"condition_add"}, "column_id": {doing}, "phase": {"enter"}, "kind": {"tarot"}},
-		{"op": {"permission_add"}, "to_column": {done}, "subject": {"board_role"}},
-		{"op": {"policy"}, "transitions_mode": {"chaos"}},
-	} {
-		res := b.lead.Submit(s, s, form)
-		if res.Status != http.StatusBadRequest && res.Status != http.StatusSeeOther {
-			t.Errorf("%v = %d", form, res.Status)
-		}
-	}
-	if r2, _ := b.h.store.BoardRules(ctx, b.board.ID); len(r2.Conditions) != 2 || len(r2.Permissions) != 1 {
-		t.Fatalf("bad input changed the rules: %+v", r2)
-	}
-
-	for _, form := range []url.Values{
-		{"op": {"permission_delete"}, "permission_id": {id(r.Permissions[0].ID)}},
-		{"op": {"condition_delete"}, "condition_id": {id(r.Conditions[0].ID)}},
-		{"confirm": {"1"}, "op": {"role_delete"}, "role_id": {role}},
-	} {
-		if res := b.lead.Submit(s, s, form); res.Status != http.StatusSeeOther {
-			t.Fatalf("%s = %d", form.Get("op"), res.Status)
-		}
-	}
-	r, _ = b.h.store.BoardRules(ctx, b.board.ID)
-	if len(r.Roles) != 0 || len(r.Permissions) != 0 || len(r.Conditions) != 1 {
-		t.Fatalf("after deletes = %+v", r)
-	}
-	_ = strconv.Itoa
-}
