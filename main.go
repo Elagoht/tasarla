@@ -20,6 +20,7 @@ import (
 	"kanban/internal/auth"
 	"kanban/internal/config"
 	"kanban/internal/db"
+	"kanban/internal/files"
 	"kanban/internal/store"
 	"kanban/internal/web"
 )
@@ -64,12 +65,16 @@ func run() error {
 		return err
 	}
 
-	files, err := appFiles(devMode)
+	assets, err := appFiles(devMode)
+	if err != nil {
+		return err
+	}
+	attachments, err := files.Open(cfg.AttachmentsDir)
 	if err != nil {
 		return err
 	}
 	app, err := web.New(web.Deps{
-		Files: files, DevMode: devMode,
+		Files: assets, Attachments: attachments, DevMode: devMode,
 		Host: envString("HOST", "localhost"), Port: envInt("PORT", 6060),
 		Config: cfg, Store: store.New(pool), OIDC: client, Logger: logger,
 	})

@@ -20,3 +20,6 @@
 
 # Superpowers plan workspaces.
 /.superpowers/
+
+# Local attachments.
+/data/

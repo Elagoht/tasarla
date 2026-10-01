@@ -1,0 +1,14 @@
+<p><a href="{{pageURL "board" "id" .Board.ID}}">← {{t "card.back"}}: {{.Board.Name}}</a></p>
+<h1>{{t "activity.board_title"}}</h1>
+{{if .Activity}}
+<ol class="activity">
+  {{range .Activity}}
+  <li>
+    {{.Text}}{{if .CardID}} · <a href="{{pageURL "card" "id" .BoardID "card" .CardID}}">{{.CardTitle}}</a>{{end}}
+    <time class="muted" datetime="{{.ISO}}">{{.When}}</time>
+  </li>
+  {{end}}
+</ol>
+{{else}}
+<p class="muted">{{t "activity.empty"}}</p>
+{{end}}

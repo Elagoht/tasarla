@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 
 	"kanban/internal/authz"
 	"kanban/internal/config"
+	"kanban/internal/files"
 	"kanban/internal/store"
 )
 
@@ -66,11 +68,31 @@ type panelView struct {
 	Candidates []store.CardSummary
 	Priorities []string
 
+	Comments    []commentView
+	Handles     []string
+	Attachments []attachmentView
+	Activity    []activityView
+
 	Estimate string
 	DueDate  string
 	Priority string
 	Assignee string
 }
+
+type commentView struct {
+	Comment   store.Comment
+	Mine      bool
+	CanDelete bool
+}
+
+type attachmentView struct {
+	Attachment store.Attachment
+	Size       string
+	CanDelete  bool
+}
+
+// maxAttachment is the largest file a card takes (spec §9).
+const maxAttachment = 5 << 20
 
 type panelLabel struct {
 	Label   store.Label
@@ -91,7 +113,11 @@ func (h *handlers) cardPage() *collage.Page {
 	for _, l := range config.Locales {
 		b = b.WithFragmentPath(l, "/boards/{id}/cards/{card}/panel", h.panel)
 	}
-	return b.WithAction(http.MethodPost, h.cardPost).Dynamic().Build()
+	// The body limit leaves room for a 5 MB file and the rest of the form, so
+	// that the form's own "over 5 MB" message is reached before collage's 413.
+	post := collage.NewAction("card-post").WithMethods(http.MethodPost).
+		WithMaxBodyBytes(maxAttachment + 64<<10).WithHandler(h.cardPost).Build()
+	return b.WithActionFor(post).Dynamic().Build()
 }
 
 func (h *handlers) loadCardPage(ctx context.Context, rc *collage.RenderContext) (cardPageView, error) {
@@ -163,6 +189,30 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 	if err != nil {
 		return v, tags, err
 	}
+	comments, err := h.store.CardComments(ctx, card.ID)
+	if err != nil {
+		return v, tags, err
+	}
+	for _, c := range comments {
+		mine := c.AuthorID == cc.User.ID
+		v.Comments = append(v.Comments, commentView{Comment: c, Mine: mine, CanDelete: mine || cc.Access.CanManage})
+	}
+	for _, m := range v.Members {
+		v.Handles = append(v.Handles, "@"+store.MentionHandle(m.User))
+	}
+	attachments, err := h.store.CardAttachments(ctx, card.ID)
+	if err != nil {
+		return v, tags, err
+	}
+	for _, a := range attachments {
+		v.Attachments = append(v.Attachments, attachmentView{Attachment: a, Size: humanSize(a.Size),
+			CanDelete: a.UploaderID == cc.User.ID || cc.Access.CanManage})
+	}
+	activity, err := h.store.CardActivity(ctx, card.ID, 50)
+	if err != nil {
+		return v, tags, err
+	}
+	v.Activity = activityViews(rc, activity)
 	for _, s := range all {
 		taken := s.Card.ID == card.ID
 		for _, b := range v.Deps.Blockers {
@@ -197,13 +247,21 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 				ids = append(ids, id)
 			}
 		}
-		return h.cardChanged(rc, cc, h.store.SetCardLabels(ctx, cc.Board.ID, cc.Card.ID, ids))
+		err := h.store.SetCardLabels(ctx, cc.Board.ID, cc.Card.ID, ids)
+		if err == nil {
+			err = h.store.LogActivity(ctx, cc.Board.ID, &cc.Card.ID, cc.User.ID, store.ActivityLabelsChanged, store.ActivityPayload{})
+		}
+		return h.cardChanged(rc, cc, err)
 	case "checklist_add":
 		v.Field("item_text").Required().MaxLen(500)
 		if !v.Valid() {
 			return h.refuseCard(rc, v), nil
 		}
-		_, err := h.store.AddChecklistItem(ctx, cc.Board.ID, cc.Card.ID, strings.TrimSpace(v.Value("item_text")))
+		text := strings.TrimSpace(v.Value("item_text"))
+		_, err := h.store.AddChecklistItem(ctx, cc.Board.ID, cc.Card.ID, text)
+		if err == nil {
+			err = h.store.LogActivity(ctx, cc.Board.ID, &cc.Card.ID, cc.User.ID, store.ActivityChecklistAdded, store.ActivityPayload{Text: text})
+		}
 		return h.cardChanged(rc, cc, err)
 	case "checklist_toggle", "checklist_delete":
 		item, ok := formInt64(v, "item_id")
@@ -213,20 +271,37 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		if v.Value("op") == "checklist_delete" {
 			return h.cardChanged(rc, cc, h.store.DeleteChecklistItem(ctx, cc.Board.ID, cc.Card.ID, item))
 		}
-		return h.cardChanged(rc, cc, h.store.SetChecklistItemDone(ctx, cc.Board.ID, cc.Card.ID, item, v.Value("done") == "1"))
+		done := v.Value("done") == "1"
+		err := h.store.SetChecklistItemDone(ctx, cc.Board.ID, cc.Card.ID, item, done)
+		if err == nil && done {
+			err = h.logChecklistChecked(ctx, cc, item)
+		}
+		return h.cardChanged(rc, cc, err)
 	case "dep_add", "dep_remove":
 		blocker, ok := formInt64(v, "blocker_id")
 		if !ok {
 			return collage.NoContent(http.StatusBadRequest), nil
 		}
+		kind := store.ActivityDependencyAdded
 		if v.Value("op") == "dep_remove" {
-			return h.cardChanged(rc, cc, h.store.RemoveDependency(ctx, cc.Board.ID, blocker, cc.Card.ID))
+			kind = store.ActivityDependencyRemoved
+			err = h.store.RemoveDependency(ctx, cc.Board.ID, blocker, cc.Card.ID)
+		} else {
+			err = h.store.AddDependency(ctx, cc.Board.ID, blocker, cc.Card.ID)
 		}
-		err := h.store.AddDependency(ctx, cc.Board.ID, blocker, cc.Card.ID)
 		if errors.Is(err, store.ErrCycle) {
 			return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, i18n.T(rc, "card.cycle"))
 		}
+		if err == nil {
+			if other, lookupErr := h.store.Card(ctx, cc.Board.ID, blocker); lookupErr == nil {
+				err = h.store.LogActivity(ctx, cc.Board.ID, &cc.Card.ID, cc.User.ID, kind, store.ActivityPayload{Text: other.Title})
+			}
+		}
 		return h.cardChanged(rc, cc, err)
+	case "comment_add", "comment_edit", "comment_delete":
+		return h.commentOp(ctx, rc, v, cc)
+	case "attachment_add", "attachment_delete":
+		return h.attachmentOp(ctx, rc, v, cc)
 	case "archive":
 		if err := h.store.ArchiveCard(ctx, cc.Board.ID, cc.Card.ID, cc.User.ID); err != nil {
 			return nil, err
@@ -369,4 +444,107 @@ func (h *handlers) updateCard(ctx context.Context, rc *collage.RenderContext, v 
 		res.InvalidateTags = []string{boardTag(cc.Board.ID), cardTag(cc.Card.ID)}
 	}
 	return res, err
+}
+
+func (h *handlers) logChecklistChecked(ctx context.Context, cc cardContext, item int64) error {
+	items, err := h.store.ChecklistItems(ctx, cc.Card.ID)
+	if err != nil {
+		return err
+	}
+	for _, it := range items {
+		if it.ID == item {
+			return h.store.LogActivity(ctx, cc.Board.ID, &cc.Card.ID, cc.User.ID, store.ActivityChecklistChecked, store.ActivityPayload{Text: it.Text})
+		}
+	}
+	return nil
+}
+
+func (h *handlers) commentOp(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
+	members, err := h.store.Members(ctx, cc.Team.ID)
+	if err != nil {
+		return nil, err
+	}
+	switch v.Value("op") {
+	case "comment_add":
+		v.Field("comment").Required().MaxLen(10000)
+		if !v.Valid() {
+			return h.refuseCard(rc, v), nil
+		}
+		body := strings.TrimSpace(v.Value("comment"))
+		_, err = h.store.AddComment(ctx, cc.Board.ID, cc.Card.ID, cc.User.ID, body, store.ResolveMentions(body, members))
+	case "comment_edit":
+		id, ok := formInt64(v, "comment_id")
+		if !ok {
+			return collage.NoContent(http.StatusBadRequest), nil
+		}
+		v.Field("comment_body").Required().MaxLen(10000)
+		if !v.Valid() {
+			return h.refuseCard(rc, v), nil
+		}
+		body := strings.TrimSpace(v.Value("comment_body"))
+		err = h.store.EditComment(ctx, cc.Board.ID, cc.Card.ID, id, cc.User.ID, body, store.ResolveMentions(body, members))
+	case "comment_delete":
+		id, ok := formInt64(v, "comment_id")
+		if !ok {
+			return collage.NoContent(http.StatusBadRequest), nil
+		}
+		err = h.store.DeleteComment(ctx, cc.Board.ID, cc.Card.ID, id, cc.User.ID, cc.Access.CanManage)
+	}
+	return h.cardChanged(rc, cc, err)
+}
+
+func (h *handlers) attachmentOp(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
+	if v.Value("op") == "attachment_delete" {
+		id, ok := formInt64(v, "attachment_id")
+		if !ok {
+			return collage.NoContent(http.StatusBadRequest), nil
+		}
+		key, err := h.store.DeleteAttachment(ctx, cc.Board.ID, cc.Card.ID, id, cc.User.ID, cc.Access.CanManage)
+		if err == nil {
+			if rmErr := h.files.Remove(key); rmErr != nil {
+				h.log.Warn("attachments: remove file", "key", key, "err", rmErr)
+			}
+		}
+		return h.cardChanged(rc, cc, err)
+	}
+	file, header, err := rc.Request.FormFile("file")
+	if err != nil {
+		v.Fail("file", i18n.T(rc, "attachments.required"))
+		return h.refuseCard(rc, v), nil
+	}
+	defer file.Close()
+	if header.Size > maxAttachment {
+		v.Fail("file", i18n.T(rc, "attachments.too_large"))
+		return h.refuseCard(rc, v), nil
+	}
+	saved, err := h.files.Save(file, maxAttachment)
+	if errors.Is(err, files.ErrTooLarge) {
+		v.Fail("file", i18n.T(rc, "attachments.too_large"))
+		return h.refuseCard(rc, v), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	name := filepath.Base(strings.ReplaceAll(header.Filename, "\\", "/"))
+	if name == "." || name == "/" || name == "" {
+		name = "file"
+	}
+	_, err = h.store.AddAttachment(ctx, cc.Board.ID, cc.Card.ID, store.Attachment{
+		UploaderID: cc.User.ID, Filename: name, ContentType: saved.ContentType, Size: saved.Size, StorageKey: saved.Key,
+	})
+	if err != nil {
+		h.files.Remove(saved.Key)
+	}
+	return h.cardChanged(rc, cc, err)
+}
+
+// humanSize writes a byte count for people.
+func humanSize(n int64) string {
+	switch {
+	case n >= 1<<20:
+		return strconv.FormatFloat(float64(n)/(1<<20), 'f', 1, 64) + " MB"
+	case n >= 1<<10:
+		return strconv.FormatFloat(float64(n)/(1<<10), 'f', 0, 64) + " KB"
+	}
+	return strconv.FormatInt(n, 10) + " B"
 }

@@ -3,6 +3,7 @@ package web
 
 import (
 	"fmt"
+	"html/template"
 	"io/fs"
 	"log/slog"
 	"net/url"
@@ -19,23 +20,26 @@ import (
 
 	"kanban/internal/auth"
 	"kanban/internal/config"
+	"kanban/internal/files"
 	"kanban/internal/store"
 )
 
 // Deps is what the application is built from.
 type Deps struct {
-	Files   fs.FS
-	DevMode bool
-	Host    string
-	Port    int
-	Config  config.Config
-	Store   *store.Store
-	OIDC    *auth.Client
-	Logger  *slog.Logger
+	Files       fs.FS
+	Attachments *files.Dir
+	DevMode     bool
+	Host        string
+	Port        int
+	Config      config.Config
+	Store       *store.Store
+	OIDC        *auth.Client
+	Logger      *slog.Logger
 }
 
 type handlers struct {
 	store *store.Store
+	files *files.Dir
 	log   *slog.Logger
 
 	// Fragments that actions answer with; set when their pages are built.
@@ -51,6 +55,7 @@ func New(d Deps) (*collage.App, error) {
 		Server:  collage.ServerConfig{Host: d.Host, Port: d.Port},
 		Template: collage.TemplateConfig{
 			FS: d.Files, Root: "templates", Extension: ".html",
+			Funcs: template.FuncMap{"richText": richText},
 		},
 		Locale: collage.LocaleConfig{Default: d.Config.DefaultLocale, Supported: config.Locales},
 		Cache:  collage.CacheConfig{Enabled: true, Type: "memory", DefaultTTL: 5 * time.Minute},
@@ -77,7 +82,7 @@ func New(d Deps) (*collage.App, error) {
 	}
 
 	notFound, serverError, authFailed := notFoundPage(), errorPage(), authFailedPage()
-	h := &handlers{store: d.Store, log: d.Logger}
+	h := &handlers{store: d.Store, files: d.Attachments, log: d.Logger}
 	pages := append([]*collage.Page{notFound, serverError, authFailed}, h.pages()...)
 	for _, p := range pages {
 		if err := app.RegisterPage(p); err != nil {
@@ -106,6 +111,10 @@ func New(d Deps) (*collage.App, error) {
 		return nil, err
 	}
 
+	if err := app.Handle("/files/", h.filesHandler()); err != nil {
+		return nil, err
+	}
+
 	static, err := fs.Sub(d.Files, "static")
 	if err != nil {
 		return nil, err
@@ -120,7 +129,7 @@ func New(d Deps) (*collage.App, error) {
 func (h *handlers) pages() []*collage.Page {
 	return []*collage.Page{
 		h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
-		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(),
+		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(),
 	}
 }
 

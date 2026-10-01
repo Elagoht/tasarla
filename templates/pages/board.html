@@ -1,6 +1,7 @@
 <header class="board-head">
   <h1>{{.Board.Name}}</h1>
   <a class="muted" href="{{pageURL "team" "id" .Board.TeamID}}">{{.Team.Name}}</a>
+  <a href="{{pageURL "board-activity" "id" .Board.ID}}">{{t "activity.title"}}</a>
   {{if .Access.CanManage}}<a href="{{pageURL "board-settings" "id" .Board.ID}}">{{t "board.settings"}}</a>{{end}}
 </header>
 {{if .Notices}}<ul class="board-notice" role="alert">{{range .Notices}}<li>{{.}}</li>{{end}}</ul>{{end}}

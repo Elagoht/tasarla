@@ -260,5 +260,54 @@
       "blockers_done": "Every card blocking it must be done for a card to leave {column}.",
       "min_attachments": "A card needs at least {count} attachments to leave {column}."
     }
+  },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Write a comment; use @ to mention someone",
+    "add": "Add comment",
+    "edit": "Edit",
+    "save": "Save",
+    "delete": "Delete",
+    "deleted": "This comment was deleted.",
+    "edited": "edited",
+    "empty": "No comments yet.",
+    "added": "Comment added."
+  },
+  "attachments": {
+    "title": "Attachments",
+    "upload": "Upload",
+    "file": "File",
+    "empty": "No attachments yet.",
+    "delete": "Delete",
+    "too_large": "The file is over 5 MB.",
+    "required": "Choose a file.",
+    "added": "File attached.",
+    "deleted": "File deleted."
+  },
+  "activity": {
+    "title": "Activity",
+    "board_title": "Board activity",
+    "empty": "No activity yet.",
+    "someone": "Someone",
+    "card_created": "{actor} created the card",
+    "card_moved": "{actor} moved the card from {from} to {to}",
+    "card_updated": "{actor} edited the card: {fields}",
+    "card_archived": "{actor} archived the card",
+    "labels_changed": "{actor} changed the labels",
+    "checklist_added": "{actor} added to the checklist: {text}",
+    "checklist_checked": "{actor} checked an item: {text}",
+    "dependency_added": "{actor} added a dependency: {text}",
+    "dependency_removed": "{actor} removed a dependency: {text}",
+    "comment_added": "{actor} commented: {text}",
+    "attachment_added": "{actor} attached {filename}",
+    "attachment_deleted": "{actor} deleted {filename}",
+    "fields": {
+      "title": "title",
+      "description": "description",
+      "assignee": "assignee",
+      "estimate": "estimate",
+      "due_date": "due date",
+      "priority": "priority"
+    }
   }
 }

@@ -260,5 +260,54 @@
       "blockers_done": "{column} kolonundan çıkmak için bloklayan kartların hepsi bitmiş olmalı.",
       "min_attachments": "{column} kolonundan çıkmak için kartın en az {count} dosya eki olmalı."
     }
+  },
+  "comments": {
+    "title": "Yorumlar",
+    "placeholder": "Yorum yazın; birini anmak için @ kullanın",
+    "add": "Yorum ekle",
+    "edit": "Düzenle",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "deleted": "Bu yorum silindi.",
+    "edited": "düzenlendi",
+    "empty": "Henüz yorum yok.",
+    "added": "Yorum eklendi."
+  },
+  "attachments": {
+    "title": "Dosya ekleri",
+    "upload": "Yükle",
+    "file": "Dosya",
+    "empty": "Henüz dosya eki yok.",
+    "delete": "Sil",
+    "too_large": "Dosya 5 MB'ı aşıyor.",
+    "required": "Bir dosya seçin.",
+    "added": "Dosya eklendi.",
+    "deleted": "Dosya silindi."
+  },
+  "activity": {
+    "title": "Etkinlik",
+    "board_title": "Board etkinliği",
+    "empty": "Henüz etkinlik yok.",
+    "someone": "Biri",
+    "card_created": "{actor} kartı oluşturdu",
+    "card_moved": "{actor} kartı {from} kolonundan {to} kolonuna taşıdı",
+    "card_updated": "{actor} kartı düzenledi: {fields}",
+    "card_archived": "{actor} kartı arşivledi",
+    "labels_changed": "{actor} etiketleri değiştirdi",
+    "checklist_added": "{actor} kontrol listesine ekledi: {text}",
+    "checklist_checked": "{actor} bir maddeyi işaretledi: {text}",
+    "dependency_added": "{actor} bir bağımlılık ekledi: {text}",
+    "dependency_removed": "{actor} bir bağımlılığı kaldırdı: {text}",
+    "comment_added": "{actor} yorum yaptı: {text}",
+    "attachment_added": "{actor} dosya ekledi: {filename}",
+    "attachment_deleted": "{actor} dosyayı sildi: {filename}",
+    "fields": {
+      "title": "başlık",
+      "description": "açıklama",
+      "assignee": "atanan",
+      "estimate": "tahmin",
+      "due_date": "son tarih",
+      "priority": "öncelik"
+    }
   }
 }

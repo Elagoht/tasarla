@@ -52,7 +52,7 @@
     <button type="submit">{{t "card.move_button"}}</button>
   </form>
   {{else}}
-  {{with .Card.Description}}<p class="card-detail__description">{{.}}</p>{{end}}
+  {{with .Card.Description}}<p class="card-detail__description">{{richText .}}</p>{{end}}
   {{end}}
 
   <h2>{{t "card.labels"}}</h2>
@@ -134,6 +134,94 @@
   <ul class="deps">
     {{range .Deps.Blocking}}<li><a href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted">({{t "card.done"}})</span>{{end}}</li>{{end}}
   </ul>
+  {{end}}
+
+  <h2>{{t "attachments.title"}}</h2>
+  {{if .Attachments}}
+  <ul class="attachments">
+    {{range .Attachments}}
+    <li>
+      <a href="/files/{{.Attachment.ID}}" rel="noopener">{{.Attachment.Filename}}</a>
+      <span class="muted">{{.Size}} · {{.Attachment.UploaderName}}</span>
+      {{if and $edit .CanDelete}}
+      <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="attachment_delete">
+        <input type="hidden" name="attachment_id" value="{{.Attachment.ID}}">
+        <button type="submit">{{t "attachments.delete"}}</button>
+      </form>
+      {{end}}
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="muted">{{t "attachments.empty"}}</p>
+  {{end}}
+  {{if $edit}}
+  <form class="inline" method="post" action="{{$self}}" enctype="multipart/form-data">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="attachment_add">
+    <input type="file" name="file" aria-label="{{t "attachments.file"}}" required>
+    <button type="submit">{{t "attachments.upload"}}</button>
+    {{with fieldError "file"}}<p class="error">{{.}}</p>{{end}}
+  </form>
+  {{end}}
+
+  <h2>{{t "comments.title"}}</h2>
+  {{if .Comments}}
+  <ol class="comments">
+    {{range .Comments}}
+    <li class="comment" id="comment-{{.Comment.ID}}">
+      <p class="comment__meta"><strong>{{.Comment.AuthorName}}</strong> <time class="muted" datetime="{{.Comment.CreatedAt.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Comment.CreatedAt.Local.Format "2006-01-02 15:04"}}</time>{{if .Comment.EditedAt}} <span class="muted">({{t "comments.edited"}})</span>{{end}}</p>
+      {{if .Comment.DeletedAt}}
+      <p class="muted">{{t "comments.deleted"}}</p>
+      {{else}}
+      <p class="comment__body">{{richText .Comment.Body}}</p>
+      {{if and $edit .Mine}}
+      <details>
+        <summary>{{t "comments.edit"}}</summary>
+        <form class="form" method="post" action="{{$self}}" data-collage-target="#card-panel">
+          {{csrfToken}}
+          <input type="hidden" name="op" value="comment_edit">
+          <input type="hidden" name="comment_id" value="{{.Comment.ID}}">
+          <textarea name="comment_body" rows="3" maxlength="10000" aria-label="{{t "comments.edit"}}">{{.Comment.Body}}</textarea>
+          <button type="submit">{{t "comments.save"}}</button>
+        </form>
+      </details>
+      {{end}}
+      {{if and $edit .CanDelete}}
+      <form class="inline" method="post" action="{{$self}}" data-collage-target="#card-panel">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="comment_delete">
+        <input type="hidden" name="comment_id" value="{{.Comment.ID}}">
+        <button type="submit">{{t "comments.delete"}}</button>
+      </form>
+      {{end}}
+      {{end}}
+    </li>
+    {{end}}
+  </ol>
+  {{else}}
+  <p class="muted">{{t "comments.empty"}}</p>
+  {{end}}
+  {{if $edit}}
+  <form class="form" method="post" action="{{$self}}" data-collage-target="#card-panel">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="comment_add">
+    <textarea name="comment" rows="3" maxlength="10000" placeholder="{{t "comments.placeholder"}}" aria-label="{{t "comments.title"}}" list="mention-handles">{{fieldValue "comment"}}</textarea>
+    <datalist id="mention-handles">{{range .Handles}}<option value="{{.}}">{{end}}</datalist>
+    {{with fieldError "comment"}}<p class="error">{{.}}</p>{{end}}
+    <button type="submit">{{t "comments.add"}}</button>
+  </form>
+  {{end}}
+
+  <h2>{{t "activity.title"}}</h2>
+  {{if .Activity}}
+  <ol class="activity">
+    {{range .Activity}}<li>{{.Text}} <time class="muted" datetime="{{.ISO}}">{{.When}}</time></li>{{end}}
+  </ol>
+  {{else}}
+  <p class="muted">{{t "activity.empty"}}</p>
   {{end}}
 
   {{if $edit}}

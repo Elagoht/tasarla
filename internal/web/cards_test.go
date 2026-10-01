@@ -103,8 +103,9 @@ func TestCardPartsThroughThePanel(t *testing.T) {
 	mustContain(t, res.Body, "Bu bağımlılık bir döngü oluşturur.")
 
 	res = b.member.SubmitFetch(b.cardPath(c), b.cardPath(c), url.Values{"op": {"checklist_delete"}, "item_id": {id(items[0].ID)}})
-	if strings.Contains(res.Body, "Write tests") {
-		t.Error("the deleted item is still shown")
+	// The activity log still names the item; the checklist must not.
+	if strings.Contains(res.Body, `class="checklist__item`) {
+		t.Error("the deleted item is still in the checklist")
 	}
 	res = b.member.SubmitFetch(b.cardPath(c), b.cardPath(c), url.Values{"op": {"dep_remove"}, "blocker_id": {id(blocker.ID)}})
 	if res.Status != http.StatusOK {

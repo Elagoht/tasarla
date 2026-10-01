@@ -59,3 +59,8 @@ a { color: var(--accent); }
 .task-group { margin: 1rem 0; }
 [data-collage-stale] { opacity: .6; }
 .matrix td { text-align: center; }
+.comments, .activity, .attachments { list-style: none; padding: 0; display: grid; gap: .5rem; }
+.comment { border-top: 1px solid var(--line); padding-top: .5rem; }
+.comment__meta { margin: 0; font-size: .9rem; }
+.comment__body { margin: .25rem 0; }
+.activity li { font-size: .9rem; }

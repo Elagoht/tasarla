@@ -3,8 +3,10 @@
 package webtest
 
 import (
+	"bytes"
 	"html"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -92,6 +94,40 @@ func (b *Browser) Cookies() []*http.Cookie {
 		out = append(out, &http.Cookie{Name: name, Value: value})
 	}
 	return out
+}
+
+// Upload loads page, then posts fields and one file to action as
+// multipart/form-data, with the page's forgery token.
+func (b *Browser) Upload(page, action string, fields url.Values, field, filename string, content []byte) Response {
+	b.t.Helper()
+	res := b.Get(page)
+	if res.Status != http.StatusOK {
+		b.t.Fatalf("webtest: GET %s = %d, want 200", page, res.Status)
+	}
+	var body bytes.Buffer
+	w := multipart.NewWriter(&body)
+	fields.Set("_csrf", CSRFToken(b.t, res.Body))
+	for name, values := range fields {
+		for _, v := range values {
+			if err := w.WriteField(name, v); err != nil {
+				b.t.Fatal(err)
+			}
+		}
+	}
+	part, err := w.CreateFormFile(field, filename)
+	if err != nil {
+		b.t.Fatal(err)
+	}
+	if _, err := part.Write(content); err != nil {
+		b.t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		b.t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, Origin+action, &body)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Origin", Origin)
+	return b.do(req)
 }
 
 // HasCookie reports whether the browser holds a cookie named name.

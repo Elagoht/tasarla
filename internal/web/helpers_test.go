@@ -14,6 +14,7 @@ import (
 	"kanban/internal/auth/authtest"
 	"kanban/internal/config"
 	"kanban/internal/db/dbtest"
+	"kanban/internal/files"
 	"kanban/internal/store"
 	"kanban/internal/web"
 	"kanban/internal/webtest"
@@ -56,6 +57,7 @@ func buildAt(t *testing.T, s *store.Store, adminEmails, base string) *harness {
 			"OIDC_ISSUER": issuer.URL, "OIDC_CLIENT_ID": issuer.ClientID, "OIDC_CLIENT_SECRET": issuer.ClientSecret,
 			"OIDC_REDIRECT_URL": callback,
 			"ADMIN_EMAILS":      adminEmails, "SESSION_KEY": key, "CSRF_KEY": key, "FLASH_KEY": key,
+			"ATTACHMENTS_DIR": t.TempDir(),
 		}[k]
 	})
 	if err != nil {
@@ -73,8 +75,12 @@ func buildAt(t *testing.T, s *store.Store, adminEmails, base string) *harness {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { root.Close() })
+	dir, err := files.Open(cfg.AttachmentsDir)
+	if err != nil {
+		t.Fatal(err)
+	}
 	app, err := web.New(web.Deps{
-		Files: root.FS(), Config: cfg, Store: s, OIDC: client,
+		Files: root.FS(), Attachments: dir, Config: cfg, Store: s, OIDC: client,
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	if err != nil {
