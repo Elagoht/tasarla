@@ -64,6 +64,27 @@ func (b *Browser) Submit(page, action string, form url.Values) Response {
 	return b.Post(action, form)
 }
 
+// Fetch posts form to path the way board.js and collage-live do: with fetch,
+// marked with collage.FetchHeader.
+func (b *Browser) Fetch(path string, form url.Values) Response {
+	req := httptest.NewRequest(http.MethodPost, Origin+path, strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", Origin)
+	req.Header.Set("Collage-Fetch", "1")
+	return b.do(req)
+}
+
+// SubmitFetch is Submit through Fetch.
+func (b *Browser) SubmitFetch(page, action string, form url.Values) Response {
+	b.t.Helper()
+	res := b.Get(page)
+	if res.Status != http.StatusOK {
+		b.t.Fatalf("webtest: GET %s = %d, want 200", page, res.Status)
+	}
+	form.Set("_csrf", CSRFToken(b.t, res.Body))
+	return b.Fetch(action, form)
+}
+
 // HasCookie reports whether the browser holds a cookie named name.
 func (b *Browser) HasCookie(name string) bool {
 	_, ok := b.cookies[name]

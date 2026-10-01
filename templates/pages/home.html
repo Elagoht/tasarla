@@ -1,10 +1,17 @@
 <h1>{{t "home.title"}}</h1>
 {{if .Teams}}
-<ul class="list">
-  {{range .Teams}}
-  <li><a href="{{pageURL "team" "id" .Team.ID}}">{{.Team.Name}}</a> <span class="muted">{{tn "teams.member_count" .MemberCount}}</span></li>
+{{range .Teams}}
+<section class="home-team">
+  <h2><a href="{{pageURL "team" "id" .Team.Team.ID}}">{{.Team.Team.Name}}</a> <span class="muted">{{tn "teams.member_count" .Team.MemberCount}}</span></h2>
+  {{if .Boards}}
+  <ul class="board-list">
+    {{range .Boards}}<li><a href="{{pageURL "board" "id" .ID}}">{{.Name}}</a></li>{{end}}
+  </ul>
+  {{else}}
+  <p class="muted">{{t "board.empty"}}</p>
   {{end}}
-</ul>
+</section>
+{{end}}
 {{else}}
 <p class="muted">{{t "home.empty"}}</p>
 {{end}}

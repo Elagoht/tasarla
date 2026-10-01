@@ -1,7 +1,16 @@
 {
-  "app": { "name": "Kanban" },
-  "locale": { "switcher": "Language" },
-  "nav": { "home": "Home", "teams": "Teams", "users": "Users" },
+  "app": {
+    "name": "Kanban"
+  },
+  "locale": {
+    "switcher": "Language"
+  },
+  "nav": {
+    "home": "Home",
+    "teams": "Teams",
+    "users": "Users",
+    "tasks": "My tasks"
+  },
   "auth": {
     "logout": "Sign out",
     "failed": {
@@ -11,22 +20,37 @@
     }
   },
   "errors": {
-    "not_found": { "title": "Page not found", "body": "The page does not exist, or you may not see it." },
-    "server": { "title": "Something went wrong", "body": "Your request could not be completed. Please try again shortly." }
+    "not_found": {
+      "title": "Page not found",
+      "body": "The page does not exist, or you may not see it."
+    },
+    "server": {
+      "title": "Something went wrong",
+      "body": "Your request could not be completed. Please try again shortly."
+    }
   },
-  "home": { "title": "My teams", "empty": "You are not in a team yet." },
+  "home": {
+    "title": "My teams",
+    "empty": "You are not in a team yet."
+  },
   "teams": {
     "title": "Teams",
     "empty": "There are no teams yet.",
     "name": "Team name",
     "create": "Create team",
     "created": "{name} was created.",
-    "member_count": { "one": "{count} member", "other": "{count} members" }
+    "member_count": {
+      "one": "{count} member",
+      "other": "{count} members"
+    }
   },
   "team": {
     "members": "Members",
     "role": "Role",
-    "roles": { "lead": "Lead", "member": "Member" },
+    "roles": {
+      "lead": "Lead",
+      "member": "Member"
+    },
     "add": "Add member",
     "email": "Email",
     "save": "Save",
@@ -53,5 +77,73 @@
     "saved": "Saved.",
     "last_admin": "At least one active admin must remain.",
     "self_disable": "You cannot disable your own account."
+  },
+  "board": {
+    "default_columns": {
+      "todo": "To do",
+      "doing": "In progress",
+      "done": "Done"
+    },
+    "boards": "Boards",
+    "empty": "There are no boards yet.",
+    "name": "Board name",
+    "create": "Create board",
+    "new_card": "New card title",
+    "add_card": "Add card",
+    "settings": "Settings",
+    "conflict": "This card was changed by someone else.",
+    "moved": "Card moved.",
+    "over_limit": "Over the limit",
+    "blocked": "Blocked",
+    "unassigned": "Unassigned",
+    "open_card": "Open card"
+  },
+  "card": {
+    "title": "Title",
+    "description": "Description",
+    "assignee": "Assignee",
+    "unassigned": "Unassigned",
+    "estimate": "Estimate",
+    "due_date": "Due date",
+    "priority": "Priority",
+    "none": "None",
+    "priorities": {
+      "1": "Low",
+      "2": "Medium",
+      "3": "High",
+      "4": "Urgent"
+    },
+    "save": "Save",
+    "saved": "Saved.",
+    "column": "Column",
+    "move": "Move to column",
+    "move_button": "Move",
+    "labels": "Labels",
+    "no_labels": "This board has no labels.",
+    "checklist": "Checklist",
+    "checklist_add": "Add item",
+    "checklist_item": "New item",
+    "delete": "Delete",
+    "mark_done": "Mark done",
+    "mark_undone": "Undo",
+    "dependencies": "Dependencies",
+    "blockers": "Blocked by",
+    "blocking": "Blocking",
+    "add_blocker": "Add blocker",
+    "remove": "Remove",
+    "cycle": "This dependency would create a cycle.",
+    "archive": "Archive",
+    "archived": "Card archived.",
+    "is_archived": "This card is archived.",
+    "back": "Back to the board",
+    "close": "Close",
+    "estimate_invalid": "Enter zero or a positive number.",
+    "date_invalid": "Enter the date as YYYY-MM-DD.",
+    "assignee_invalid": "Choose one of the team's members.",
+    "done": "done"
+  },
+  "tasks": {
+    "title": "My tasks",
+    "empty": "No cards are assigned to you."
   }
 }

@@ -1,0 +1,27 @@
+{{with .Notice}}<p class="board-notice" role="alert">{{.}}</p>{{end}}
+<div class="columns">
+  {{range .Columns}}
+  <section class="column{{if .OverLimit}} column--over{{end}}{{if .Column.IsDone}} column--done{{end}}" aria-labelledby="column-{{.Column.ID}}">
+    <header class="column__head">
+      <h2 id="column-{{.Column.ID}}">{{.Column.Name}}</h2>
+      <span class="column__count">{{len .Cards}}{{if .Limit}} / {{.Limit}}{{end}}</span>
+      {{if .OverLimit}}<span class="column__over">{{t "board.over_limit"}}</span>{{end}}
+    </header>
+    <ol class="column__cards" data-column="{{.Column.ID}}">
+      {{range .Cards}}
+      <li class="card{{if .Summary.Blocked}} card--blocked{{end}}" id="card-{{.Summary.Card.ID}}" data-card="{{.Summary.Card.ID}}" data-version="{{.Summary.Card.Version}}" data-column="{{.Summary.Card.ColumnID}}">
+        <a class="card__title" href="{{pageURL "card" "id" .Summary.Card.BoardID "card" .Summary.Card.ID}}">{{.Summary.Card.Title}}</a>
+        {{if .Summary.Labels}}<ul class="card__labels">{{range .Summary.Labels}}<li class="label" data-color="{{.Color}}">{{.Name}}</li>{{end}}</ul>{{end}}
+        <div class="card__meta">
+          {{if .Summary.AssigneeName}}<span class="card__assignee">{{.Summary.AssigneeName}}</span>{{end}}
+          {{if .Due}}<span class="card__due{{if .Overdue}} card__due--late{{end}}">{{.Due}}</span>{{end}}
+          {{if .Priority}}<span class="card__priority">{{.Priority}}</span>{{end}}
+          {{if .Summary.ChecklistTotal}}<span class="card__checklist">{{.Summary.ChecklistDone}}/{{.Summary.ChecklistTotal}}</span>{{end}}
+          {{if .Summary.Blocked}}<span class="card__blocked">{{t "board.blocked"}}</span>{{end}}
+        </div>
+      </li>
+      {{end}}
+    </ol>
+  </section>
+  {{end}}
+</div>

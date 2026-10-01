@@ -37,6 +37,10 @@ type Deps struct {
 type handlers struct {
 	store *store.Store
 	log   *slog.Logger
+
+	// Fragments that actions answer with; set when their pages are built.
+	columns *collage.Fragment
+	panel   *collage.Fragment
 }
 
 // New builds the application: plugins, layouts, every page and action.
@@ -114,7 +118,10 @@ func New(d Deps) (*collage.App, error) {
 
 // pages is every page for signed-in readers.
 func (h *handlers) pages() []*collage.Page {
-	return []*collage.Page{h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage()}
+	return []*collage.Page{
+		h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
+		h.boardPage(), h.cardPage(), h.tasksPage(),
+	}
 }
 
 // contentSecurityPolicy allows scripts only from this origin, and form posts

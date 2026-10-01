@@ -2,6 +2,7 @@
   <a class="topbar__home" href="{{pageURL "home"}}">{{t "app.name"}}</a>
   <nav class="topbar__nav">
     <a href="{{pageURL "teams"}}">{{t "nav.teams"}}</a>
+    <a href="{{pageURL "tasks"}}">{{t "nav.tasks"}}</a>
     {{if .User.IsAdmin}}<a href="{{pageURL "admin-users"}}">{{t "nav.users"}}</a>{{end}}
   </nav>
   <span class="topbar__user">{{.User.Name}}</span>

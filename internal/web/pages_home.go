@@ -10,7 +10,12 @@ import (
 )
 
 type homeView struct {
-	Teams []store.TeamSummary
+	Teams []homeTeam
+}
+
+type homeTeam struct {
+	Team   store.TeamSummary
+	Boards []store.Board
 }
 
 func (h *handlers) homePage() *collage.Page {
@@ -28,5 +33,16 @@ func (h *handlers) loadHome(ctx context.Context, rc *collage.RenderContext) (hom
 	}
 	rc.HoistTitle(i18n.T(rc, "home.title"))
 	teams, err := h.store.TeamsOf(ctx, user.ID)
-	return homeView{Teams: teams}, err
+	if err != nil {
+		return homeView{}, err
+	}
+	var view homeView
+	for _, t := range teams {
+		boards, err := h.store.BoardsOfTeam(ctx, t.Team.ID)
+		if err != nil {
+			return homeView{}, err
+		}
+		view.Teams = append(view.Teams, homeTeam{Team: t, Boards: boards})
+	}
+	return view, nil
 }

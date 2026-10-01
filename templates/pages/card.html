@@ -1,0 +1,5 @@
+<p><a href="{{pageURL "board" "id" .Board.ID}}">← {{t "card.back"}}: {{.Board.Name}}</a></p>
+<div id="card-panel" class="card-panel"
+  data-collage-fragment="{{fragmentURL "card" "card-panel" "id" .Board.ID "card" .Card.ID}}" data-collage-push data-collage-swap="morph">
+  {{slot "panel"}}
+</div>

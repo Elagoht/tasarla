@@ -94,8 +94,13 @@ func (h *handlers) adminUsersPost(ctx context.Context, rc *collage.RenderContext
 	return h.redirectTo(rc, "admin-users")
 }
 
-func (h *handlers) redirectTo(rc *collage.RenderContext, page string) (*collage.ActionResult, error) {
-	target, err := rc.URL(page, nil)
+// redirectTo answers with a 303 to a named page; params are name, value pairs.
+func (h *handlers) redirectTo(rc *collage.RenderContext, page string, params ...string) (*collage.ActionResult, error) {
+	values := map[string]string{}
+	for i := 0; i+1 < len(params); i += 2 {
+		values[params[i]] = params[i+1]
+	}
+	target, err := rc.URL(page, values)
 	if err != nil {
 		return nil, err
 	}

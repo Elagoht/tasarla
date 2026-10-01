@@ -1,0 +1,19 @@
+<h1>{{t "tasks.title"}}</h1>
+{{if .Groups}}
+{{range .Groups}}
+<section class="task-group">
+  <h2><a href="{{pageURL "board" "id" .BoardID}}">{{.BoardName}}</a> <span class="muted">{{.TeamName}}</span></h2>
+  <ul class="list">
+    {{range .Tasks}}
+    <li>
+      <a href="{{pageURL "card" "id" .Task.Card.BoardID "card" .Task.Card.ID}}">{{.Task.Card.Title}}</a>
+      <span class="muted">{{.Task.ColumnName}}</span>
+      {{if .Due}}<span class="card__due{{if .Overdue}} card__due--late{{end}}">{{.Due}}</span>{{end}}
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+{{else}}
+<p class="muted">{{t "tasks.empty"}}</p>
+{{end}}

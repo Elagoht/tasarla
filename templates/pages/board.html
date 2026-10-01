@@ -1,0 +1,23 @@
+<header class="board-head">
+  <h1>{{.Board.Name}}</h1>
+  <a class="muted" href="{{pageURL "team" "id" .Board.TeamID}}">{{.Team.Name}}</a>
+</header>
+{{if .Access.CanEdit}}
+<form class="new-card" method="post" action="{{pageURL "board" "id" .Board.ID}}">
+  {{csrfToken}}
+  <input type="hidden" name="op" value="create_card">
+  <input name="title" value="{{fieldValue "title"}}" placeholder="{{t "board.new_card"}}" aria-label="{{t "board.new_card"}}" required maxlength="200">
+  <button type="submit">{{t "board.add_card"}}</button>
+  {{with fieldError "title"}}<p class="error">{{.}}</p>{{end}}
+</form>
+{{end}}
+<div id="board" class="board" data-move-url="{{pageURL "board" "id" .Board.ID}}"
+  data-collage-fragment="{{fragmentURL "board" "board-columns" "id" .Board.ID}}" data-collage-push data-collage-swap="morph">
+  {{slot "columns"}}
+</div>
+<dialog id="card-dialog" class="card-dialog" aria-label="{{t "board.open_card"}}">
+  <form method="dialog"><button class="card-dialog__close" type="submit">{{t "card.close"}}</button></form>
+  <div class="card-dialog__body"></div>
+</dialog>
+<script src="{{asset "/static/vendor/Sortable.min.js"}}"></script>
+<script type="module" src="{{asset "/static/board.js"}}"></script>

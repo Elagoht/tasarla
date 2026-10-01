@@ -24,6 +24,7 @@ type teamsView struct {
 
 type teamView struct {
 	Team      store.Team
+	Boards    []store.Board
 	Members   []store.Member
 	Roles     []store.Role
 	CanManage bool
@@ -129,8 +130,12 @@ func (h *handlers) loadTeam(ctx context.Context, rc *collage.RenderContext) (tea
 		return teamView{}, err
 	}
 	rc.HoistTitle(team.Name)
+	boards, err := h.store.BoardsOfTeam(ctx, team.ID)
+	if err != nil {
+		return teamView{}, err
+	}
 	members, err := h.store.Members(ctx, team.ID)
-	return teamView{Team: team, Members: members, Roles: store.Roles, CanManage: access.CanManage}, err
+	return teamView{Team: team, Boards: boards, Members: members, Roles: store.Roles, CanManage: access.CanManage}, err
 }
 
 func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*collage.ActionResult, error) {
@@ -150,6 +155,8 @@ func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return h.addMember(ctx, rc, v, team)
 	case "set_role", "remove_member":
 		return h.changeMember(ctx, rc, v, team)
+	case "create_board":
+		return h.createBoard(ctx, rc, v, team)
 	}
 	return collage.NoContent(http.StatusBadRequest), nil
 }
@@ -219,4 +226,22 @@ func (h *handlers) changeMember(ctx context.Context, rc *collage.RenderContext, 
 		return nil, err
 	}
 	return h.redirectToTeam(rc, team.ID)
+}
+
+// createBoard adds a board with three columns named in the creator's language.
+func (h *handlers) createBoard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, team store.Team) (*collage.ActionResult, error) {
+	v.Field("board_name").Required().MaxLen(100)
+	if !v.Valid() {
+		return validate.Refuse(rc, v, rc.Page), nil
+	}
+	columns := []string{
+		i18n.T(rc, "board.default_columns.todo"),
+		i18n.T(rc, "board.default_columns.doing"),
+		i18n.T(rc, "board.default_columns.done"),
+	}
+	board, err := h.store.CreateBoard(ctx, team.ID, strings.TrimSpace(v.Value("board_name")), columns)
+	if err != nil {
+		return nil, err
+	}
+	return h.redirectTo(rc, "board", "id", strconv.FormatInt(board.ID, 10))
 }

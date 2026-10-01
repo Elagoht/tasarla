@@ -1,7 +1,16 @@
 {
-  "app": { "name": "Kanban" },
-  "locale": { "switcher": "Dil" },
-  "nav": { "home": "Ana sayfa", "teams": "Takımlar", "users": "Kullanıcılar" },
+  "app": {
+    "name": "Kanban"
+  },
+  "locale": {
+    "switcher": "Dil"
+  },
+  "nav": {
+    "home": "Ana sayfa",
+    "teams": "Takımlar",
+    "users": "Kullanıcılar",
+    "tasks": "Bana atananlar"
+  },
   "auth": {
     "logout": "Çıkış yap",
     "failed": {
@@ -11,22 +20,37 @@
     }
   },
   "errors": {
-    "not_found": { "title": "Sayfa bulunamadı", "body": "Aradığınız sayfa yok ya da görme izniniz yok." },
-    "server": { "title": "Bir şeyler ters gitti", "body": "İsteğiniz tamamlanamadı. Lütfen biraz sonra yeniden deneyin." }
+    "not_found": {
+      "title": "Sayfa bulunamadı",
+      "body": "Aradığınız sayfa yok ya da görme izniniz yok."
+    },
+    "server": {
+      "title": "Bir şeyler ters gitti",
+      "body": "İsteğiniz tamamlanamadı. Lütfen biraz sonra yeniden deneyin."
+    }
   },
-  "home": { "title": "Takımlarım", "empty": "Henüz bir takımda değilsiniz." },
+  "home": {
+    "title": "Takımlarım",
+    "empty": "Henüz bir takımda değilsiniz."
+  },
   "teams": {
     "title": "Takımlar",
     "empty": "Henüz takım yok.",
     "name": "Takım adı",
     "create": "Takım oluştur",
     "created": "{name} oluşturuldu.",
-    "member_count": { "one": "{count} üye", "other": "{count} üye" }
+    "member_count": {
+      "one": "{count} üye",
+      "other": "{count} üye"
+    }
   },
   "team": {
     "members": "Üyeler",
     "role": "Rol",
-    "roles": { "lead": "Lider", "member": "Üye" },
+    "roles": {
+      "lead": "Lider",
+      "member": "Üye"
+    },
     "add": "Üye ekle",
     "email": "E-posta",
     "save": "Kaydet",
@@ -53,5 +77,73 @@
     "saved": "Kaydedildi.",
     "last_admin": "En az bir aktif admin kalmalı.",
     "self_disable": "Kendi hesabınızı devre dışı bırakamazsınız."
+  },
+  "board": {
+    "default_columns": {
+      "todo": "Yapılacak",
+      "doing": "Yapılıyor",
+      "done": "Bitti"
+    },
+    "boards": "Board'lar",
+    "empty": "Henüz board yok.",
+    "name": "Board adı",
+    "create": "Board oluştur",
+    "new_card": "Yeni kart başlığı",
+    "add_card": "Kart ekle",
+    "settings": "Ayarlar",
+    "conflict": "Bu kart başka biri tarafından değiştirildi.",
+    "moved": "Kart taşındı.",
+    "over_limit": "Limit aşıldı",
+    "blocked": "Bloklu",
+    "unassigned": "Atanmamış",
+    "open_card": "Kartı aç"
+  },
+  "card": {
+    "title": "Başlık",
+    "description": "Açıklama",
+    "assignee": "Atanan",
+    "unassigned": "Atanmamış",
+    "estimate": "Tahmin",
+    "due_date": "Son tarih",
+    "priority": "Öncelik",
+    "none": "Yok",
+    "priorities": {
+      "1": "Düşük",
+      "2": "Orta",
+      "3": "Yüksek",
+      "4": "Acil"
+    },
+    "save": "Kaydet",
+    "saved": "Kaydedildi.",
+    "column": "Kolon",
+    "move": "Kolona taşı",
+    "move_button": "Taşı",
+    "labels": "Etiketler",
+    "no_labels": "Bu board'da etiket yok.",
+    "checklist": "Kontrol listesi",
+    "checklist_add": "Madde ekle",
+    "checklist_item": "Yeni madde",
+    "delete": "Sil",
+    "mark_done": "Tamamlandı işaretle",
+    "mark_undone": "Geri al",
+    "dependencies": "Bağımlılıklar",
+    "blockers": "Bu kartı bloklayanlar",
+    "blocking": "Bu kartın blokladıkları",
+    "add_blocker": "Bloklayan ekle",
+    "remove": "Kaldır",
+    "cycle": "Bu bağımlılık bir döngü oluşturur.",
+    "archive": "Arşivle",
+    "archived": "Kart arşivlendi.",
+    "is_archived": "Bu kart arşivde.",
+    "back": "Board'a dön",
+    "close": "Kapat",
+    "estimate_invalid": "Sıfır ya da pozitif bir sayı girin.",
+    "date_invalid": "Tarihi YYYY-AA-GG biçiminde girin.",
+    "assignee_invalid": "Takım üyelerinden birini seçin.",
+    "done": "tamamlandı"
+  },
+  "tasks": {
+    "title": "Bana atananlar",
+    "empty": "Size atanmış kart yok."
   }
 }
