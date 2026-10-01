@@ -4,8 +4,9 @@
 /bin/kanban
 /bin/kanban.exe
 
-# "collage export" output.
+# "collage export" and "collage build" output.
 /dist/
+/bin/
 
 # Rendered pages, kept between restarts. Namespaced by a hash of the binary, so
 # nothing here outlives the build that wrote it.
