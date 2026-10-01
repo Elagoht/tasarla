@@ -5,7 +5,9 @@
 /* hidden hides, whatever display a class gives. */
 [hidden] { display: none !important; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* The canvas has the page's colour itself, not only by way of body: during a
+   view transition it shows wherever a moving part has left its place. */
+html { -webkit-text-size-adjust: 100%; background-color: var(--paper); }
 
 body {
   margin: 0;
@@ -75,6 +77,9 @@ time { font-variant-numeric: tabular-nums; }
    is the target: with nothing clicked, one page's title flows into the next. */
 .page-head h1, .card-panel--page .cardp__title, .confirm-page h1, .solo__card h1 { view-transition-name: target; width: fit-content; }
 .card-panel--page .cardp__title { width: 100%; }
+/* Under the moving parts, the page's colour: never a white canvas, which in
+   the dark theme flashed through the place a title or link had left. */
+::view-transition { background-color: var(--paper); }
 ::view-transition-group(*) { animation-duration: 280ms; animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1); }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; }
 @media (prefers-reduced-motion: reduce) {
