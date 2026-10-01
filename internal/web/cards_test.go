@@ -116,7 +116,7 @@ func TestCardPartsThroughThePanel(t *testing.T) {
 func TestArchivingACard(t *testing.T) {
 	b := newBoardSetup(t)
 	c := b.card(t, 0, "Old card")
-	res := b.member.Submit(b.cardPath(c), b.cardPath(c), url.Values{"op": {"archive"}})
+	res := b.member.Submit(b.cardPath(c), b.cardPath(c), url.Values{"confirm": {"1"}, "op": {"archive"}})
 	if res.Status != http.StatusSeeOther || res.Location() != b.path {
 		t.Fatalf("archive = %d %q", res.Status, res.Location())
 	}

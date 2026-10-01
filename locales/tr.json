@@ -352,5 +352,20 @@
       "tr": "Türkçe",
       "en": "English"
     }
+  },
+  "confirm": {
+    "title": "Emin misiniz?",
+    "yes": "Evet, devam et",
+    "cancel": "Vazgeç",
+    "irreversible": "Bu işlem geri alınamaz.",
+    "archive": "Kart arşivlensin mi?",
+    "comment_delete": "Yorum silinsin mi?",
+    "attachment_delete": "Dosya silinsin mi?",
+    "label_delete": "Etiket silinsin mi?",
+    "role_delete": "Rol silinsin mi?",
+    "rule_delete": "Kural silinsin mi?",
+    "archive_board": "Board arşivlensin mi?",
+    "remove_member": "Üye takımdan çıkarılsın mı?",
+    "set_disabled": "Kullanıcı devre dışı bırakılsın mı?"
   }
 }

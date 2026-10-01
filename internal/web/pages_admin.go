@@ -63,6 +63,9 @@ func (h *handlers) adminUsersPost(ctx context.Context, rc *collage.RenderContext
 		return nil, err
 	}
 	v := validate.Form(rc)
+	if res := h.confirmFirst(rc, v); res != nil {
+		return res, nil
+	}
 	userID, err := strconv.ParseInt(v.Value("user_id"), 10, 64)
 	if err != nil {
 		return collage.NoContent(http.StatusBadRequest), nil

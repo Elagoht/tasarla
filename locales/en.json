@@ -352,5 +352,20 @@
       "tr": "Türkçe",
       "en": "English"
     }
+  },
+  "confirm": {
+    "title": "Are you sure?",
+    "yes": "Yes, continue",
+    "cancel": "Cancel",
+    "irreversible": "This cannot be undone.",
+    "archive": "Archive this card?",
+    "comment_delete": "Delete this comment?",
+    "attachment_delete": "Delete this file?",
+    "label_delete": "Delete this label?",
+    "role_delete": "Delete this role?",
+    "rule_delete": "Delete this rule?",
+    "archive_board": "Archive this board?",
+    "remove_member": "Remove this member from the team?",
+    "set_disabled": "Disable this user?"
   }
 }

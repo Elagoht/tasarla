@@ -37,7 +37,7 @@ func TestTheOnlyAdminCannotStepDown(t *testing.T) {
 	id := strconv.FormatInt(h.user("admin@example.com").ID, 10)
 	for _, value := range []url.Values{
 		{"op": {"set_admin"}, "user_id": {id}, "value": {"0"}},
-		{"op": {"set_disabled"}, "user_id": {id}, "value": {"1"}},
+		{"confirm": {"1"}, "op": {"set_disabled"}, "user_id": {id}, "value": {"1"}},
 	} {
 		if res := admin.Submit("/admin/users", "/admin/users", value); res.Status != http.StatusForbidden {
 			t.Fatalf("%s on myself = %d, want 403", value.Get("op"), res.Status)
@@ -57,7 +57,7 @@ func TestDisablingAUserSignsThemOut(t *testing.T) {
 	}
 	id := strconv.FormatInt(h.user("bob@example.com").ID, 10)
 
-	res := admin.Submit("/admin/users", "/admin/users", url.Values{"op": {"set_disabled"}, "user_id": {id}, "value": {"1"}})
+	res := admin.Submit("/admin/users", "/admin/users", url.Values{"confirm": {"1"}, "op": {"set_disabled"}, "user_id": {id}, "value": {"1"}})
 	if res.Status != http.StatusSeeOther {
 		t.Fatalf("disable = %d", res.Status)
 	}
@@ -66,7 +66,7 @@ func TestDisablingAUserSignsThemOut(t *testing.T) {
 		t.Fatalf("disabled bob GET / = %d %q, want a redirect to /login", res.Status, res.Location())
 	}
 
-	admin.Submit("/admin/users", "/admin/users", url.Values{"op": {"set_disabled"}, "user_id": {id}, "value": {"0"}})
+	admin.Submit("/admin/users", "/admin/users", url.Values{"confirm": {"1"}, "op": {"set_disabled"}, "user_id": {id}, "value": {"0"}})
 	again := h.signedIn("bob", "bob@example.com")
 	if res := again.Get("/"); res.Status != http.StatusOK {
 		t.Fatalf("re-enabled bob GET / = %d", res.Status)

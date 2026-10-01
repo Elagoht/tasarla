@@ -47,6 +47,7 @@ type handlers struct {
 	columns *collage.Fragment
 	panel   *collage.Fragment
 	badge   *collage.Fragment
+	confirm *collage.Page
 
 	notifier *notify.Notifier
 }
@@ -146,8 +147,9 @@ func New(d Deps) (*App, error) {
 
 // pages is every page for signed-in readers.
 func (h *handlers) pages() []*collage.Page {
+	h.confirm = h.confirmPage()
 	return []*collage.Page{
-		h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
+		h.confirm, h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
 		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(),
 		h.notificationsPage(), h.meSettingsPage(),
 	}

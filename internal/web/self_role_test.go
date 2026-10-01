@@ -17,7 +17,7 @@ func TestAnAdminCannotChangeTheirOwnRole(t *testing.T) {
 	me := id(h.user("admin@example.com").ID)
 	for _, form := range []url.Values{
 		{"op": {"set_admin"}, "user_id": {me}, "value": {"0"}},
-		{"op": {"set_disabled"}, "user_id": {me}, "value": {"1"}},
+		{"confirm": {"1"}, "op": {"set_disabled"}, "user_id": {me}, "value": {"1"}},
 	} {
 		if res := admin.Submit("/admin/users", "/admin/users", form); res.Status != http.StatusForbidden {
 			t.Errorf("%s on myself = %d, want 403", form.Get("op"), res.Status)
@@ -45,7 +45,7 @@ func TestALeadCannotChangeTheirOwnRole(t *testing.T) {
 	me := id(h.user("lead@example.com").ID)
 	for _, form := range []url.Values{
 		{"op": {"set_role"}, "user_id": {me}, "role": {"member"}},
-		{"op": {"remove_member"}, "user_id": {me}},
+		{"confirm": {"1"}, "op": {"remove_member"}, "user_id": {me}},
 	} {
 		if res := lead.Submit(path, path, form); res.Status != http.StatusForbidden {
 			t.Errorf("%s on myself = %d, want 403", form.Get("op"), res.Status)

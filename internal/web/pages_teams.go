@@ -152,6 +152,9 @@ func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return collage.NoContent(http.StatusForbidden), nil
 	}
 	v := validate.Form(rc)
+	if res := h.confirmFirst(rc, v); res != nil {
+		return res, nil
+	}
 	switch v.Value("op") {
 	case "add_member":
 		return h.addMember(ctx, rc, v, team)

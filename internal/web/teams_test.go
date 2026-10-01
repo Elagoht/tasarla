@@ -94,7 +94,7 @@ func TestLeadManagesMembers(t *testing.T) {
 		t.Errorf("carol's role = %q", role)
 	}
 
-	res = lead.Submit(path, path, url.Values{"op": {"remove_member"}, "user_id": {carolID}})
+	res = lead.Submit(path, path, url.Values{"confirm": {"1"}, "op": {"remove_member"}, "user_id": {carolID}})
 	if res.Status != http.StatusSeeOther {
 		t.Fatalf("remove = %d", res.Status)
 	}

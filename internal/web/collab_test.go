@@ -33,7 +33,7 @@ func TestCommentsAndMentions(t *testing.T) {
 		t.Fatalf("edit = %d", res.Status)
 	}
 	mustContain(t, b.member.Get(b.cardPath(c)).Body, "Edited text", "düzenlendi")
-	if res := b.lead.Submit(b.cardPath(c), b.cardPath(c), url.Values{"op": {"comment_delete"}, "comment_id": {id0}}); res.Status != http.StatusSeeOther {
+	if res := b.lead.Submit(b.cardPath(c), b.cardPath(c), url.Values{"confirm": {"1"}, "op": {"comment_delete"}, "comment_id": {id0}}); res.Status != http.StatusSeeOther {
 		t.Fatalf("a lead deleting = %d", res.Status)
 	}
 	page = b.member.Get(b.cardPath(c)).Body

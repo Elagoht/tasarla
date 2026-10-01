@@ -55,7 +55,7 @@ func TestUnblockedIsSaidOnce(t *testing.T) {
 	move(b.cols[1].ID, b.cols[2].ID)
 	move(b.cols[2].ID, b.cols[1].ID)
 	cur, _ := b.h.store.Card(ctx, b.board.ID, blocker.ID)
-	b.lead.Submit(b.cardPath(cur), b.cardPath(cur), url.Values{"op": {"archive"}})
+	b.lead.Submit(b.cardPath(cur), b.cardPath(cur), url.Values{"confirm": {"1"}, "op": {"archive"}})
 	if n, _ := b.h.store.UnreadCount(ctx, memberID); n != 1 {
 		t.Fatalf("unblocked notifications = %d, want 1", n)
 	}
@@ -67,7 +67,7 @@ func TestDeletingARoleInUseSaysWhy(t *testing.T) {
 	qa, _ := b.h.store.CreateBoardRole(ctx, b.board.ID, "QA")
 	b.h.store.AddMovePermission(ctx, b.board.ID, store.MovePermission{ToColumnID: b.cols[2].ID, Subject: rules.SubjectBoardRole, BoardRoleID: &qa.ID})
 	s := b.path + "/settings"
-	if res := b.lead.Submit(s, s, url.Values{"op": {"role_delete"}, "role_id": {id(qa.ID)}}); res.Status != http.StatusSeeOther {
+	if res := b.lead.Submit(s, s, url.Values{"confirm": {"1"}, "op": {"role_delete"}, "role_id": {id(qa.ID)}}); res.Status != http.StatusSeeOther {
 		t.Fatalf("role_delete = %d", res.Status)
 	}
 	page := b.lead.Get(s).Body

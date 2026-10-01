@@ -201,6 +201,9 @@ func (h *handlers) boardSettingsPost(ctx context.Context, rc *collage.RenderCont
 		return nil, err
 	}
 	v := validate.Form(rc)
+	if res := h.confirmFirst(rc, v); res != nil {
+		return res, nil
+	}
 	boardID := bc.Board.ID
 	switch v.Value("op") {
 	case "rename":

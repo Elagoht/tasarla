@@ -243,6 +243,9 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return collage.NoContent(http.StatusForbidden), nil
 	}
 	v := validate.Form(rc)
+	if res := h.confirmFirst(rc, v); res != nil {
+		return res, nil
+	}
 	switch v.Value("op") {
 	case "update":
 		return h.updateCard(ctx, rc, v, cc)

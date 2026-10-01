@@ -132,7 +132,7 @@ func TestLeadConfiguresRules(t *testing.T) {
 	for _, form := range []url.Values{
 		{"op": {"permission_delete"}, "permission_id": {id(r.Permissions[0].ID)}},
 		{"op": {"condition_delete"}, "condition_id": {id(r.Conditions[0].ID)}},
-		{"op": {"role_delete"}, "role_id": {role}},
+		{"confirm": {"1"}, "op": {"role_delete"}, "role_id": {role}},
 	} {
 		if res := b.lead.Submit(s, s, form); res.Status != http.StatusSeeOther {
 			t.Fatalf("%s = %d", form.Get("op"), res.Status)

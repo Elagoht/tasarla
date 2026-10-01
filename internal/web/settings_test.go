@@ -84,13 +84,13 @@ func TestEditingLabelsAndTheBoard(t *testing.T) {
 	if len(labels) != 1 {
 		t.Fatalf("labels = %+v", labels)
 	}
-	b.lead.Submit(s, s, url.Values{"op": {"label_delete"}, "label_id": {id(labels[0].ID)}})
+	b.lead.Submit(s, s, url.Values{"confirm": {"1"}, "op": {"label_delete"}, "label_id": {id(labels[0].ID)}})
 	if labels, _ := b.h.store.Labels(ctx, b.board.ID); len(labels) != 0 {
 		t.Fatal("label not deleted")
 	}
 	b.lead.Submit(s, s, url.Values{"op": {"rename"}, "board_name": {"Sprint 42"}})
 	mustContain(t, b.member.Get(b.path).Body, "Sprint 42")
-	res = b.lead.Submit(s, s, url.Values{"op": {"archive_board"}})
+	res = b.lead.Submit(s, s, url.Values{"confirm": {"1"}, "op": {"archive_board"}})
 	if res.Status != http.StatusSeeOther || !strings.HasPrefix(res.Location(), "/teams/") {
 		t.Fatalf("archive = %d %q", res.Status, res.Location())
 	}
