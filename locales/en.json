@@ -169,7 +169,9 @@
       "other": "{count} cards have to be done first."
     },
     "unblocked": "Not blocked",
-    "not_done": "not done"
+    "not_done": "not done",
+    "start_date": "Start date",
+    "date_order": "The start date cannot be after the due date."
   },
   "tasks": {
     "title": "My tasks",
@@ -414,7 +416,8 @@
       "assignee": "assignee",
       "estimate": "estimate",
       "due_date": "due date",
-      "priority": "priority"
+      "priority": "priority",
+      "start_date": "start date"
     },
     "card_updated_short": "{actor} edited the card",
     "none": "—",
@@ -507,5 +510,42 @@
     "see_all": "Go to Done",
     "drop_here": "Drop a card here to complete it",
     "option": "{name} (completes)"
+  },
+  "gantt": {
+    "title": "Gantt chart",
+    "button": "Gantt",
+    "settings": "Chart settings",
+    "scale_label": "Scale",
+    "scale": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "group_label": "Grouping",
+    "group": {
+      "column": "By column",
+      "assignee": "By person"
+    },
+    "show_done": "Show done",
+    "empty": "No card has a date yet. Give cards a start or due date and they show here.",
+    "rows": "Cards",
+    "undated": "Cards without dates",
+    "undated_hint": "These are not on the chart; give them a start or due date in the card's panel.",
+    "save_failed": "The dates could not be saved.",
+    "saved": "Dates saved.",
+    "months": {
+      "1": "Jan",
+      "2": "Feb",
+      "3": "Mar",
+      "4": "Apr",
+      "5": "May",
+      "6": "Jun",
+      "7": "Jul",
+      "8": "Aug",
+      "9": "Sep",
+      "10": "Oct",
+      "11": "Nov",
+      "12": "Dec"
+    }
   }
 }

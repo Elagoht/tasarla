@@ -62,6 +62,7 @@ textarea.cardp__title:focus { outline: none; border-color: var(--accent); box-sh
 #card-panel[data-saved="column"] [data-saved-for="column"],
 #card-panel[data-saved="assignee"] [data-saved-for="assignee"],
 #card-panel[data-saved="due_date"] [data-saved-for="due_date"],
+#card-panel[data-saved="start_date"] [data-saved-for="start_date"],
 #card-panel[data-saved="priority"] [data-saved-for="priority"],
 #card-panel[data-saved="estimate"] [data-saved-for="estimate"],
 #card-panel[data-saved="labels"] [data-saved-for="labels"],

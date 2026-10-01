@@ -1,0 +1,70 @@
+/* Gantt chart: a list of cards on the left, their bars on a time scale. */
+
+.gantt-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.segmented { display: inline-flex; padding: 2px; border-radius: var(--r-sm); background: var(--shelf); border: 1px solid var(--line); }
+.segmented__item { padding: 4px 12px; border-radius: 6px; color: var(--ink-muted); font-size: var(--text-sm); font-weight: 700; text-decoration: none; }
+.segmented__item:hover { color: var(--ink); }
+.segmented__item.is-active { background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-paper); }
+.gantt-tools .is-on { background: var(--ok-soft); color: var(--ok); }
+
+.gantt { display: grid; gap: var(--s4); }
+.gantt__frame {
+  display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--sheet); overflow: hidden; box-shadow: var(--shadow-paper);
+}
+.gantt__labels { list-style: none; margin: 0; padding: 0; border-right: 1px solid var(--line); background: var(--sheet); }
+.gantt__corner { height: 52px; border-bottom: 1px solid var(--line); background: var(--shelf); }
+.gantt__group, .gantt__label {
+  height: 36px; display: flex; align-items: center; gap: var(--s2); padding: 0 var(--s3);
+  border-bottom: 1px solid var(--line); font-size: var(--text-sm); min-width: 0;
+}
+.gantt__group { background: var(--shelf); font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; font-size: var(--text-xs); }
+.gantt__label a { color: var(--ink); text-decoration: none; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.gantt__label a:hover { color: var(--accent-strong); }
+.gantt__label.is-done a { color: var(--ink-muted); text-decoration: line-through; text-decoration-color: var(--ink-faint); }
+.gantt__who { margin-left: auto; color: var(--ink-faint); font-size: var(--text-xs); white-space: nowrap; }
+.gantt__tick { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--ok); color: var(--sheet); flex: none; }
+.gantt__tick .icon { width: 11px; height: 11px; }
+
+.gantt__scroll { overflow-x: auto; overflow-y: hidden; }
+/* Its own width: the frame scrolls, rather than the chart shrinking to fit. */
+.gantt__chart { display: block; max-width: none; font-family: var(--font-body); }
+.gantt__head { fill: var(--shelf); }
+.gantt__rowline { stroke: var(--line); stroke-width: 1; }
+.gantt__grouprow { fill: var(--shelf); opacity: 0.6; }
+.gantt__weekend { fill: var(--shelf); opacity: 0.55; }
+.gantt__month { stroke: var(--line-strong); stroke-width: 1; }
+.gantt__monthlabel { fill: var(--ink-soft); font-size: 12px; font-weight: 700; }
+.gantt__ticklabel { fill: var(--ink-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.gantt__today { stroke: var(--accent); stroke-width: 2; }
+.gantt__todaydot { fill: var(--accent); }
+
+.gantt__bar { cursor: grab; outline: none; }
+.gantt__bar:not([data-editable] *) { cursor: pointer; }
+.gantt__rect { fill: var(--chip-dot, var(--accent)); opacity: 0.88; }
+.gantt__bar:hover .gantt__rect, .gantt__bar:focus-visible .gantt__rect { opacity: 1; }
+.gantt__bar:focus-visible .gantt__rect, .gantt__bar:focus-visible .gantt__diamond { stroke: var(--ink); stroke-width: 2; }
+.gantt__diamond { fill: var(--chip-dot, var(--accent)); }
+.gantt__text { fill: var(--ink-soft); font-size: 12px; font-weight: 700; pointer-events: none; }
+.gantt__text.is-in { fill: #fff; }
+.gantt__handle { fill: transparent; cursor: ew-resize; }
+.gantt__frame[data-editable] .gantt__bar:hover .gantt__handle { fill: rgb(255 255 255 / 0.35); }
+.gantt__frame:not([data-editable]) .gantt__handle { display: none; }
+.gantt__bar.is-done .gantt__rect, .gantt__bar.is-done .gantt__diamond { opacity: 0.35; }
+.gantt__bar.is-done .gantt__text { fill: var(--ink-muted); text-decoration: line-through; }
+.gantt__bar.is-dragging { cursor: grabbing; }
+.gantt__bar.is-dragging .gantt__rect { opacity: 1; stroke: var(--ink); stroke-width: 1.5; }
+.gantt__bar.is-saving { opacity: 0.6; }
+
+.gantt__arrow { fill: none; stroke: var(--ink-faint); stroke-width: 1.5; }
+.gantt__arrowhead { fill: var(--ink-faint); }
+.gantt__arrow--late { stroke: var(--danger); }
+.gantt__arrowhead--late { fill: var(--danger); }
+
+.gantt__undated .chips { gap: var(--s2); }
+.gantt__undated .chip { text-decoration: none; }
+
+@media (max-width: 720px) {
+  .gantt__frame { grid-template-columns: minmax(120px, 40vw) minmax(0, 1fr); }
+  .gantt__who { display: none; }
+}

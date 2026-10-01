@@ -268,7 +268,7 @@ func (s *Store) DueCandidates(ctx context.Context, now time.Time) ([]DueCandidat
 		var d DueCandidate
 		c := &d.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom, &c.StartDate,
 			&d.BoardName, &d.Kind); err != nil {
 			return nil, err
 		}

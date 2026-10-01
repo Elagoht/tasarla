@@ -1,0 +1,20 @@
+{{$self := pageURL "board-gantt" "id" .Board.ID}}
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{pageURL "board" "id" .Board.ID}}">{{template "icon" "arrow-left"}} {{.Board.Name}}</a>
+    <h1>{{t "gantt.title"}}</h1>
+  </div>
+  <nav class="gantt-tools" aria-label="{{t "gantt.settings"}}">
+    <div class="segmented" role="group" aria-label="{{t "gantt.scale_label"}}">
+      {{range .Scales}}<a class="segmented__item{{if eq . $.Scale}} is-active{{end}}" href="{{$self}}?scale={{.}}&group={{$.Group}}{{if $.Done}}&done=1{{end}}" {{if eq . $.Scale}}aria-current="true"{{end}}>{{t (printf "gantt.scale.%s" .)}}</a>{{end}}
+    </div>
+    <div class="segmented" role="group" aria-label="{{t "gantt.group_label"}}">
+      {{range .Groups}}<a class="segmented__item{{if eq . $.Group}} is-active{{end}}" href="{{$self}}?scale={{$.Scale}}&group={{.}}{{if $.Done}}&done=1{{end}}" {{if eq . $.Group}}aria-current="true"{{end}}>{{t (printf "gantt.group.%s" .)}}</a>{{end}}
+    </div>
+    <a class="btn btn--quiet btn--sm{{if .Done}} is-on{{end}}" href="{{$self}}?scale={{.Scale}}&group={{.Group}}{{if not .Done}}&done=1{{end}}" aria-pressed="{{if .Done}}true{{else}}false{{end}}">{{template "icon" "check"}} {{t "gantt.show_done"}}</a>
+  </nav>
+</header>
+<div class="gantt" id="gantt" data-collage-fragment="{{fragmentURL "board-gantt" "board-gantt-chart" "id" .Board.ID}}?{{.Query}}" data-collage-push>
+  {{slot "chart"}}
+</div>
+<script type="module" src="{{asset "/static/js/gantt.js"}}"></script>

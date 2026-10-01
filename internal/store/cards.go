@@ -34,14 +34,16 @@ type Card struct {
 	// the board; CompletedFrom is the column it came from.
 	CompletedAt   *time.Time
 	CompletedFrom *int64
+	// StartDate is where the card's bar begins on the Gantt chart.
+	StartDate *time.Time
 }
 
-const cardColumns = `id, board_id, column_id, position, title, description, assignee_id, estimate::float8, due_date, priority, created_by, version, archived_at, created_at, completed_at, completed_from_column_id`
+const cardColumns = `id, board_id, column_id, position, title, description, assignee_id, estimate::float8, due_date, priority, created_by, version, archived_at, created_at, completed_at, completed_from_column_id, start_date`
 
 func scanCard(row pgx.Row) (Card, error) {
 	var c Card
 	err := row.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-		&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom)
+		&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom, &c.StartDate)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Card{}, ErrNotFound
 	}
@@ -122,7 +124,11 @@ type CardFields struct {
 	Estimate    *float64
 	DueDate     *time.Time
 	Priority    *int16
+	StartDate   *time.Time
 }
+
+// ErrDateOrder refuses a start date after the due date.
+var ErrDateOrder = errors.New("store: the start date is after the due date")
 
 // UpdateCard changes a card's fields if it is still at expectedVersion. Giving
 // the card to someone new checks their WIP (spec §5.2).
@@ -140,6 +146,7 @@ const (
 	FieldDueDate     CardField = "due_date"
 	FieldPriority    CardField = "priority"
 	FieldEstimate    CardField = "estimate"
+	FieldStartDate   CardField = "start_date"
 )
 
 // ErrUnknownField refuses a field UpdateCardField does not save.
@@ -150,13 +157,12 @@ var ErrUnknownField = errors.New("store: unknown card field")
 // someone else changed meanwhile in another field.
 func (s *Store) UpdateCardField(ctx context.Context, boardID, cardID int64, expectedVersion int, field CardField, f CardFields, actorID int64) (Card, error) {
 	switch field {
-	case FieldTitle, FieldDescription, FieldAssignee, FieldDueDate, FieldPriority, FieldEstimate:
+	case FieldTitle, FieldDescription, FieldAssignee, FieldDueDate, FieldPriority, FieldEstimate, FieldStartDate:
 	default:
 		return Card{}, ErrUnknownField
 	}
 	return s.updateCard(ctx, boardID, cardID, expectedVersion, func(c Card) CardFields {
-		cur := CardFields{Title: c.Title, Description: c.Description, AssigneeID: c.AssigneeID,
-			Estimate: c.Estimate, DueDate: c.DueDate, Priority: c.Priority}
+		cur := fieldsOf(c)
 		switch field {
 		case FieldTitle:
 			cur.Title = f.Title
@@ -170,9 +176,27 @@ func (s *Store) UpdateCardField(ctx context.Context, boardID, cardID int64, expe
 			cur.Priority = f.Priority
 		case FieldEstimate:
 			cur.Estimate = f.Estimate
+		case FieldStartDate:
+			cur.StartDate = f.StartDate
 		}
 		return cur
 	}, actorID)
+}
+
+// UpdateCardDates sets a card's start and due dates together, as dragging its
+// bar on the Gantt chart does; every other field keeps its value.
+func (s *Store) UpdateCardDates(ctx context.Context, boardID, cardID int64, expectedVersion int, start, due *time.Time, actorID int64) (Card, error) {
+	return s.updateCard(ctx, boardID, cardID, expectedVersion, func(c Card) CardFields {
+		cur := fieldsOf(c)
+		cur.StartDate, cur.DueDate = start, due
+		return cur
+	}, actorID)
+}
+
+// fieldsOf is a card's fields as they stand.
+func fieldsOf(c Card) CardFields {
+	return CardFields{Title: c.Title, Description: c.Description, AssigneeID: c.AssigneeID,
+		Estimate: c.Estimate, DueDate: c.DueDate, Priority: c.Priority, StartDate: c.StartDate}
 }
 
 // updateCard writes the fields fieldsFor derives from the card as it stands,
@@ -195,6 +219,9 @@ func (s *Store) updateCard(ctx context.Context, boardID, cardID int64, expectedV
 		return Card{}, ErrConflict
 	}
 	f := fieldsFor(card)
+	if f.StartDate != nil && f.DueDate != nil && f.StartDate.After(*f.DueDate) {
+		return Card{}, ErrDateOrder
+	}
 	if f.AssigneeID != nil && (card.AssigneeID == nil || *card.AssigneeID != *f.AssigneeID) && card.ArchivedAt == nil {
 		snap, err := loadSnapshot(ctx, tx, boardID, card)
 		if err != nil {
@@ -211,10 +238,10 @@ func (s *Store) updateCard(ctx context.Context, boardID, cardID int64, expectedV
 	before := card
 	card, err = scanCard(tx.QueryRow(ctx, `
 		UPDATE cards SET title = $3, description = $4, assignee_id = $5, estimate = $6,
-		       due_date = $7, priority = $8, version = version + 1
+		       due_date = $7, priority = $8, start_date = $9, version = version + 1
 		WHERE id = $2 AND board_id = $1
 		RETURNING `+cardColumns,
-		boardID, cardID, f.Title, f.Description, f.AssigneeID, f.Estimate, f.DueDate, f.Priority))
+		boardID, cardID, f.Title, f.Description, f.AssigneeID, f.Estimate, f.DueDate, f.Priority, f.StartDate))
 	if err != nil {
 		return Card{}, err
 	}
@@ -243,6 +270,7 @@ func changedFields(a, b Card) []string {
 	add("description", a.Description != b.Description)
 	add("assignee", !samePtr(a.AssigneeID, b.AssigneeID))
 	add("estimate", !samePtr(a.Estimate, b.Estimate))
+	add("start_date", !sameDate(a.StartDate, b.StartDate))
 	add("due_date", !sameDate(a.DueDate, b.DueDate))
 	add("priority", !samePtr(a.Priority, b.Priority))
 	return out
@@ -276,6 +304,11 @@ func fieldChanges(ctx context.Context, tx pgx.Tx, a, b Card, changed []string) (
 				return "", nil
 			}
 			return c.DueDate.Format(time.DateOnly), nil
+		case "start_date":
+			if c.StartDate == nil {
+				return "", nil
+			}
+			return c.StartDate.Format(time.DateOnly), nil
 		case "priority":
 			if c.Priority == nil {
 				return "", nil
@@ -376,7 +409,7 @@ func (s *Store) BoardCards(ctx context.Context, boardID int64) ([]CardSummary, e
 		var cs CardSummary
 		c := &cs.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom, &c.StartDate,
 			&cs.AssigneeName, &cs.ChecklistDone, &cs.ChecklistTotal, &cs.Attachments, &cs.Blocked); err != nil {
 			return nil, err
 		}

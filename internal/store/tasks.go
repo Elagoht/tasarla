@@ -33,7 +33,7 @@ func (s *Store) AssignedTo(ctx context.Context, userID int64) ([]Task, error) {
 		var t Task
 		c := &t.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom, &c.StartDate,
 			&t.BoardName, &t.ColumnName, &t.TeamName); err != nil {
 			return nil, err
 		}

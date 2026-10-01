@@ -1,0 +1,58 @@
+{{$board := .BoardID}}
+{{if .Empty}}
+<div class="empty empty--small gantt__empty"><p>{{t "gantt.empty"}}</p></div>
+{{end}}
+<div class="gantt__frame" data-gantt data-day-width="{{.DayWidth}}" data-from="{{.From}}" {{if .CanEdit}}data-editable{{end}}
+  data-error-conflict="{{t "board.conflict"}}" data-error-order="{{t "card.date_order"}}" data-error="{{t "gantt.save_failed"}}">
+  <ol class="gantt__labels" aria-label="{{t "gantt.rows"}}">
+    <li class="gantt__corner" aria-hidden="true"></li>
+    {{range .Rows}}
+    {{if .Group}}
+    <li class="gantt__group" data-color="{{.Color}}"><span class="dot" aria-hidden="true"></span>{{.Label}}</li>
+    {{else}}
+    <li class="gantt__label{{if .Done}} is-done{{end}}">
+      {{if .Done}}<span class="gantt__tick" aria-hidden="true">{{template "icon" "check"}}</span>{{end}}
+      <a href="{{pageURL "card" "id" $board "card" .CardID}}">{{.Label}}</a>
+      {{with .Sub}}<span class="gantt__who">{{.}}</span>{{end}}
+    </li>
+    {{end}}
+    {{end}}
+  </ol>
+  <div class="gantt__scroll" data-gantt-scroll>
+    <svg class="gantt__chart" width="{{.Width}}" height="{{.Height}}" viewBox="0 0 {{.Width}} {{.Height}}" role="img" aria-label="{{t "gantt.title"}}">
+      <defs>
+        <marker id="gantt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" class="gantt__arrowhead"/></marker>
+        <marker id="gantt-arrow-late" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" class="gantt__arrowhead gantt__arrowhead--late"/></marker>
+      </defs>
+      {{range .Weekends}}<rect class="gantt__weekend" x="{{.X}}" y="{{$.Header}}" width="{{.W}}" height="{{$.Height}}"/>{{end}}
+      {{range .Rows}}{{if .Group}}<rect class="gantt__grouprow" x="0" y="{{.Y}}" width="{{$.Width}}" height="{{$.RowH}}"/>{{end}}<line class="gantt__rowline" x1="0" x2="{{$.Width}}" y1="{{.Y}}" y2="{{.Y}}"/>{{end}}
+      <rect class="gantt__head" x="0" y="0" width="{{.Width}}" height="{{.Header}}"/>
+      {{range .Months}}<line class="gantt__month" x1="{{.X}}" x2="{{.X}}" y1="0" y2="{{$.Height}}"/><text class="gantt__monthlabel" x="{{.X}}" dx="6" y="20">{{.Label}}</text>{{end}}
+      {{range .Ticks}}<text class="gantt__ticklabel" x="{{.X}}" dx="{{if eq $.DayWidth 36}}18{{else}}3{{end}}" y="42"{{if eq $.DayWidth 36}} text-anchor="middle"{{end}}>{{.Label}}</text>{{end}}
+      {{range .Arrows}}<path class="gantt__arrow{{if .Late}} gantt__arrow--late{{end}}" d="{{.D}}" marker-end="url(#gantt-arrow{{if .Late}}-late{{end}})"/>{{end}}
+      {{range .Bars}}
+      <a class="gantt__bar{{if .Done}} is-done{{end}}{{if .Milestone}} is-milestone{{end}}" href="{{pageURL "card" "id" $board "card" .CardID}}" data-color="{{.Color}}"
+        data-card="{{.CardID}}" data-version="{{.Version}}" data-start="{{.Start}}" data-due="{{.Due}}" data-url="{{pageURL "card" "id" $board "card" .CardID}}">
+        <title>{{.Title}} · {{.Range}}</title>
+        {{if .Milestone}}
+        <polygon class="gantt__diamond" points="{{.Points}}"/>
+        <text class="gantt__text" x="{{.TextX}}" y="{{.CY}}" dy="4">{{.Title}}</text>
+        {{else}}
+        <rect class="gantt__rect" x="{{.X}}" y="{{.Y}}" width="{{.W}}" height="22" rx="6"/>
+        <rect class="gantt__handle gantt__handle--start" data-handle="start" x="{{.X}}" y="{{.Y}}" width="8" height="22" rx="4"/>
+        <rect class="gantt__handle gantt__handle--end" data-handle="end" x="{{.EndX}}" y="{{.Y}}" width="8" height="22" rx="4"/>
+        <text class="gantt__text{{if .TextIn}} is-in{{end}}" x="{{.TextX}}" y="{{.CY}}" dy="4">{{.Title}}</text>
+        {{end}}
+      </a>
+      {{end}}
+      {{if ge .Today 0}}<line class="gantt__today" x1="{{.Today}}" x2="{{.Today}}" y1="{{.Header}}" y2="{{.Height}}"/><circle class="gantt__todaydot" cx="{{.Today}}" cy="{{.Header}}" r="4"/>{{end}}
+    </svg>
+  </div>
+</div>
+{{if .Undated}}
+<section class="gantt__undated stack stack--sm">
+  <h2 class="h3">{{t "gantt.undated"}} <span class="muted small">{{len .Undated}}</span></h2>
+  <p class="muted small">{{t "gantt.undated_hint"}}</p>
+  <ul class="chips">{{range .Undated}}<li><a class="chip" href="{{pageURL "card" "id" $board "card" .Card.ID}}">{{.Card.Title}}</a></li>{{end}}</ul>
+</section>
+{{end}}

@@ -4,6 +4,7 @@
     <h1>{{.Board.Name}}</h1>
   </div>
   <div class="actions">
+    <a class="btn btn--quiet" href="{{pageURL "board-gantt" "id" .Board.ID}}">{{template "icon" "calendar"}} {{t "gantt.button"}}</a>
     <a class="btn btn--quiet" href="{{pageURL "board-done" "id" .Board.ID}}">{{template "icon" "check"}} {{t "done.title"}}</a>
     <a class="btn btn--quiet" href="{{pageURL "board-archive" "id" .Board.ID}}">{{template "icon" "archive"}} {{t "archive.title"}}</a>
     <a class="btn btn--quiet" href="{{pageURL "board-activity" "id" .Board.ID}}">{{template "icon" "activity"}} {{t "activity.title"}}</a>

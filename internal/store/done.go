@@ -31,7 +31,7 @@ func (s *Store) DoneCards(ctx context.Context, boardID int64, query string) ([]D
 		var d DoneCard
 		c := &d.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom, &c.StartDate,
 			&d.CompletedBy); err != nil {
 			return nil, err
 		}

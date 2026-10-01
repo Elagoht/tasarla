@@ -74,10 +74,11 @@ type panelView struct {
 	Attachments []attachmentView
 	Activity    []activityView
 
-	Estimate string
-	DueDate  string
-	Priority string
-	Assignee string
+	Estimate  string
+	DueDate   string
+	StartDate string
+	Priority  string
+	Assignee  string
 
 	// NoticeField is the field the notices are about, shown beside it rather
 	// than above the panel; SavedField is the field just saved.
@@ -205,6 +206,9 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 	}
 	if card.DueDate != nil {
 		v.DueDate = card.DueDate.Format(time.DateOnly)
+	}
+	if card.StartDate != nil {
+		v.StartDate = card.StartDate.Format(time.DateOnly)
 	}
 	if card.Priority != nil {
 		v.Priority = strconv.Itoa(int(*card.Priority))
@@ -345,6 +349,8 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return h.setField(ctx, rc, v, cc)
 	case "move_to":
 		return h.moveFromPanel(ctx, rc, v, cc)
+	case "set_dates":
+		return h.setDates(ctx, rc, v, cc)
 	case "labels":
 		ids := []int64{}
 		for _, raw := range rc.Request.PostForm["label"] {
@@ -656,13 +662,13 @@ func (h *handlers) setField(ctx context.Context, rc *collage.RenderContext, v *v
 				}
 			}
 		}
-	case store.FieldDueDate:
+	case store.FieldDueDate, store.FieldStartDate:
 		if value != "" {
 			d, err := time.Parse(time.DateOnly, value)
 			if err != nil {
 				problem = i18n.T(rc, "card.date_invalid")
 			}
-			f.DueDate = &d
+			f.DueDate, f.StartDate = &d, &d
 		}
 	case store.FieldPriority:
 		if value != "" {
@@ -689,6 +695,9 @@ func (h *handlers) setField(ctx context.Context, rc *collage.RenderContext, v *v
 		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, problem)
 	}
 	updated, err := h.store.UpdateCardField(ctx, cc.Board.ID, cc.Card.ID, int(version), field, f, cc.User.ID)
+	if errors.Is(err, store.ErrDateOrder) {
+		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, i18n.T(rc, "card.date_order"))
+	}
 	if msgs := violationMessages(rc, err); msgs != nil {
 		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, msgs...)
 	}
@@ -734,4 +743,42 @@ func (h *handlers) moveFromPanel(ctx context.Context, rc *collage.RenderContext,
 		h.notifyUnblocked(ctx, cc.boardContext, moved.ID)
 	}
 	return h.fieldSaved(rc, cc, "column")
+}
+
+// setDates saves a card's start and due dates together, as the Gantt chart
+// does when a bar is dragged. It answers 204 — the chart follows the board's
+// push — 409 when the card changed meanwhile and 422 when the start would
+// come after the due date.
+func (h *handlers) setDates(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
+	version, ok := formInt64(v, "expected_version")
+	if !ok {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	parse := func(name string) (*time.Time, bool) {
+		raw := strings.TrimSpace(v.Value(name))
+		if raw == "" {
+			return nil, true
+		}
+		d, err := time.Parse(time.DateOnly, raw)
+		return &d, err == nil
+	}
+	start, ok1 := parse("start")
+	due, ok2 := parse("due")
+	if !ok1 || !ok2 {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	_, err := h.store.UpdateCardDates(ctx, cc.Board.ID, cc.Card.ID, int(version), start, due, cc.User.ID)
+	switch {
+	case errors.Is(err, store.ErrDateOrder):
+		return collage.NoContent(http.StatusUnprocessableEntity), nil
+	case errors.Is(err, store.ErrConflict):
+		return collage.NoContent(http.StatusConflict), nil
+	case errors.Is(err, store.ErrNotFound):
+		return collage.NoContent(http.StatusNotFound), nil
+	case err != nil:
+		return nil, err
+	}
+	res := collage.NoContent(http.StatusNoContent)
+	res.InvalidateTags = []string{boardTag(cc.Board.ID), cardTag(cc.Card.ID)}
+	return res, nil
 }

@@ -104,6 +104,24 @@
     </div>
 
     <div class="prop">
+      <dt class="prop__label">{{template "icon" "calendar"}} {{t "card.start_date"}}</dt>
+      <dd class="prop__value">
+        {{if $edit}}
+        {{$f := .Field "start_date"}}
+        <form class="autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
+          {{csrfToken}}
+          <input type="hidden" name="op" value="set_field">
+          <input type="hidden" name="field" value="start_date">
+          <input type="hidden" name="expected_version" value="{{.Card.Version}}">
+          <input class="input prop__control" type="date" name="value" value="{{.StartDate}}" aria-label="{{t "card.start_date"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>
+          <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
+          {{template "field-state" $f}}
+        </form>
+        {{else}}{{with .StartDate}}{{.}}{{else}}<span class="muted">{{t "card.none"}}</span>{{end}}{{end}}
+      </dd>
+    </div>
+
+    <div class="prop">
       <dt class="prop__label">{{template "icon" "calendar"}} {{t "card.due_date"}}</dt>
       <dd class="prop__value">
         {{if $edit}}

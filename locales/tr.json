@@ -169,7 +169,9 @@
       "other": "Önce {count} kartın bitmesi gerekiyor."
     },
     "unblocked": "Bloklu değil",
-    "not_done": "bitmedi"
+    "not_done": "bitmedi",
+    "start_date": "Başlangıç",
+    "date_order": "Başlangıç tarihi son tarihten sonra olamaz."
   },
   "tasks": {
     "title": "Bana atananlar",
@@ -414,7 +416,8 @@
       "assignee": "atanan",
       "estimate": "tahmin",
       "due_date": "son tarih",
-      "priority": "öncelik"
+      "priority": "öncelik",
+      "start_date": "başlangıç"
     },
     "card_updated_short": "{actor} kartı düzenledi",
     "none": "—",
@@ -507,5 +510,42 @@
     "see_all": "Bitenlere git",
     "drop_here": "Buraya bırakılan kart tamamlanır",
     "option": "{name} (tamamlar)"
+  },
+  "gantt": {
+    "title": "Gantt şeması",
+    "button": "Gantt",
+    "settings": "Çizelge ayarları",
+    "scale_label": "Ölçek",
+    "scale": {
+      "day": "Gün",
+      "week": "Hafta",
+      "month": "Ay"
+    },
+    "group_label": "Gruplama",
+    "group": {
+      "column": "Kolona göre",
+      "assignee": "Kişiye göre"
+    },
+    "show_done": "Bitenleri göster",
+    "empty": "Tarihi olan kart yok. Kartlara başlangıç ya da son tarih verince burada görünürler.",
+    "rows": "Kartlar",
+    "undated": "Tarihsiz kartlar",
+    "undated_hint": "Bunlar çizelgede yok; kartın panelinden başlangıç ya da son tarih verin.",
+    "save_failed": "Tarihler kaydedilemedi.",
+    "saved": "Tarihler kaydedildi.",
+    "months": {
+      "1": "Oca",
+      "2": "Şub",
+      "3": "Mar",
+      "4": "Nis",
+      "5": "May",
+      "6": "Haz",
+      "7": "Tem",
+      "8": "Ağu",
+      "9": "Eyl",
+      "10": "Eki",
+      "11": "Kas",
+      "12": "Ara"
+    }
   }
 }

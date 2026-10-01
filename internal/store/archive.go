@@ -42,7 +42,7 @@ func (s *Store) ArchivedCards(ctx context.Context, boardID int64, query string) 
 		var a ArchivedCard
 		c := &a.Card
 		if err := rows.Scan(&c.ID, &c.BoardID, &c.ColumnID, &c.Position, &c.Title, &c.Description, &c.AssigneeID,
-			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom,
+			&c.Estimate, &c.DueDate, &c.Priority, &c.CreatedBy, &c.Version, &c.ArchivedAt, &c.CreatedAt, &c.CompletedAt, &c.CompletedFrom, &c.StartDate,
 			&a.ColumnName, &a.ArchivedBy); err != nil {
 			return nil, err
 		}
