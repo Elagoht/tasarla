@@ -4,10 +4,13 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"kanban/internal/store"
 )
 
 func datesForm(version int, start, due string) url.Values {
@@ -38,7 +41,7 @@ func TestTheGanttChart(t *testing.T) {
 		`data-card="`+id(bar.ID)+`"`, `data-start="2026-10-05" data-due="2026-10-09"`, // a bar
 		`class="gantt__bar is-milestone"`,         // the due date alone: a milestone
 		`class="gantt__arrow gantt__arrow--late"`, // Launch is due before Design ends
-		"Tarihsiz kartlar", "Someday", `data-collage-fragment="`+b.path+`/gantt/chart?scale=day&amp;group=column"`)
+		"Tarihsiz kartlar", "Someday", `data-collage-fragment="`+b.path+`/gantt/chart?group=column&amp;scale=day"`)
 	// The chart's own URL, as pushes fetch it.
 	if frag := b.member.Get(b.path + "/gantt/chart?scale=week&group=assignee"); frag.Status != http.StatusOK || strings.Contains(frag.Body, "<html") {
 		t.Fatalf("chart fragment = %d", frag.Status)
@@ -77,4 +80,37 @@ func TestSettingDatesFromTheChart(t *testing.T) {
 		t.Fatalf("due before start = %d", res.Status)
 	}
 	mustContain(t, res.Body, "Başlangıç tarihi son tarihten sonra olamaz.")
+}
+
+func TestGanttFilterDimsBars(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	lead := b.h.user("lead@example.com").ID
+	due := time.Now().AddDate(0, 0, 2)
+	dated := func(title string) store.Card {
+		c := b.card(t, 0, title)
+		out, err := b.h.store.UpdateCardField(ctx, b.board.ID, c.ID, c.Version, store.FieldDueDate, store.CardFields{DueDate: &due}, lead)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return out
+	}
+	alpha, beta := dated("Alpha"), dated("Beta")
+	page := b.member.Get(b.path + "/gantt?scale=week&q=alpha")
+	if page.Status != http.StatusOK {
+		t.Fatalf("gantt = %d", page.Status)
+	}
+	mustContain(t, page.Body,
+		`/gantt/chart?group=column&amp;q=alpha&amp;scale=week"`,
+		`name="scale" value="week"`)
+	// A bar's class comes a line before its data-card.
+	dimmedBar := func(c store.Card) *regexp.Regexp {
+		return regexp.MustCompile(`class="gantt__bar[^"]*\bis-dimmed\b[^"]*"[^>]*data-card="` + id(c.ID) + `"`)
+	}
+	if !dimmedBar(beta).MatchString(page.Body) {
+		t.Error("the bar the filter leaves out is not dimmed")
+	}
+	if dimmedBar(alpha).MatchString(page.Body) {
+		t.Error("the matching bar is dimmed")
+	}
 }

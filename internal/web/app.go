@@ -87,6 +87,7 @@ func New(d Deps) (*App, error) {
 				"hue":             func(id int64) int64 { return id % 8 },
 				"initial":         initial,
 				"withQuery":       withQuery,
+				"ganttLink":       ganttLink,
 				"extraQuery":      func(v url.Values) string { return v.Encode() },
 				"priorityChoices": func() []int16 { return []int16{4, 3, 2, 1} },
 				"dueChoices":      func() []store.DueFilter { return dueFilters },

@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"slices"
 	"strconv"
 	"time"
@@ -37,7 +38,8 @@ type ganttPageView struct {
 	Done   bool
 	Scales []string
 	Groups []string
-	Query  string // the chart's settings, for its fragment URL
+	Query  string // the chart's settings and filter, for its fragment URL
+	Filter filterView
 }
 
 type ganttView struct {
@@ -75,6 +77,7 @@ type ganttRowView struct {
 	CardID int64
 	Done   bool
 	Sub    string
+	Dimmed bool
 }
 
 type ganttBarView struct {
@@ -93,6 +96,7 @@ type ganttBarView struct {
 	Start     string
 	Due       string
 	Range     string // the dates, for a tooltip
+	Dimmed    bool   // the card is left out by the board filter
 }
 
 type ganttArrow struct {
@@ -138,10 +142,26 @@ func (h *handlers) loadGanttPage(ctx context.Context, rc *collage.RenderContext)
 	rc.HoistTitle(i18n.T(rc, "gantt.title") + " · " + bc.Board.Name)
 	v := ganttPageView{Board: bc.Board, Scales: ganttScales, Groups: ganttGroups}
 	v.Scale, v.Group, v.Done = ganttSettings(rc)
-	v.Query = "scale=" + v.Scale + "&group=" + v.Group
-	if v.Done {
-		v.Query += "&done=1"
+	fv, err := h.boardFilterFor(ctx, rc, bc)
+	if err != nil {
+		return ganttPageView{}, err
 	}
+	// The bar keeps the chart's settings as hidden fields, so a new filter
+	// reloads the page with them.
+	fv.Extra = url.Values{"scale": {v.Scale}, "group": {v.Group}}
+	if v.Done {
+		fv.Extra.Set("done", "1")
+	}
+	fv.Action, err = h.urlIn("board-gantt", rc.Locale, map[string]string{"id": strconv.FormatInt(bc.Board.ID, 10)})
+	if err != nil {
+		return ganttPageView{}, err
+	}
+	q := fv.Filter.Values()
+	for k, vals := range fv.Extra {
+		q[k] = vals
+	}
+	v.Query = q.Encode()
+	v.Filter = fv
 	return v, nil
 }
 
@@ -164,7 +184,16 @@ func (h *handlers) loadGantt(ctx context.Context, rc *collage.RenderContext) (ga
 	if err != nil {
 		return ganttView{}, tags, err
 	}
-	return layoutGantt(rc, bc, scale, group, cols, cards, deps, time.Now()), tags, nil
+	fv, err := h.boardFilterFor(ctx, rc, bc)
+	if err != nil {
+		return ganttView{}, tags, err
+	}
+	now := time.Now().In(h.loc)
+	matching, err := h.store.MatchingCardIDs(ctx, bc.Board.ID, fv.Filter.Store(bc.User.ID, now))
+	if err != nil {
+		return ganttView{}, tags, err
+	}
+	return layoutGantt(rc, bc, scale, group, cols, cards, deps, now, matching), tags, nil
 }
 
 // span is a card's dates on the chart: start and end, inclusive.
@@ -185,7 +214,7 @@ func day(t time.Time) time.Time { return time.Date(t.Year(), t.Month(), t.Day(),
 func daysBetween(a, b time.Time) int { return int(day(b).Sub(day(a)).Hours() / 24) }
 
 func layoutGantt(rc *collage.RenderContext, bc boardContext, scale, group string, cols []store.Column,
-	cards []store.GanttCard, deps []store.Dependency, now time.Time) ganttView {
+	cards []store.GanttCard, deps []store.Dependency, now time.Time, matching map[int64]bool) ganttView {
 	v := ganttView{BoardID: bc.Board.ID, CanEdit: bc.Access.CanEdit, DayWidth: dayWidth[scale], Header: ganttHeader, RowH: ganttRow, Today: -1}
 	today := day(now)
 
@@ -320,8 +349,9 @@ func layoutGantt(rc *collage.RenderContext, bc boardContext, scale, group string
 			s, e, _ := span(c)
 			done := c.CompletedAt != nil
 			color := boardColor(colIndex[c.ColumnID])
-			v.Rows = append(v.Rows, ganttRowView{Y: y, Label: c.Title, Color: color, CardID: c.ID, Done: done, Sub: g.AssigneeName})
-			bar := ganttBarView{CardID: c.ID, Version: c.Version, Title: c.Title, Color: color, Done: done,
+			dimmed := matching != nil && !matching[c.ID]
+			v.Rows = append(v.Rows, ganttRowView{Y: y, Label: c.Title, Color: color, CardID: c.ID, Done: done, Sub: g.AssigneeName, Dimmed: dimmed})
+			bar := ganttBarView{CardID: c.ID, Version: c.Version, Title: c.Title, Color: color, Done: done, Dimmed: dimmed,
 				Y: y + (ganttRow-ganttBar)/2, CY: y + ganttRow/2}
 			if c.StartDate != nil {
 				bar.Start = c.StartDate.Format(time.DateOnly)
@@ -381,4 +411,15 @@ func layoutGantt(rc *collage.RenderContext, bc boardContext, scale, group string
 		v.Arrows = append(v.Arrows, ganttArrow{D: path, Late: late})
 	}
 	return v
+}
+
+// ganttLink is the chart's query with the filter kept and one setting changed.
+func ganttLink(f boardFilter, scale, group string, done bool) string {
+	v := f.Values()
+	v.Set("scale", scale)
+	v.Set("group", group)
+	if done {
+		v.Set("done", "1")
+	}
+	return v.Encode()
 }

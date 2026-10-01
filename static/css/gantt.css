@@ -46,6 +46,7 @@
 .gantt__bar:focus-visible .gantt__rect, .gantt__bar:focus-visible .gantt__diamond { stroke: var(--ink); stroke-width: 2; }
 .gantt__diamond { fill: var(--chip-dot, var(--accent)); }
 .gantt__text { fill: var(--ink-soft); font-size: 12px; font-weight: 700; pointer-events: none; }
+.gantt__bar.is-dimmed, .gantt__label.is-dimmed { opacity: 0.3; }
 .gantt__text.is-in { fill: #fff; }
 .gantt__handle { fill: transparent; cursor: ew-resize; }
 .gantt__frame[data-editable] .gantt__bar:hover .gantt__handle { fill: rgb(255 255 255 / 0.35); }

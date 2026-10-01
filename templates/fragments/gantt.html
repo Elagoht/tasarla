@@ -10,7 +10,7 @@
     {{if .Group}}
     <li class="gantt__group" data-color="{{.Color}}"><span class="dot" aria-hidden="true"></span>{{.Label}}</li>
     {{else}}
-    <li class="gantt__label{{if .Done}} is-done{{end}}">
+    <li class="gantt__label{{if .Done}} is-done{{end}}{{if .Dimmed}} is-dimmed{{end}}">
       {{if .Done}}<span class="gantt__tick" aria-hidden="true">{{template "icon" "check"}}</span>{{end}}
       <a href="{{pageURL "card" "id" $board "card" .CardID}}">{{.Label}}</a>
       {{with .Sub}}<span class="gantt__who">{{.}}</span>{{end}}
@@ -31,7 +31,7 @@
       {{range .Ticks}}<text class="gantt__ticklabel" x="{{.X}}" dx="{{if eq $.DayWidth 36}}18{{else}}3{{end}}" y="42"{{if eq $.DayWidth 36}} text-anchor="middle"{{end}}>{{.Label}}</text>{{end}}
       {{range .Arrows}}<path class="gantt__arrow{{if .Late}} gantt__arrow--late{{end}}" d="{{.D}}" marker-end="url(#gantt-arrow{{if .Late}}-late{{end}})"/>{{end}}
       {{range .Bars}}
-      <a class="gantt__bar{{if .Done}} is-done{{end}}{{if .Milestone}} is-milestone{{end}}" href="{{pageURL "card" "id" $board "card" .CardID}}" data-color="{{.Color}}"
+      <a class="gantt__bar{{if .Done}} is-done{{end}}{{if .Milestone}} is-milestone{{end}}{{if .Dimmed}} is-dimmed{{end}}" href="{{pageURL "card" "id" $board "card" .CardID}}" data-color="{{.Color}}"
         data-card="{{.CardID}}" data-version="{{.Version}}" data-start="{{.Start}}" data-due="{{.Due}}" data-url="{{pageURL "card" "id" $board "card" .CardID}}">
         <title>{{.Title}} · {{.Range}}</title>
         {{if .Milestone}}
