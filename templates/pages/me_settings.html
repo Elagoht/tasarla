@@ -1,16 +1,24 @@
-<h1>{{t "me.title"}}</h1>
-<form class="form" method="post" action="{{pageURL "me-settings"}}">
+<header class="page-head">
+  <div>
+    <h1>{{t "me.title"}}</h1>
+  </div>
+</header>
+<form class="panel stack page--narrow" method="post" action="{{pageURL "me-settings"}}">
   {{csrfToken}}
   <input type="hidden" name="op" value="save">
-  <label for="me-locale">{{t "me.locale"}}</label>
-  <select id="me-locale" name="locale">
-    {{range .Locales}}<option value="{{.}}" {{if eq . $.Locale}}selected{{end}}>{{t (printf "me.locales.%s" .)}}</option>{{end}}
-  </select>
-  <fieldset>
-    <legend>{{t "me.email_prefs"}}</legend>
-    {{range .Prefs}}
-    <label><input type="checkbox" name="email_{{.Kind}}" value="1" {{if .Email}}checked{{end}}> {{t (printf "notify.kinds.%s" .Kind)}}</label><br>
-    {{end}}
+  <label class="field field--narrow">
+    <span class="field__label">{{t "me.locale"}}</span>
+    <select class="select" id="me-locale" name="locale">
+      {{range .Locales}}<option value="{{.}}" {{if eq . $.Locale}}selected{{end}}>{{t (printf "me.locales.%s" .)}}</option>{{end}}
+    </select>
+  </label>
+  <fieldset class="field">
+    <legend class="field__label">{{t "me.email_prefs"}}</legend>
+    <div class="toggles">
+      {{range .Prefs}}
+      <label class="toggle"><input type="checkbox" class="check" name="email_{{.Kind}}" value="1" {{if .Email}}checked{{end}}> <span>{{t (printf "notify.kinds.%s" .Kind)}}</span></label>
+      {{end}}
+    </div>
   </fieldset>
-  <button type="submit">{{t "me.save"}}</button>
+  <div class="actions"><button type="submit" class="btn btn--primary">{{t "me.save"}}</button></div>
 </form>

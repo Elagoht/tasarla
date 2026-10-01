@@ -68,7 +68,15 @@ func New(d Deps) (*App, error) {
 		Server:  collage.ServerConfig{Host: d.Host, Port: d.Port},
 		Template: collage.TemplateConfig{
 			FS: d.Files, Root: "templates", Extension: ".html",
-			Funcs: template.FuncMap{"richText": richText, "inc": func(n int) int { return n + 1 }},
+			Funcs: template.FuncMap{
+				"richText": richText,
+				"inc":      func(n int) int { return n + 1 },
+				// The colour a board is shown with, the same in the sidebar and on
+				// every list; an avatar's hue and letter for a user.
+				"boardColor": func(id int64) string { return boardColor(int(id)) },
+				"hue":        func(id int64) int64 { return id % 8 },
+				"initial":    initial,
+			},
 		},
 		Locale: collage.LocaleConfig{Default: d.Config.DefaultLocale, Supported: config.Locales},
 		Cache:  collage.CacheConfig{Enabled: true, Type: "memory", DefaultTTL: 5 * time.Minute},

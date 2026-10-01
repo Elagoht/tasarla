@@ -1,14 +1,21 @@
-<p><a href="{{pageURL "board" "id" .Board.ID}}">← {{t "card.back"}}: {{.Board.Name}}</a></p>
-<h1>{{t "activity.board_title"}}</h1>
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{pageURL "board" "id" .Board.ID}}">{{template "icon" "arrow-left"}} {{.Board.Name}}</a>
+    <h1>{{t "activity.board_title"}}</h1>
+  </div>
+</header>
 {{if .Activity}}
-<ol class="activity">
+<ol class="timeline timeline--page">
   {{range .Activity}}
-  <li>
-    {{.Text}}{{if .CardID}} · <a href="{{pageURL "card" "id" .BoardID "card" .CardID}}">{{.CardTitle}}</a>{{end}}
-    <time class="muted" datetime="{{.ISO}}">{{.When}}</time>
+  <li class="timeline__item">
+    <span class="timeline__text">{{.Text}}{{if .CardID}} · <a href="{{pageURL "card" "id" .BoardID "card" .CardID}}">{{.CardTitle}}</a>{{end}}</span>
+    <time class="muted small" datetime="{{.ISO}}">{{.When}}</time>
   </li>
   {{end}}
 </ol>
 {{else}}
-<p class="muted">{{t "activity.empty"}}</p>
+<div class="empty">
+  <span class="empty__icon">{{template "icon" "activity"}}</span>
+  <p>{{t "activity.empty"}}</p>
+</div>
 {{end}}

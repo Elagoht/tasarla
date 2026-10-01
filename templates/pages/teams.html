@@ -1,30 +1,41 @@
-<h1>{{t "teams.title"}}</h1>
-{{if .Teams}}
-<table class="table">
-  <thead>
-    <tr><th>{{t "teams.name"}}</th><th>{{t "team.members"}}</th><th>{{t "team.role"}}</th></tr>
-  </thead>
-  <tbody>
+<header class="page-head">
+  <div>
+    <h1>{{t "teams.title"}}</h1>
+  </div>
+</header>
+<div class="stack stack--lg">
+  {{if .Teams}}
+  <ul class="list-rows">
     {{range .Teams}}
-    <tr>
-      <td><a href="{{pageURL "team" "id" .Team.ID}}">{{.Team.Name}}</a></td>
-      <td>{{tn "teams.member_count" .MemberCount}}</td>
-      <td>{{if .Role}}{{t (printf "team.roles.%s" .Role)}}{{end}}</td>
-    </tr>
+    <li class="list-rows__row">
+      <div class="list-rows__main">
+        <span class="tile__mark tile__mark--sm" aria-hidden="true">{{template "icon" "team"}}</span>
+        <a class="list-rows__title" href="{{pageURL "team" "id" .Team.ID}}">{{.Team.Name}}</a>
+      </div>
+      <div class="actions">
+        <span class="muted small">{{tn "teams.member_count" .MemberCount}}</span>
+        {{if .Role}}<span class="chip" data-role="{{.Role}}">{{t (printf "team.roles.%s" .Role)}}</span>{{end}}
+      </div>
+    </li>
     {{end}}
-  </tbody>
-</table>
-{{else}}
-<p class="muted">{{t "teams.empty"}}</p>
-{{end}}
+  </ul>
+  {{else}}
+  <div class="empty">
+    <span class="empty__icon">{{template "icon" "team"}}</span>
+    <p>{{t "teams.empty"}}</p>
+  </div>
+  {{end}}
 
-{{if .CanCreate}}
-<form class="form" method="post" action="{{pageURL "teams"}}">
-  {{csrfToken}}
-  <input type="hidden" name="op" value="create">
-  <label for="team-name">{{t "teams.name"}}</label>
-  <input id="team-name" name="name" value="{{fieldValue "name"}}" required maxlength="100">
-  {{with fieldError "name"}}<p class="error">{{.}}</p>{{end}}
-  <button type="submit">{{t "teams.create"}}</button>
-</form>
-{{end}}
+  {{if .CanCreate}}
+  <form class="panel field-row" method="post" action="{{pageURL "teams"}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="create">
+    <label class="field">
+      <span class="field__label">{{t "teams.name"}}</span>
+      <input class="input" id="team-name" name="name" value="{{fieldValue "name"}}" required maxlength="100">
+      {{with fieldError "name"}}<span class="field__error">{{.}}</span>{{end}}
+    </label>
+    <button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "teams.create"}}</button>
+  </form>
+  {{end}}
+</div>

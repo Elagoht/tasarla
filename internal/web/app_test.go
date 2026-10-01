@@ -71,10 +71,10 @@ func TestHomeInBothLanguages(t *testing.T) {
 	if tr.Status != http.StatusOK {
 		t.Fatalf("GET / = %d:\n%s", tr.Status, tr.Body)
 	}
-	mustContain(t, tr.Body, "Takımlarım", "Henüz bir takımda değilsiniz.", `hreflang="en" lang="en" href="/en`, "Çıkış yap", "Ada")
+	mustContain(t, tr.Body, "Board&#39;larım", "Henüz bir takımda değilsiniz.", `hreflang="en" lang="en" href="/en`, "Çıkış yap", "Ada")
 
 	en := b.Get("/en")
-	mustContain(t, en.Body, "My teams", "Sign out", `hreflang="tr" lang="tr" href="/"`)
+	mustContain(t, en.Body, "My boards", "Sign out", `hreflang="tr" lang="tr" href="/"`)
 }
 
 func TestAuthFailedPageIsTranslated(t *testing.T) {

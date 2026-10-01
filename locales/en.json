@@ -34,8 +34,11 @@
     }
   },
   "home": {
-    "title": "My teams",
-    "empty": "You are not in a team yet."
+    "title": "My boards",
+    "empty": "You are not in a team yet.",
+    "subtitle": "Boards of the teams you are in",
+    "open_team": "Go to the team page",
+    "empty_hint": "When a team lead adds you to their team, its boards show here."
   },
   "teams": {
     "title": "Teams",

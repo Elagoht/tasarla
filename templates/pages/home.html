@@ -1,17 +1,42 @@
-<h1>{{t "home.title"}}</h1>
+<header class="page-head">
+  <div>
+    <h1>{{t "home.title"}}</h1>
+    <p class="page-head__meta">{{t "home.subtitle"}}</p>
+  </div>
+</header>
 {{if .Teams}}
-{{range .Teams}}
-<section class="home-team">
-  <h2><a href="{{pageURL "team" "id" .Team.Team.ID}}">{{.Team.Team.Name}}</a> <span class="muted">{{tn "teams.member_count" .Team.MemberCount}}</span></h2>
-  {{if .Boards}}
-  <ul class="board-list">
-    {{range .Boards}}<li><a href="{{pageURL "board" "id" .ID}}">{{.Name}}</a></li>{{end}}
-  </ul>
-  {{else}}
-  <p class="muted">{{t "board.empty"}}</p>
+<div class="stack stack--lg">
+  {{range .Teams}}
+  <section class="stack stack--sm">
+    <div class="section-head">
+      <h2 class="h3"><a class="section-head__link" href="{{pageURL "team" "id" .Team.Team.ID}}">{{.Team.Team.Name}}</a></h2>
+      <span class="chip">{{template "icon" "team"}} {{tn "teams.member_count" .Team.MemberCount}}</span>
+    </div>
+    {{if .Boards}}
+    <ul class="grid-cards tiles">
+      {{range .Boards}}
+      <li>
+        <a class="tile" href="{{pageURL "board" "id" .ID}}" data-color="{{boardColor .ID}}">
+          <span class="tile__mark" aria-hidden="true">{{template "icon" "board"}}</span>
+          <span class="tile__name">{{.Name}}</span>
+          <span class="tile__go" aria-hidden="true">{{template "icon" "chevron-right"}}</span>
+        </a>
+      </li>
+      {{end}}
+    </ul>
+    {{else}}
+    <div class="empty empty--small">
+      <p>{{t "board.empty"}}</p>
+      <a class="btn btn--secondary btn--sm" href="{{pageURL "team" "id" .Team.Team.ID}}">{{t "home.open_team"}}</a>
+    </div>
+    {{end}}
+  </section>
   {{end}}
-</section>
-{{end}}
+</div>
 {{else}}
-<p class="muted">{{t "home.empty"}}</p>
+<div class="empty">
+  <span class="empty__icon">{{template "icon" "board"}}</span>
+  <p><strong>{{t "home.empty"}}</strong></p>
+  <p>{{t "home.empty_hint"}}</p>
+</div>
 {{end}}

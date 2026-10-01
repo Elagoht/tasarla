@@ -1,19 +1,35 @@
-<h1>{{t "tasks.title"}}</h1>
+<header class="page-head">
+  <div>
+    <h1>{{t "tasks.title"}}</h1>
+  </div>
+</header>
 {{if .Groups}}
-{{range .Groups}}
-<section class="task-group">
-  <h2><a href="{{pageURL "board" "id" .BoardID}}">{{.BoardName}}</a> <span class="muted">{{.TeamName}}</span></h2>
-  <ul class="list">
-    {{range .Tasks}}
-    <li>
-      <a href="{{pageURL "card" "id" .Task.Card.BoardID "card" .Task.Card.ID}}">{{.Task.Card.Title}}</a>
-      <span class="muted">{{.Task.ColumnName}}</span>
-      {{if .Due}}<span class="card__due{{if .Overdue}} card__due--late{{end}}">{{.Due}}</span>{{end}}
-    </li>
-    {{end}}
-  </ul>
-</section>
-{{end}}
+<div class="stack stack--lg">
+  {{range .Groups}}
+  <section class="stack stack--sm">
+    <div class="section-head">
+      <h2 class="h3"><a class="section-head__link" href="{{pageURL "board" "id" .BoardID}}"><span class="dot" data-color="{{boardColor .BoardID}}" aria-hidden="true"></span>{{.BoardName}}</a></h2>
+      <span class="muted small">{{.TeamName}}</span>
+    </div>
+    <ul class="list-rows">
+      {{range .Tasks}}
+      <li class="list-rows__row">
+        <div class="list-rows__main">
+          <a class="list-rows__title" href="{{pageURL "card" "id" .Task.Card.BoardID "card" .Task.Card.ID}}">{{.Task.Card.Title}}</a>
+        </div>
+        <div class="actions">
+          {{if .Due}}<span class="card__due small{{if .Overdue}} card__due--late{{end}}">{{template "icon" "calendar"}} {{.Due}}</span>{{end}}
+          <span class="chip">{{.Task.ColumnName}}</span>
+        </div>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+</div>
 {{else}}
-<p class="muted">{{t "tasks.empty"}}</p>
+<div class="empty">
+  <span class="empty__icon">{{template "icon" "check"}}</span>
+  <p>{{t "tasks.empty"}}</p>
+</div>
 {{end}}

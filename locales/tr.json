@@ -34,8 +34,11 @@
     }
   },
   "home": {
-    "title": "Takımlarım",
-    "empty": "Henüz bir takımda değilsiniz."
+    "title": "Board'larım",
+    "empty": "Henüz bir takımda değilsiniz.",
+    "subtitle": "Üyesi olduğunuz takımların board'ları",
+    "open_team": "Takım sayfasına git",
+    "empty_hint": "Bir takım lideri sizi takımına eklediğinde board'ları burada görünür."
   },
   "teams": {
     "title": "Takımlar",

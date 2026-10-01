@@ -1,79 +1,103 @@
 {{$self := pageURL "team" "id" .Team.ID}}
-<h1>{{.Team.Name}}</h1>
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{pageURL "teams"}}">{{template "icon" "arrow-left"}} {{t "teams.title"}}</a>
+    <h1>{{.Team.Name}}</h1>
+  </div>
+</header>
 
-<h2>{{t "board.boards"}}</h2>
-{{if .Boards}}
-<ul class="board-list">
-  {{range .Boards}}<li><a href="{{pageURL "board" "id" .ID}}">{{.Name}}</a></li>{{end}}
-</ul>
-{{else}}
-<p class="muted">{{t "board.empty"}}</p>
-{{end}}
-{{if .CanManage}}
-<form class="form" method="post" action="{{$self}}">
-  {{csrfToken}}
-  <input type="hidden" name="op" value="create_board">
-  <label for="board-name">{{t "board.name"}}</label>
-  <input id="board-name" name="board_name" value="{{fieldValue "board_name"}}" required maxlength="100">
-  {{with fieldError "board_name"}}<p class="error">{{.}}</p>{{end}}
-  <button type="submit">{{t "board.create"}}</button>
-</form>
-{{end}}
-
-<h2>{{t "team.members"}}</h2>
-<table class="table">
-  <thead>
-    <tr><th>{{t "users.name"}}</th><th>{{t "users.email"}}</th><th>{{t "team.role"}}</th>{{if .CanManage}}<th></th>{{end}}</tr>
-  </thead>
-  <tbody>
-    {{range .Members}}
-    <tr>
-      <td>{{.User.Name}}</td>
-      <td>{{.User.Email}}</td>
-      <td>
-        {{if $.CanManage}}
-        <form class="inline" method="post" action="{{$self}}">
-          {{csrfToken}}
-          <input type="hidden" name="op" value="set_role">
-          <input type="hidden" name="user_id" value="{{.User.ID}}">
-          {{$current := .Role}}
-          <select name="role" aria-label="{{t "team.role"}}" {{if eq .User.ID $.Me}}disabled title="{{t "team.self_change"}}"{{end}}>
-            {{range $.Roles}}<option value="{{.}}" {{if eq . $current}}selected{{end}}>{{t (printf "team.roles.%s" .)}}</option>{{end}}
-          </select>
-          <button type="submit" {{if eq .User.ID $.Me}}disabled{{end}}>{{t "team.save"}}</button>
-        </form>
-        {{else}}
-        {{t (printf "team.roles.%s" .Role)}}
-        {{end}}
-      </td>
-      {{if $.CanManage}}
-      <td>
-        <form class="inline" method="post" action="{{$self}}">
-          {{csrfToken}}
-          <input type="hidden" name="op" value="remove_member">
-          <input type="hidden" name="user_id" value="{{.User.ID}}">
-          <button type="submit" {{if eq .User.ID $.Me}}disabled title="{{t "team.self_change"}}"{{end}}>{{t "team.remove"}}</button>
-        </form>
-      </td>
+<div class="stack stack--lg">
+  <section class="stack stack--sm">
+    <h2 class="h3">{{t "board.boards"}}</h2>
+    {{if .Boards}}
+    <ul class="grid-cards tiles">
+      {{range .Boards}}
+      <li>
+        <a class="tile" href="{{pageURL "board" "id" .ID}}" data-color="{{boardColor .ID}}">
+          <span class="tile__mark" aria-hidden="true">{{template "icon" "board"}}</span>
+          <span class="tile__name">{{.Name}}</span>
+          <span class="tile__go" aria-hidden="true">{{template "icon" "chevron-right"}}</span>
+        </a>
+      </li>
       {{end}}
-    </tr>
+    </ul>
+    {{else}}
+    <div class="empty empty--small"><p>{{t "board.empty"}}</p></div>
     {{end}}
-  </tbody>
-</table>
+    {{if .CanManage}}
+    <form class="field-row" method="post" action="{{$self}}">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="create_board">
+      <label class="field">
+        <span class="field__label">{{t "board.name"}}</span>
+        <input class="input" id="board-name" name="board_name" value="{{fieldValue "board_name"}}" required maxlength="100">
+        {{with fieldError "board_name"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+      <button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "board.create"}}</button>
+    </form>
+    {{end}}
+  </section>
 
-{{if .CanManage}}
-<h2>{{t "team.add"}}</h2>
-<form class="form" method="post" action="{{$self}}">
-  {{csrfToken}}
-  <input type="hidden" name="op" value="add_member">
-  <label for="new-email">{{t "team.email"}}</label>
-  <input id="new-email" name="new_email" type="email" value="{{fieldValue "new_email"}}" required>
-  {{with fieldError "new_email"}}<p class="error">{{.}}</p>{{end}}
-  <label for="new-role">{{t "team.role"}}</label>
-  <select id="new-role" name="new_role">
-    {{range .Roles}}<option value="{{.}}" {{if eq . "member"}}selected{{end}}>{{t (printf "team.roles.%s" .)}}</option>{{end}}
-  </select>
-  {{with fieldError "new_role"}}<p class="error">{{.}}</p>{{end}}
-  <button type="submit">{{t "team.add"}}</button>
-</form>
-{{end}}
+  <section class="stack stack--sm">
+    <h2 class="h3">{{t "team.members"}} <span class="muted small">{{len .Members}}</span></h2>
+    <ul class="list-rows">
+      {{range .Members}}
+      {{$me := eq .User.ID $.Me}}
+      <li class="list-rows__row">
+        <div class="list-rows__main">
+          <span class="avatar avatar--lg" data-hue="{{hue .User.ID}}" aria-hidden="true">{{initial .User.Name}}</span>
+          <div class="person">
+            <span class="person__name">{{.User.Name}}{{if $me}} <span class="muted small">{{t "users.you"}}</span>{{end}}</span>
+            <span class="person__mail">{{.User.Email}}</span>
+          </div>
+        </div>
+        <div class="actions">
+          {{if $.CanManage}}
+          <form class="inline-form" method="post" action="{{$self}}">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="set_role">
+            <input type="hidden" name="user_id" value="{{.User.ID}}">
+            {{$current := .Role}}
+            <select class="select select--compact" name="role" aria-label="{{t "team.role"}}" {{if $me}}disabled title="{{t "team.self_change"}}"{{end}}>
+              {{range $.Roles}}<option value="{{.}}" {{if eq . $current}}selected{{end}}>{{t (printf "team.roles.%s" .)}}</option>{{end}}
+            </select>
+            <button type="submit" class="btn btn--secondary btn--sm" {{if $me}}disabled{{end}}>{{t "team.save"}}</button>
+          </form>
+          <form method="post" action="{{$self}}" data-confirm="{{t "confirm.remove_member"}}">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="remove_member">
+            <input type="hidden" name="user_id" value="{{.User.ID}}">
+            <button type="submit" class="btn btn--quiet btn--sm btn--danger-text" {{if $me}}disabled title="{{t "team.self_change"}}"{{end}}>{{template "icon" "trash"}} {{t "team.remove"}}</button>
+          </form>
+          {{else}}
+          <span class="chip" data-role="{{.Role}}">{{t (printf "team.roles.%s" .Role)}}</span>
+          {{end}}
+        </div>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+
+  {{if .CanManage}}
+  <section class="panel stack">
+    <h2 class="h3">{{t "team.add"}}</h2>
+    <form class="field-row" method="post" action="{{$self}}">
+      {{csrfToken}}
+      <input type="hidden" name="op" value="add_member">
+      <label class="field">
+        <span class="field__label">{{t "team.email"}}</span>
+        <input class="input" id="new-email" name="new_email" type="email" value="{{fieldValue "new_email"}}" required>
+        {{with fieldError "new_email"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+      <label class="field field--narrow">
+        <span class="field__label">{{t "team.role"}}</span>
+        <select class="select" id="new-role" name="new_role">
+          {{range .Roles}}<option value="{{.}}" {{if eq . "member"}}selected{{end}}>{{t (printf "team.roles.%s" .)}}</option>{{end}}
+        </select>
+        {{with fieldError "new_role"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+      <button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "team.add"}}</button>
+    </form>
+  </section>
+  {{end}}
+</div>
