@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -34,6 +35,16 @@ type Config struct {
 	FlashKey      []byte
 
 	AttachmentsDir string
+	SMTP           SMTP
+}
+
+// SMTP is the server e-mails are sent through.
+type SMTP struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	From     string
 }
 
 // Load reads the configuration through getenv and reports every missing or
@@ -128,6 +139,19 @@ func Load(getenv func(string) string) (Config, error) {
 	cfg.CSRFKey = key("CSRF_KEY")
 	cfg.FlashKey = key("FLASH_KEY")
 	cfg.AttachmentsDir = required("ATTACHMENTS_DIR")
+	cfg.SMTP = SMTP{
+		Host:     required("SMTP_HOST"),
+		Port:     strings.TrimSpace(getenv("SMTP_PORT")),
+		User:     strings.TrimSpace(getenv("SMTP_USER")),
+		Password: getenv("SMTP_PASSWORD"),
+		From:     required("SMTP_FROM"),
+	}
+	if cfg.SMTP.Port == "" {
+		cfg.SMTP.Port = "587"
+	}
+	if n, err := strconv.Atoi(cfg.SMTP.Port); err != nil || n <= 0 || n > 65535 {
+		fail("SMTP_PORT", "must be a port number")
+	}
 
 	return cfg, errors.Join(errs...)
 }

@@ -23,6 +23,8 @@ func env(overrides map[string]string) func(string) string {
 		"CSRF_KEY":           hexKey,
 		"FLASH_KEY":          hexKey,
 		"ATTACHMENTS_DIR":    "/data/attachments",
+		"SMTP_HOST":          "smtp.example.com",
+		"SMTP_FROM":          "Kanban <noreply@example.com>",
 	}
 	for k, v := range overrides {
 		base[k] = v
@@ -47,6 +49,9 @@ func TestLoadValid(t *testing.T) {
 	if cfg.OIDC.CallbackPath != "/auth/openid/authentik" {
 		t.Errorf("CallbackPath = %q", cfg.OIDC.CallbackPath)
 	}
+	if cfg.SMTP.Host != "smtp.example.com" || cfg.SMTP.Port != "587" || cfg.SMTP.From != "Kanban <noreply@example.com>" {
+		t.Errorf("SMTP = %+v", cfg.SMTP)
+	}
 	if cfg.AttachmentsDir != "/data/attachments" {
 		t.Errorf("AttachmentsDir = %q", cfg.AttachmentsDir)
 	}
@@ -70,7 +75,7 @@ func TestLoadReportsEveryProblemByName(t *testing.T) {
 	if err == nil {
 		t.Fatal("Load with an empty environment succeeded")
 	}
-	for _, name := range []string{"BASE_URL", "DATABASE_URL", "OIDC_ISSUER", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET", "OIDC_REDIRECT_URL", "SESSION_KEY", "CSRF_KEY", "FLASH_KEY", "ATTACHMENTS_DIR"} {
+	for _, name := range []string{"BASE_URL", "DATABASE_URL", "OIDC_ISSUER", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET", "OIDC_REDIRECT_URL", "SESSION_KEY", "CSRF_KEY", "FLASH_KEY", "ATTACHMENTS_DIR", "SMTP_HOST", "SMTP_FROM"} {
 		if !strings.Contains(err.Error(), name) {
 			t.Errorf("error does not name %s:\n%v", name, err)
 		}
@@ -86,6 +91,7 @@ func TestLoadRejectsBadValues(t *testing.T) {
 		"OIDC_ISSUER":                    {"OIDC_ISSUER": "not a url"},
 		"SESSION_KEY":                    {"SESSION_KEY": "zz"},
 		"CSRF_KEY short":                 {"CSRF_KEY": "00ff"},
+		"SMTP_PORT":                      {"SMTP_PORT": "smtp"},
 		"OIDC_REDIRECT_URL other origin": {"OIDC_REDIRECT_URL": "https://elsewhere.example.com/auth/openid/authentik"},
 		"OIDC_REDIRECT_URL root":         {"OIDC_REDIRECT_URL": "https://pano.example.com/"},
 	}
