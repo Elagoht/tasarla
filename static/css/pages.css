@@ -73,3 +73,16 @@ a.notification__text:hover { color: var(--accent-strong); }
 
 /* A done card in the Done list. */
 .done-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--ok-soft); color: var(--ok); flex: none; }
+
+/* The board filter: a row of controls that wraps on a narrow screen. */
+.filter-bar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; margin: 0 0 var(--s4); }
+.filter-bar__text { width: min(260px, 100%); }
+.filter-pick { position: relative; }
+.filter-pick.is-on > summary { background: var(--accent-soft); color: var(--accent-ink, var(--ink)); }
+.filter-pick__list {
+  position: absolute; z-index: 20; top: calc(100% + var(--s1)); left: 0; min-width: 14rem; max-height: 18rem; overflow: auto;
+  display: grid; gap: var(--s1); padding: var(--s2); border-radius: var(--r-md);
+  background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow-float);
+}
+.filter-pick__list label { display: flex; gap: var(--s2); align-items: center; padding: var(--s1); border-radius: var(--r-sm); cursor: pointer; }
+.filter-pick__list label:hover { background: var(--shelf); }

@@ -126,3 +126,8 @@
   .column { flex-basis: min(300px, 82vw); }
   .board-head { padding-right: var(--s4); }
 }
+
+/* A card the filter leaves out: still there, still draggable, out of the way. */
+.card--dimmed { opacity: 0.38; filter: saturate(0.4); }
+.card--dimmed:hover, .card--dimmed:focus-within { opacity: 0.8; }
+.filter-count { margin: 0 0 var(--s3); font-size: var(--text-sm); color: var(--ink-soft); }
