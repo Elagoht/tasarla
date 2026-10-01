@@ -170,7 +170,7 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 		byColumn[c.ID] = len(view.Columns)
 		view.Columns = append(view.Columns, cv)
 	}
-	today := time.Now().Format(time.DateOnly)
+	today := time.Now().In(h.loc).Format(time.DateOnly)
 	for _, s := range cards {
 		i, ok := byColumn[s.Card.ColumnID]
 		if !ok {

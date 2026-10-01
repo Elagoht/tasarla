@@ -72,6 +72,7 @@ ADMIN_EMAILS=alice@example.com
 | `ADMIN_EMAILS` | hayır | İlk girişte admin olacak e-postalar, virgülle ayrılmış |
 | `SESSION_KEY`, `CSRF_KEY`, `FLASH_KEY` | evet | Her biri en az 32 bayt, hex (`openssl rand -hex 32`) |
 | `ATTACHMENTS_DIR` | evet | Dosya eklerinin dizini |
+| `TIMEZONE` | hayır | "Bugün" ve zamanlamaların saat dilimi, IANA adı (ör. `Europe/Istanbul`). Verilmezse sunucunun yerel saati |
 | `SMTP_HOST`, `SMTP_FROM` | evet | E-posta sunucusu ve gönderen |
 | `SMTP_PORT` | hayır | Varsayılan `587` |
 | `SMTP_USER`, `SMTP_PASSWORD` | hayır | Yalnız TLS üzerinden ya da localhost'ta kullanılır |

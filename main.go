@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	_ "time/tzdata"
 
 	"kanban/internal/auth"
 	"kanban/internal/config"

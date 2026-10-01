@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Locales are the locales the application is translated into.
@@ -34,6 +35,8 @@ type Config struct {
 	CSRFKey       []byte
 	FlashKey      []byte
 
+	// Location is the time zone "today" and schedules are reckoned in.
+	Location       *time.Location
 	AttachmentsDir string
 	SMTP           SMTP
 }
@@ -132,6 +135,16 @@ func Load(getenv func(string) string) (Config, error) {
 	for _, e := range strings.Split(getenv("ADMIN_EMAILS"), ",") {
 		if e = strings.ToLower(strings.TrimSpace(e)); e != "" {
 			cfg.AdminEmails = append(cfg.AdminEmails, e)
+		}
+	}
+
+	cfg.Location = time.Local
+	if tz := strings.TrimSpace(getenv("TIMEZONE")); tz != "" {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			fail("TIMEZONE", "must be an IANA time zone name, such as Europe/Istanbul")
+		} else {
+			cfg.Location = loc
 		}
 	}
 

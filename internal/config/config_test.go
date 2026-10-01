@@ -3,6 +3,7 @@ package config_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"kanban/internal/config"
 )
@@ -78,6 +79,33 @@ func TestLoadReportsEveryProblemByName(t *testing.T) {
 	for _, name := range []string{"BASE_URL", "DATABASE_URL", "OIDC_ISSUER", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET", "OIDC_REDIRECT_URL", "SESSION_KEY", "CSRF_KEY", "FLASH_KEY", "ATTACHMENTS_DIR", "SMTP_HOST", "SMTP_FROM"} {
 		if !strings.Contains(err.Error(), name) {
 			t.Errorf("error does not name %s:\n%v", name, err)
+		}
+	}
+}
+
+func TestTimezone(t *testing.T) {
+	cases := []struct {
+		value, want string
+		ok          bool
+	}{
+		{"", time.Local.String(), true},
+		{"Europe/Istanbul", "Europe/Istanbul", true},
+		{"  UTC  ", "UTC", true},
+		{"Mars/Olympus", "", false},
+	}
+	for _, c := range cases {
+		cfg, err := config.Load(env(map[string]string{"TIMEZONE": c.value}))
+		if !c.ok {
+			if err == nil || !strings.Contains(err.Error(), "TIMEZONE") {
+				t.Errorf("TIMEZONE=%q: err = %v, want one naming TIMEZONE", c.value, err)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("TIMEZONE=%q: %v", c.value, err)
+		}
+		if cfg.Location.String() != c.want {
+			t.Errorf("TIMEZONE=%q: location = %s, want %s", c.value, cfg.Location, c.want)
 		}
 	}
 }
