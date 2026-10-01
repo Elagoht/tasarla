@@ -34,7 +34,7 @@ func TestBoardFilterDimsCards(t *testing.T) {
 		`data-collage-fragment="`+b.path+`/columns?priority=4"`,
 		`data-move-url="`+b.path+`?priority=4"`)
 	unfiltered := b.member.Get(b.path).Body
-	if strings.Contains(unfiltered, "card--dimmed") || strings.Contains(unfiltered, "eşleşiyor") {
+	if strings.Contains(unfiltered, "card--dimmed") || strings.Contains(unfiltered, `class="filter-count"`) {
 		t.Error("an unfiltered board dims cards")
 	}
 }

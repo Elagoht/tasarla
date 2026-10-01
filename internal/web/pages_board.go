@@ -116,8 +116,12 @@ func (h *handlers) boardFilterFor(ctx context.Context, rc *collage.RenderContext
 		if err != nil {
 			return filterView{}, err
 		}
+		action, err := h.urlIn("board", rc.Locale, map[string]string{"id": strconv.FormatInt(bc.Board.ID, 10)})
+		if err != nil {
+			return filterView{}, err
+		}
 		f := parseBoardFilter(rc.Request.URL.Query(), members, labels)
-		return filterView{Filter: f, Query: f.Query(), Members: members, Labels: labels}, nil
+		return filterView{Filter: f, Query: f.Query(), Action: action, Members: members, Labels: labels}, nil
 	})
 }
 
@@ -173,10 +177,6 @@ func (h *handlers) loadBoard(ctx context.Context, rc *collage.RenderContext) (bo
 	if err != nil {
 		return boardView{}, err
 	}
-	fv.Action, err = h.urlIn("board", rc.Locale, map[string]string{"id": strconv.FormatInt(bc.Board.ID, 10)})
-	if err != nil {
-		return boardView{}, err
-	}
 	return boardView{Notices: notices, Board: bc.Board, Team: bc.Team, Access: bc.Access, Filter: fv}, nil
 }
 
@@ -203,11 +203,7 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 	if err != nil {
 		return columnsView{}, tags, err
 	}
-	movePath, err := h.urlIn("board", rc.Locale, map[string]string{"id": strconv.FormatInt(bc.Board.ID, 10)})
-	if err != nil {
-		return columnsView{}, tags, err
-	}
-	view := columnsView{CanEdit: bc.Access.CanEdit, Filter: fv, MoveURL: withQuery(movePath, fv.Query)}
+	view := columnsView{CanEdit: bc.Access.CanEdit, Filter: fv, MoveURL: withQuery(fv.Action, fv.Query)}
 	view.Notices, _ = collage.Get[[]string](rc, noticeKey)
 	byColumn := map[int64]int{}
 	creatable := map[int64]bool{}
