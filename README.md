@@ -37,6 +37,27 @@ go test ./... -race                   # veritabanı testleri bu değişken yoksa
 - **Çıkış:** sonrasında `<BASE_URL>/login` adresine dönülür.
 - **Migration'lar** binary'ye gömülüdür ve açılışta çalışır.
 
+### Yerel Authentik
+
+`dev/authentik/` test provider'la aynı sürümde (2026.8.3) bir Authentik çalıştırır. Kanban uygulamasını, OAuth2 provider'ını ve iki kullanıcıyı (`alice`, `bob`; şifre `kanban`) blueprint ile kurar.
+
+```bash
+cd dev/authentik
+printf 'PG_PASS=%s\nAUTHENTIK_SECRET_KEY=%s\n' "$(openssl rand -hex 24)" "$(openssl rand -hex 50)" > .env
+docker compose up -d                  # ilk açılış ~1 dakika; http://localhost:9000 (akadmin / kanban-admin)
+```
+
+`.env.development` için gereken değerler:
+
+```
+BASE_URL=http://localhost:6060
+OIDC_ISSUER=http://localhost:9000/application/o/kanban-dev/
+OIDC_REDIRECT_URL=http://localhost:6060/auth/openid/authentik
+OIDC_CLIENT_ID=kanban-dev
+OIDC_CLIENT_SECRET=kanban-dev-secret
+ADMIN_EMAILS=alice@example.com
+```
+
 ## Ortam değişkenleri
 
 | Değişken | Zorunlu | Açıklama |

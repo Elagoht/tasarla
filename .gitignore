@@ -23,3 +23,6 @@
 
 # Local attachments.
 /data/
+
+# Local Authentik secrets.
+/dev/authentik/.env
