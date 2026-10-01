@@ -29,6 +29,13 @@ func TestSearchPage(t *testing.T) {
 	mustContain(t, b.member.Get("/en/search?q=rapor").Body, "Archived")
 }
 
+func TestSearchPageSurvivesAHugePage(t *testing.T) {
+	b := newBoardSetup(t)
+	if r := b.member.Get("/search?q=rapor&page=9223372036854775807"); r.Status != http.StatusOK {
+		t.Fatalf("huge page = %d", r.Status)
+	}
+}
+
 func TestSearchPageIsPrivate(t *testing.T) {
 	b := newBoardSetup(t)
 	if r := b.h.browser().Get("/search?q=rapor"); r.Status != http.StatusSeeOther {

@@ -45,7 +45,7 @@ func (h *handlers) loadTasks(ctx context.Context, rc *collage.RenderContext) (ta
 	if err != nil {
 		return tasksView{}, err
 	}
-	today := time.Now().Format(time.DateOnly)
+	today := time.Now().In(h.loc).Format(time.DateOnly)
 	var view tasksView
 	for _, t := range tasks {
 		if n := len(view.Groups); n == 0 || view.Groups[n-1].BoardID != t.Card.BoardID {

@@ -9,6 +9,12 @@ func TestHighlightFoldsLikeTheDatabase(t *testing.T) {
 	}
 }
 
+func TestHighlightFoldsTheCapitalDottedI(t *testing.T) {
+	if h := highlight("İstanbul", "istanbul", 0); h.Match != "İstanbul" {
+		t.Errorf("got %+v", h)
+	}
+}
+
 func TestHighlightKeepsAWindow(t *testing.T) {
 	long := ""
 	for range 100 {

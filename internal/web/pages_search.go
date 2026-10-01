@@ -51,7 +51,7 @@ func (h *handlers) loadSearch(ctx context.Context, rc *collage.RenderContext) (s
 	q := rc.Request.URL.Query()
 	v := searchView{Query: strings.TrimSpace(q.Get("q")), Page: 1}
 	if p, err := strconv.Atoi(q.Get("page")); err == nil && p > 1 {
-		v.Page = p
+		v.Page = min(p, store.MaxSearchPage)
 	}
 	hits, more, err := h.store.Search(ctx, user.ID, v.Query, v.Page)
 	if err != nil {

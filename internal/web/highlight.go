@@ -16,7 +16,7 @@ func fold(s []rune) ([]rune, []int) {
 	out, from := make([]rune, 0, len(s)), make([]int, 0, len(s))
 	for i, r := range s {
 		switch r {
-		case '̇': // the dot lowering İ may leave
+		case '\u0307': // the dot lowering İ may leave
 			continue
 		case 'İ', 'I', 'ı':
 			r = 'i'
