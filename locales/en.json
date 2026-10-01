@@ -10,6 +10,7 @@
     "teams": "Teams",
     "users": "Users",
     "tasks": "My tasks",
+    "search": "Search",
     "main": "Main menu",
     "boards": "My boards",
     "collapse": "Collapse the menu",
@@ -480,6 +481,15 @@
     "remove_member": "Remove this member from the team?",
     "set_disabled": "Disable this user?",
     "archive_hint": "You can restore it from the archive."
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search cards, descriptions and comments",
+    "empty": "No card matches.",
+    "archived": "Archived",
+    "done": "Done",
+    "previous": "Previous",
+    "next": "Next"
   },
   "archive": {
     "title": "Archive",

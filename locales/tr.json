@@ -10,6 +10,7 @@
     "teams": "Takımlar",
     "users": "Kullanıcılar",
     "tasks": "Bana atananlar",
+    "search": "Ara",
     "main": "Ana menü",
     "boards": "Board'larım",
     "collapse": "Menüyü daralt",
@@ -480,6 +481,15 @@
     "remove_member": "Üye takımdan çıkarılsın mı?",
     "set_disabled": "Kullanıcı devre dışı bırakılsın mı?",
     "archive_hint": "Arşivden geri yükleyebilirsiniz."
+  },
+  "search": {
+    "title": "Arama",
+    "placeholder": "Kart, açıklama ya da yorum ara",
+    "empty": "Eşleşen kart yok.",
+    "archived": "Arşivde",
+    "done": "Tamamlandı",
+    "previous": "Önceki",
+    "next": "Sonraki"
   },
   "archive": {
     "title": "Arşiv",

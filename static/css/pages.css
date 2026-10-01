@@ -86,3 +86,8 @@ a.notification__text:hover { color: var(--accent-strong); }
 }
 .filter-pick__list label { display: flex; gap: var(--s2); align-items: center; padding: var(--s1); border-radius: var(--r-sm); cursor: pointer; }
 .filter-pick__list label:hover { background: var(--shelf); }
+
+.search-hit__main { display: grid; gap: var(--s1); }
+.search-hit__excerpt { margin: 0; font-size: var(--text-sm); color: var(--ink-soft); }
+mark { background: var(--accent-soft); color: inherit; border-radius: 2px; padding: 0 1px; }
+.pager { display: flex; gap: var(--s2); justify-content: flex-end; }

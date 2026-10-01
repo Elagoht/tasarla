@@ -3,6 +3,10 @@
     <div class="sidebar__top">
       <a class="brand" href="{{pageURL "home"}}"><span class="brand__mark">{{template "icon" "board"}}</span><span class="brand__name">{{t "app.name"}}</span></a>
     </div>
+    <form class="sidebar__search" method="get" action="{{pageURL "search"}}" role="search">
+      <label class="sr-only" for="sidebar-q">{{t "nav.search"}}</label>
+      <input class="input input--sm" id="sidebar-q" name="q" type="search" placeholder="{{t "nav.search"}}" minlength="2">
+    </form>
 
     <nav class="nav" aria-label="{{t "nav.main"}}">
       <a class="nav__item{{if eq .Page "home"}} is-active{{end}}" href="{{pageURL "home"}}" {{if eq .Page "home"}}aria-current="page"{{end}}>{{template "icon" "board"}}<span class="nav__label">{{t "nav.boards"}}</span></a>

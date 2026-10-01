@@ -1,0 +1,2 @@
+{{/* hl: a highlighted piece of text — the search's match marked, the cut ends shown. Takes a highlighted. */}}
+{{define "hl"}}{{if .CutStart}}…{{end}}{{.Before}}{{with .Match}}<mark>{{.}}</mark>{{end}}{{.After}}{{if .CutEnd}}…{{end}}{{end}}

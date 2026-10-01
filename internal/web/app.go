@@ -81,6 +81,7 @@ func New(d Deps) (*App, error) {
 			Funcs: template.FuncMap{
 				"richText": richText,
 				"inc":      func(n int) int { return n + 1 },
+				"dec":      func(n int) int { return n - 1 },
 				// The colour a board is shown with, the same in the sidebar and on
 				// every list; an avatar's hue and letter for a user.
 				"boardColor":      func(id int64) string { return boardColor(int(id)) },
@@ -175,7 +176,7 @@ func (h *handlers) pages() []*collage.Page {
 	return []*collage.Page{
 		h.confirm, h.homePage(), h.teamsPage(), h.teamPage(), h.adminUsersPage(),
 		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(), h.boardArchivePage(), h.boardDonePage(), h.boardGanttPage(),
-		h.notificationsPage(), h.meSettingsPage(),
+		h.notificationsPage(), h.meSettingsPage(), h.searchPage(),
 	}
 }
 

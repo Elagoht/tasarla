@@ -1,0 +1,39 @@
+<header class="page-head">
+  <div><h1>{{t "search.title"}}</h1></div>
+  <form class="search" method="get" action="{{pageURL "search"}}" role="search">
+    <label class="sr-only" for="search-q">{{t "search.title"}}</label>
+    <input class="input" id="search-q" name="q" type="search" value="{{.Query}}" placeholder="{{t "search.placeholder"}}" minlength="2" autofocus>
+    <button type="submit" class="btn btn--secondary">{{t "archive.search_button"}}</button>
+  </form>
+</header>
+{{if .Groups}}
+<div class="stack stack--lg">
+  {{range .Groups}}
+  <section class="stack stack--sm">
+    <div class="section-head">
+      <h2 class="h3"><a class="section-head__link" href="{{pageURL "board" "id" .BoardID}}"><span class="dot" data-color="{{boardColor .BoardID}}" aria-hidden="true"></span>{{.BoardName}}</a></h2>
+      <span class="muted small">{{.TeamName}}</span>
+    </div>
+    <ul class="list-rows">
+      {{range .Hits}}
+      <li class="list-rows__row search-hit">
+        <div class="list-rows__main search-hit__main">
+          <a class="list-rows__title" href="{{pageURL "card" "id" .Hit.Card.BoardID "card" .Hit.Card.ID}}">{{template "hl" .Title}}</a>
+          {{if .Hit.Excerpt}}<p class="search-hit__excerpt">{{template "hl" .Excerpt}}</p>{{end}}
+        </div>
+        <div class="actions">
+          {{if .Hit.Card.ArchivedAt}}<span class="chip">{{t "search.archived"}}</span>{{else if .Done}}<span class="chip">{{t "search.done"}}</span>{{end}}
+        </div>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+  <nav class="pager">
+    {{if gt .Page 1}}<a class="btn btn--quiet" href="{{pageURL "search"}}?q={{.Query}}&page={{dec .Page}}">{{t "search.previous"}}</a>{{end}}
+    {{if .More}}<a class="btn btn--quiet" href="{{pageURL "search"}}?q={{.Query}}&page={{inc .Page}}">{{t "search.next"}}</a>{{end}}
+  </nav>
+</div>
+{{else if .Ran}}
+<div class="empty"><span class="empty__icon">{{template "icon" "search"}}</span><p>{{t "search.empty"}}</p></div>
+{{end}}
