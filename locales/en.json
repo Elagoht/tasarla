@@ -496,6 +496,22 @@
     "boards": "Archived boards",
     "see_all": "Go to the archive"
   },
+  "filter": {
+    "text": "Search cards",
+    "assignee": "Assignee",
+    "me": "Me",
+    "label": "Label",
+    "priority": "Priority",
+    "due": "Due date",
+    "due_any": "Any date",
+    "due_overdue": "Overdue",
+    "due_today": "Today",
+    "due_week": "This week",
+    "due_none": "No date",
+    "apply": "Apply",
+    "clear": "Clear",
+    "count": "{matching} of {total} cards match"
+  },
   "done": {
     "title": "Done",
     "subtitle": "Cards entering a done column are completed and leave the board; they stay here and can be reopened.",

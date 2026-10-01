@@ -1,0 +1,37 @@
+{{/* filter-bar: the board filter (spec 2026-10-01 filtre… §3.1), a GET form that works without scripts; filter.js submits it as it changes. Takes a filterView. */}}
+{{define "filter-bar"}}
+<form class="filter-bar" method="get" action="{{.Action}}" role="search" data-filter-bar>
+  {{range $k, $vs := .Extra}}{{range $vs}}<input type="hidden" name="{{$k}}" value="{{.}}">{{end}}{{end}}
+  <label class="sr-only" for="filter-q">{{t "filter.text"}}</label>
+  <input class="input filter-bar__text" id="filter-q" name="q" type="search" value="{{.Filter.Text}}" placeholder="{{t "filter.text"}}" data-filter-text>
+  <details class="filter-pick{{if or .Filter.Me .Filter.None .Filter.Assignees}} is-on{{end}}">
+    <summary class="btn btn--quiet btn--sm">{{template "icon" "user"}} {{t "filter.assignee"}}</summary>
+    <div class="filter-pick__list">
+      <label><input type="checkbox" name="assignee" value="me"{{if .Filter.HasAssignee "me"}} checked{{end}}> {{t "filter.me"}}</label>
+      <label><input type="checkbox" name="assignee" value="none"{{if .Filter.HasAssignee "none"}} checked{{end}}> {{t "board.unassigned"}}</label>
+      {{range .Members}}<label><input type="checkbox" name="assignee" value="{{.User.ID}}"{{if $.Filter.HasAssignee (printf "%d" .User.ID)}} checked{{end}}> {{.User.Name}}</label>{{end}}
+    </div>
+  </details>
+  {{if .Labels}}
+  <details class="filter-pick{{if .Filter.Labels}} is-on{{end}}">
+    <summary class="btn btn--quiet btn--sm">{{template "icon" "tag"}} {{t "filter.label"}}</summary>
+    <div class="filter-pick__list">
+      {{range .Labels}}<label><input type="checkbox" name="label" value="{{.ID}}"{{if $.Filter.HasLabel .ID}} checked{{end}}> <span class="chip label" data-color="{{.Color}}">{{.Name}}</span></label>{{end}}
+    </div>
+  </details>
+  {{end}}
+  <details class="filter-pick{{if .Filter.Priorities}} is-on{{end}}">
+    <summary class="btn btn--quiet btn--sm">{{template "icon" "flag"}} {{t "filter.priority"}}</summary>
+    <div class="filter-pick__list">
+      {{range $p := priorityChoices}}<label><input type="checkbox" name="priority" value="{{$p}}"{{if $.Filter.HasPriority $p}} checked{{end}}> {{t (printf "card.priorities.%d" $p)}}</label>{{end}}
+    </div>
+  </details>
+  <label class="sr-only" for="filter-due">{{t "filter.due"}}</label>
+  <select class="input input--sm filter-bar__due" id="filter-due" name="due">
+    <option value="">{{t "filter.due_any"}}</option>
+    {{range dueChoices}}<option value="{{.}}"{{if eq (printf "%s" .) (printf "%s" $.Filter.Due)}} selected{{end}}>{{t (printf "filter.due_%s" .)}}</option>{{end}}
+  </select>
+  <noscript><button type="submit" class="btn btn--secondary btn--sm">{{t "filter.apply"}}</button></noscript>
+  {{if .Filter.Active}}<a class="btn btn--quiet btn--sm" href="{{withQuery .Action (extraQuery .Extra)}}" data-filter-clear>{{t "filter.clear"}}</a>{{end}}
+</form>
+{{end}}

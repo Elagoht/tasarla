@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -79,12 +80,45 @@ type boardView struct {
 	Board   store.Board
 	Team    store.Team
 	Access  authz.BoardAccess
+	Filter  filterView
 }
 
 type columnsView struct {
 	Notices []string
 	CanEdit bool
 	Columns []columnView
+	Filter  filterView
+	// Matching of Total cards match the filter; MoveURL is the board page
+	// with the filter, where moves and new cards are sent.
+	Matching, Total int
+	MoveURL         string
+}
+
+type filterView struct {
+	Filter  boardFilter
+	Query   string // Filter.Query()
+	Action  string // the page the bar submits to, without a query
+	Members []store.Member
+	Labels  []store.Label
+	Extra   url.Values // other settings the page keeps (Gantt's scale…), as hidden fields
+}
+
+// boardFilterFor is the board's filter for this render — the page's and its
+// columns' — read from the request's own URL, so a fragment pushed or answered
+// to an action keeps the filter its URL carries.
+func (h *handlers) boardFilterFor(ctx context.Context, rc *collage.RenderContext, bc boardContext) (filterView, error) {
+	return collage.Once(rc, "filter:"+rc.Param("id"), func(ctx context.Context) (filterView, error) {
+		members, err := h.store.Members(ctx, bc.Team.ID)
+		if err != nil {
+			return filterView{}, err
+		}
+		labels, err := h.store.Labels(ctx, bc.Board.ID)
+		if err != nil {
+			return filterView{}, err
+		}
+		f := parseBoardFilter(rc.Request.URL.Query(), members, labels)
+		return filterView{Filter: f, Query: f.Query(), Members: members, Labels: labels}, nil
+	})
 }
 
 type columnView struct {
@@ -108,6 +142,7 @@ type cardView struct {
 	Priority string
 	Hue      int
 	Initial  string
+	Dimmed   bool
 }
 
 func (h *handlers) boardPage() *collage.Page {
@@ -134,7 +169,15 @@ func (h *handlers) loadBoard(ctx context.Context, rc *collage.RenderContext) (bo
 	}
 	rc.HoistTitle(bc.Board.Name)
 	notices, _ := collage.Get[[]string](rc, noticeKey)
-	return boardView{Notices: notices, Board: bc.Board, Team: bc.Team, Access: bc.Access}, nil
+	fv, err := h.boardFilterFor(ctx, rc, bc)
+	if err != nil {
+		return boardView{}, err
+	}
+	fv.Action, err = h.urlIn("board", rc.Locale, map[string]string{"id": strconv.FormatInt(bc.Board.ID, 10)})
+	if err != nil {
+		return boardView{}, err
+	}
+	return boardView{Notices: notices, Board: bc.Board, Team: bc.Team, Access: bc.Access, Filter: fv}, nil
 }
 
 func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (columnsView, []string, error) {
@@ -151,7 +194,20 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 	if err != nil {
 		return columnsView{}, tags, err
 	}
-	view := columnsView{CanEdit: bc.Access.CanEdit}
+	fv, err := h.boardFilterFor(ctx, rc, bc)
+	if err != nil {
+		return columnsView{}, tags, err
+	}
+	today := time.Now().In(h.loc)
+	matching, err := h.store.MatchingCardIDs(ctx, bc.Board.ID, fv.Filter.Store(bc.User.ID, today))
+	if err != nil {
+		return columnsView{}, tags, err
+	}
+	movePath, err := h.urlIn("board", rc.Locale, map[string]string{"id": strconv.FormatInt(bc.Board.ID, 10)})
+	if err != nil {
+		return columnsView{}, tags, err
+	}
+	view := columnsView{CanEdit: bc.Access.CanEdit, Filter: fv, MoveURL: withQuery(movePath, fv.Query)}
 	view.Notices, _ = collage.Get[[]string](rc, noticeKey)
 	byColumn := map[int64]int{}
 	creatable := map[int64]bool{}
@@ -170,19 +226,25 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 		byColumn[c.ID] = len(view.Columns)
 		view.Columns = append(view.Columns, cv)
 	}
-	today := time.Now().In(h.loc).Format(time.DateOnly)
+	todayISO := today.Format(time.DateOnly)
 	for _, s := range cards {
 		i, ok := byColumn[s.Card.ColumnID]
 		if !ok {
 			continue
 		}
 		cv := cardView{Summary: s, Initial: initial(s.AssigneeName)}
+		view.Total++
+		if matching == nil || matching[s.Card.ID] {
+			view.Matching++
+		} else {
+			cv.Dimmed = true
+		}
 		if s.Card.AssigneeID != nil {
 			cv.Hue = int(*s.Card.AssigneeID % 8)
 		}
 		if s.Card.DueDate != nil {
 			cv.Due = s.Card.DueDate.Format(time.DateOnly)
-			cv.Overdue = cv.Due < today && !view.Columns[i].Column.IsDone
+			cv.Overdue = cv.Due < todayISO && !view.Columns[i].Column.IsDone
 		}
 		if s.Card.Priority != nil {
 			cv.Priority = i18n.T(rc, "card.priorities."+strconv.Itoa(int(*s.Card.Priority)))

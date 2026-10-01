@@ -496,6 +496,22 @@
     "boards": "Arşivlenmiş board'lar",
     "see_all": "Arşive git"
   },
+  "filter": {
+    "text": "Kartlarda ara",
+    "assignee": "Atanan",
+    "me": "Ben",
+    "label": "Etiket",
+    "priority": "Öncelik",
+    "due": "Son tarih",
+    "due_any": "Her tarih",
+    "due_overdue": "Gecikmiş",
+    "due_today": "Bugün",
+    "due_week": "Bu hafta",
+    "due_none": "Tarihsiz",
+    "apply": "Uygula",
+    "clear": "Temizle",
+    "count": "Eşleşen: {matching} / {total}"
+  },
   "done": {
     "title": "Bitenler",
     "subtitle": "Bitti kolonuna giren kartlar tamamlanır ve board'dan kalkar; burada durur, istenirse yeniden açılır.",

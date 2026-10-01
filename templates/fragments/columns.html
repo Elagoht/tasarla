@@ -1,4 +1,5 @@
 {{if .Notices}}<div class="alert board-alert" role="alert" data-board-alert>{{template "icon" "flag"}}<ul>{{range .Notices}}<li>{{.}}</li>{{end}}</ul></div>{{end}}
+{{if .Filter.Filter.Active}}<p class="filter-count" role="status">{{t "filter.count" "matching" (printf "%d" .Matching) "total" (printf "%d" .Total)}}</p>{{end}}
 <div class="columns">
   {{range .Columns}}
   {{$col := .}}
@@ -12,7 +13,7 @@
     {{if .OverLimit}}<p class="column__over">{{t "board.over_limit"}}</p>{{end}}
     <ol class="column__cards" data-column="{{.Column.ID}}" data-empty="{{if .Column.IsDone}}{{t "done.drop_here"}}{{else}}{{t "board.no_cards"}}{{end}}">
       {{range .Cards}}
-      <li class="card{{if .Summary.Blocked}} card--blocked{{end}}" id="card-{{.Summary.Card.ID}}" data-card="{{.Summary.Card.ID}}" data-version="{{.Summary.Card.Version}}" data-column="{{.Summary.Card.ColumnID}}">
+      <li class="card{{if .Dimmed}} card--dimmed{{end}}{{if .Summary.Blocked}} card--blocked{{end}}" id="card-{{.Summary.Card.ID}}" data-card="{{.Summary.Card.ID}}" data-version="{{.Summary.Card.Version}}" data-column="{{.Summary.Card.ColumnID}}">
         <a class="card__title" data-card-link href="{{pageURL "card" "id" .Summary.Card.BoardID "card" .Summary.Card.ID}}">{{.Summary.Card.Title}}</a>
         {{if .Summary.Labels}}<ul class="chips card__labels">{{range .Summary.Labels}}<li class="chip label" data-color="{{.Color}}">{{.Name}}</li>{{end}}</ul>{{end}}
         {{if or .Summary.AssigneeName .Due .Priority .Summary.ChecklistTotal .Summary.Attachments .Summary.Blocked}}
@@ -32,7 +33,7 @@
     {{$here := or (eq (fieldValue "column") (printf "%d" .Column.ID)) (and (eq (fieldValue "column") "") .FirstCreate)}}
     <details class="add-card" data-keep-open="add-{{.Column.ID}}"{{if and $here (fieldError "title")}} open{{end}}>
       <summary class="add-card__open">{{template "icon" "plus"}} {{t "board.add_card"}}</summary>
-      <form class="add-card__form" method="post" action="{{pageURL "board" "id" .Column.BoardID}}">
+      <form class="add-card__form" method="post" action="{{$.MoveURL}}">
         {{csrfToken}}
         <input type="hidden" name="op" value="create_card">
         <input type="hidden" name="column" value="{{.Column.ID}}">

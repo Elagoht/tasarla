@@ -11,8 +11,9 @@
     {{if .Access.CanManage}}<a class="btn btn--secondary" href="{{pageURL "board-settings" "id" .Board.ID}}">{{template "icon" "settings"}} {{t "board.settings"}}</a>{{end}}
   </div>
 </header>
-<div id="board" class="board" data-move-url="{{pageURL "board" "id" .Board.ID}}"
-  data-collage-fragment="{{fragmentURL "board" "board-columns" "id" .Board.ID}}" data-collage-push data-collage-swap="morph">
+{{template "filter-bar" .Filter}}
+<div id="board" class="board" data-move-url="{{withQuery (pageURL "board" "id" .Board.ID) .Filter.Query}}"
+  data-collage-fragment="{{withQuery (fragmentURL "board" "board-columns" "id" .Board.ID) .Filter.Query}}" data-collage-push data-collage-swap="morph">
   {{slot "columns"}}
 </div>
 <dialog id="card-drawer" class="drawer" aria-label="{{t "board.open_card"}}">

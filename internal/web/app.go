@@ -50,7 +50,7 @@ type handlers struct {
 	urlIn func(name, locale string, params map[string]string) (string, error)
 	i18n  *i18n.Plugin
 	// loc is the time zone "today" and schedules are reckoned in.
-	loc   *time.Location
+	loc *time.Location
 
 	// Fragments that actions answer with; set when their pages are built.
 	columns *collage.Fragment
@@ -83,9 +83,13 @@ func New(d Deps) (*App, error) {
 				"inc":      func(n int) int { return n + 1 },
 				// The colour a board is shown with, the same in the sidebar and on
 				// every list; an avatar's hue and letter for a user.
-				"boardColor": func(id int64) string { return boardColor(int(id)) },
-				"hue":        func(id int64) int64 { return id % 8 },
-				"initial":    initial,
+				"boardColor":      func(id int64) string { return boardColor(int(id)) },
+				"hue":             func(id int64) int64 { return id % 8 },
+				"initial":         initial,
+				"withQuery":       withQuery,
+				"extraQuery":      func(v url.Values) string { return v.Encode() },
+				"priorityChoices": func() []int16 { return []int16{4, 3, 2, 1} },
+				"dueChoices":      func() []store.DueFilter { return dueFilters },
 			},
 		},
 		Locale: collage.LocaleConfig{Default: d.Config.DefaultLocale, Supported: config.Locales},
