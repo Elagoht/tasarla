@@ -249,6 +249,10 @@ func (h *handlers) cardPost(ctx context.Context, rc *collage.RenderContext) (*co
 	switch v.Value("op") {
 	case "update":
 		return h.updateCard(ctx, rc, v, cc)
+	case "set_field":
+		return h.setField(ctx, rc, v, cc)
+	case "move_to":
+		return h.moveFromPanel(ctx, rc, v, cc)
 	case "labels":
 		ids := []int64{}
 		for _, raw := range rc.Request.PostForm["label"] {
@@ -589,4 +593,118 @@ func (h *handlers) commentMentions(ctx context.Context, cardID, commentID int64)
 		}
 	}
 	return nil
+}
+
+// setField saves one field of the card (spec §2.2): the others keep what the
+// card holds now, so nothing typed elsewhere is lost or overwritten.
+func (h *handlers) setField(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
+	version, ok := formInt64(v, "expected_version")
+	field := store.CardField(v.Value("field"))
+	if !ok {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	value := strings.TrimSpace(v.Value("value"))
+	var f store.CardFields
+	problem := ""
+	switch field {
+	case store.FieldTitle:
+		if value == "" || len([]rune(value)) > 200 {
+			problem = i18n.T(rc, "card.title_invalid")
+		}
+		f.Title = value
+	case store.FieldDescription:
+		if len([]rune(value)) > 10000 {
+			problem = i18n.T(rc, "card.description_invalid")
+		}
+		f.Description = value
+	case store.FieldAssignee:
+		if value != "" {
+			members, err := h.store.Members(ctx, cc.Team.ID)
+			if err != nil {
+				return nil, err
+			}
+			problem = i18n.T(rc, "card.assignee_invalid")
+			for _, m := range members {
+				if strconv.FormatInt(m.User.ID, 10) == value {
+					id := m.User.ID
+					f.AssigneeID, problem = &id, ""
+				}
+			}
+		}
+	case store.FieldDueDate:
+		if value != "" {
+			d, err := time.Parse(time.DateOnly, value)
+			if err != nil {
+				problem = i18n.T(rc, "card.date_invalid")
+			}
+			f.DueDate = &d
+		}
+	case store.FieldPriority:
+		if value != "" {
+			n, err := strconv.Atoi(value)
+			if err != nil || n < 1 || n > 4 {
+				problem = i18n.T(rc, "card.priority_invalid")
+			}
+			p := int16(n)
+			f.Priority = &p
+		}
+	case store.FieldEstimate:
+		if value != "" {
+			e, err := strconv.ParseFloat(strings.ReplaceAll(value, ",", "."), 64)
+			if err != nil || e < 0 {
+				problem = i18n.T(rc, "card.estimate_invalid")
+			}
+			f.Estimate = &e
+		}
+	default:
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	if problem != "" {
+		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, problem)
+	}
+	updated, err := h.store.UpdateCardField(ctx, cc.Board.ID, cc.Card.ID, int(version), field, f, cc.User.ID)
+	if msgs := violationMessages(rc, err); msgs != nil {
+		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, msgs...)
+	}
+	if errors.Is(err, store.ErrConflict) {
+		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, i18n.T(rc, "board.conflict"))
+	}
+	if err != nil {
+		return nil, err
+	}
+	if field == store.FieldAssignee {
+		h.notifyAssigned(ctx, cc.boardContext, cc.Card, updated)
+	}
+	return h.cardChanged(rc, cc, nil)
+}
+
+// moveFromPanel moves the card to the bottom of another column from its
+// panel, through the rules like any move, and answers with the panel.
+func (h *handlers) moveFromPanel(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
+	to, ok1 := formInt64(v, "to_column")
+	from, ok2 := formInt64(v, "expected_from")
+	version, ok3 := formInt64(v, "expected_version")
+	if !ok1 || !ok2 || !ok3 {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	moved, err := h.store.MoveCard(ctx, store.Move{
+		BoardID: cc.Board.ID, CardID: cc.Card.ID, ToColumnID: to, ToIndex: 1 << 30,
+		ExpectedFrom: from, ExpectedVersion: int(version), Actor: cc.actor(),
+	})
+	if msgs := violationMessages(rc, err); msgs != nil {
+		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, msgs...)
+	}
+	if errors.Is(err, store.ErrConflict) {
+		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, i18n.T(rc, "board.conflict"))
+	}
+	if errors.Is(err, store.ErrNotFound) {
+		return collage.NoContent(http.StatusNotFound), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if moved.ColumnID != from && h.finishedBy(ctx, moved) {
+		h.notifyUnblocked(ctx, cc.boardContext, moved.ID)
+	}
+	return h.cardChanged(rc, cc, nil)
 }

@@ -142,7 +142,10 @@
     "estimate_invalid": "Sıfır ya da pozitif bir sayı girin.",
     "date_invalid": "Tarihi YYYY-AA-GG biçiminde girin.",
     "assignee_invalid": "Takım üyelerinden birini seçin.",
-    "done": "tamamlandı"
+    "done": "tamamlandı",
+    "title_invalid": "Başlık boş olamaz ve en fazla 200 karakter olabilir.",
+    "description_invalid": "Açıklama en fazla 10000 karakter olabilir.",
+    "priority_invalid": "Geçerli bir öncelik seçin."
   },
   "tasks": {
     "title": "Bana atananlar",

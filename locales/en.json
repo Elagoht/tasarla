@@ -142,7 +142,10 @@
     "estimate_invalid": "Enter zero or a positive number.",
     "date_invalid": "Enter the date as YYYY-MM-DD.",
     "assignee_invalid": "Choose one of the team's members.",
-    "done": "done"
+    "done": "done",
+    "title_invalid": "The title cannot be empty or longer than 200 characters.",
+    "description_invalid": "The description can be at most 10000 characters.",
+    "priority_invalid": "Choose a valid priority."
   },
   "tasks": {
     "title": "My tasks",
