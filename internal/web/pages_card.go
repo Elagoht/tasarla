@@ -87,6 +87,8 @@ type panelView struct {
 	Live int
 	// ChecklistDone counts the items done.
 	ChecklistDone int
+	// OpenBlockers counts the blocking cards not done yet.
+	OpenBlockers int
 }
 
 // fieldState is what the panel shows beside one field: the notices about it
@@ -240,6 +242,11 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 	}
 	if v.Deps, err = h.store.CardDependencies(ctx, card.ID); err != nil {
 		return v, tags, err
+	}
+	for _, b := range v.Deps.Blockers {
+		if !b.Done {
+			v.OpenBlockers++
+		}
 	}
 	all, err := h.store.BoardCards(ctx, cc.Board.ID)
 	if err != nil {

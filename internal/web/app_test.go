@@ -71,10 +71,19 @@ func TestHomeInBothLanguages(t *testing.T) {
 	if tr.Status != http.StatusOK {
 		t.Fatalf("GET / = %d:\n%s", tr.Status, tr.Body)
 	}
-	mustContain(t, tr.Body, "Board&#39;larım", "Henüz bir takımda değilsiniz.", `hreflang="en" lang="en" href="/en`, "Çıkış yap", "Ada")
+	mustContain(t, tr.Body, "Board&#39;larım", "Henüz bir takımda değilsiniz.", "Çıkış yap", "Ada")
 
+	// The interface is in the account's language: an English address is
+	// sent to the Turkish one, and the other way round once it is English.
+	if res := b.Get("/en/teams?x=1"); res.Status != http.StatusSeeOther || res.Location() != "/teams?x=1" {
+		t.Fatalf("GET /en/teams for a Turkish account = %d %q", res.Status, res.Location())
+	}
+	h.speaks("ada@example.com", "en")
+	if res := b.Get("/"); res.Status != http.StatusSeeOther || res.Location() != "/en" {
+		t.Fatalf("GET / for an English account = %d %q", res.Status, res.Location())
+	}
 	en := b.Get("/en")
-	mustContain(t, en.Body, "My boards", "Sign out", `hreflang="tr" lang="tr" href="/"`)
+	mustContain(t, en.Body, "My boards", "Sign out")
 }
 
 func TestAuthFailedPageIsTranslated(t *testing.T) {

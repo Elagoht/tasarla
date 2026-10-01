@@ -183,6 +183,12 @@ func (h *handlers) meSettingsPost(ctx context.Context, rc *collage.RenderContext
 	if err := h.store.SetNotificationPrefs(ctx, user.ID, prefs); err != nil {
 		return nil, err
 	}
-	flash.Add(rc, flash.Success, i18n.T(rc, "me.saved"))
-	return h.redirectTo(rc, "me-settings")
+	// The interface follows the account's language: back to these settings in it.
+	locale := v.Value("locale")
+	flash.Add(rc, flash.Success, h.i18n.In(locale).T("me.saved"))
+	target, err := h.urlIn("me-settings", locale, nil)
+	if err != nil {
+		return nil, err
+	}
+	return collage.SeeOther(target), nil
 }

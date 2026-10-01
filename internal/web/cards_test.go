@@ -133,5 +133,6 @@ func TestMyTasksIsEmptyAtFirst(t *testing.T) {
 	h := newHarness(t, "")
 	b := h.signedIn("ada", "ada@example.com")
 	mustContain(t, b.Get("/me/tasks").Body, "Size atanmış kart yok.")
+	h.speaks("ada@example.com", "en")
 	mustContain(t, b.Get("/en/me/tasks").Body, "No cards are assigned to you.")
 }

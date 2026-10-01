@@ -26,6 +26,7 @@
   </header>
 
   {{if .Archived}}<p class="alert alert--info">{{template "icon" "archive"}} {{t "card.is_archived"}}</p>{{end}}
+  {{if .OpenBlockers}}<a class="blocked-banner" href="#card-deps" data-tab-link="details">{{template "icon" "lock"}}<span><strong>{{t "card.blocked_title"}}</strong> {{tn "card.blocked_by" .OpenBlockers}}</span></a>{{end}}
   {{with .TopNotices}}<div class="alert" role="alert">{{template "icon" "flag"}}<ul>{{range .}}<li>{{.}}</li>{{end}}</ul></div>{{end}}
 
   <dl class="props">
@@ -219,15 +220,17 @@
       {{end}}
     </div>
 
-    <div class="block">
-      <h2 class="block__title">{{template "icon" "lock"}} {{t "card.dependencies"}}</h2>
+    <div class="block deps-box{{if .OpenBlockers}} is-blocked{{end}}" id="card-deps">
+      <h2 class="block__title">{{template "icon" "lock"}} {{t "card.dependencies"}}
+        {{if .OpenBlockers}}<span class="chip chip--danger">{{t "board.blocked"}}</span>{{else if .Deps.Blockers}}<span class="chip chip--ok">{{t "card.unblocked"}}</span>{{end}}</h2>
       <h3 class="block__sub">{{t "card.blockers"}}</h3>
       {{if .Deps.Blockers}}
       <ul class="deps">
         {{range .Deps.Blockers}}
-        <li class="deps__item">
+        <li class="deps__item{{if not .Done}} is-open{{end}}">
           <span class="deps__state{{if .Done}} is-done{{end}}" aria-hidden="true">{{if .Done}}{{template "icon" "check"}}{{else}}{{template "icon" "lock"}}{{end}}</span>
-          <a data-card-link href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted small">({{t "card.done"}})</span>{{end}}
+          <a data-card-link href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>
+          <span class="muted small">{{if .Done}}{{t "card.done"}}{{else}}{{t "card.not_done"}}{{end}}</span>
           {{if $edit}}
           <form method="post" action="{{$self}}" data-collage-target="#card-panel">
             {{csrfToken}}
@@ -253,7 +256,7 @@
       {{if .Deps.Blocking}}
       <h3 class="block__sub">{{t "card.blocking"}}</h3>
       <ul class="deps">
-        {{range .Deps.Blocking}}<li class="deps__item"><span class="deps__state" aria-hidden="true">{{template "icon" "arrow-left"}}</span><a data-card-link href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted small">({{t "card.done"}})</span>{{end}}</li>{{end}}
+        {{range .Deps.Blocking}}<li class="deps__item"><span class="deps__state is-waiting" aria-hidden="true">{{template "icon" "clock"}}</span><a data-card-link href="{{pageURL "card" "id" $.Board.ID "card" .ID}}">{{.Title}}</a>{{if .Done}} <span class="muted small">{{t "card.done"}}</span>{{end}}</li>{{end}}
       </ul>
       {{end}}
     </div>
@@ -356,7 +359,7 @@
     <h2 class="block__title cardp__section-title">{{t "activity.title"}}</h2>
     {{if .Activity}}
     <ol class="timeline">
-      {{range .Activity}}<li class="timeline__item"><span class="timeline__text">{{.Text}}</span> <time class="muted small" datetime="{{.ISO}}">{{.When}}</time></li>{{end}}
+      {{range .Activity}}<li class="timeline__item"><span class="timeline__text">{{.Text}}</span>{{template "changes" .Changes}} <time class="muted small" datetime="{{.ISO}}">{{.When}}</time></li>{{end}}
     </ol>
     {{else}}
     <p class="muted small">{{t "activity.empty"}}</p>

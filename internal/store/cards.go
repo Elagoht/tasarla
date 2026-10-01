@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -205,7 +206,12 @@ func (s *Store) updateCard(ctx context.Context, boardID, cardID int64, expectedV
 		return Card{}, err
 	}
 	if changed := changedFields(before, card); len(changed) > 0 {
-		if err := logActivity(ctx, tx, boardID, &card.ID, actorID, ActivityCardUpdated, ActivityPayload{Fields: changed}); err != nil {
+		changes, err := fieldChanges(ctx, tx, before, card, changed)
+		if err != nil {
+			return Card{}, err
+		}
+		if err := logActivity(ctx, tx, boardID, &card.ID, actorID, ActivityCardUpdated,
+			ActivityPayload{Fields: changed, Changes: changes}); err != nil {
 			return Card{}, err
 		}
 	}
@@ -227,6 +233,57 @@ func changedFields(a, b Card) []string {
 	add("due_date", !sameDate(a.DueDate, b.DueDate))
 	add("priority", !samePtr(a.Priority, b.Priority))
 	return out
+}
+
+// fieldChanges are the values of the changed fields before and after.
+func fieldChanges(ctx context.Context, tx pgx.Tx, a, b Card, changed []string) ([]FieldChange, error) {
+	name := func(id *int64) (string, error) {
+		if id == nil {
+			return "", nil
+		}
+		var n string
+		err := tx.QueryRow(ctx, `SELECT name FROM users WHERE id = $1`, *id).Scan(&n)
+		return n, err
+	}
+	value := func(c Card, field string) (string, error) {
+		switch field {
+		case "title":
+			return c.Title, nil
+		case "description":
+			return c.Description, nil
+		case "assignee":
+			return name(c.AssigneeID)
+		case "estimate":
+			if c.Estimate == nil {
+				return "", nil
+			}
+			return strconv.FormatFloat(*c.Estimate, 'f', -1, 64), nil
+		case "due_date":
+			if c.DueDate == nil {
+				return "", nil
+			}
+			return c.DueDate.Format(time.DateOnly), nil
+		case "priority":
+			if c.Priority == nil {
+				return "", nil
+			}
+			return strconv.Itoa(int(*c.Priority)), nil
+		}
+		return "", nil
+	}
+	out := make([]FieldChange, 0, len(changed))
+	for _, f := range changed {
+		old, err := value(a, f)
+		if err != nil {
+			return nil, err
+		}
+		cur, err := value(b, f)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, FieldChange{Field: f, Old: old, New: cur})
+	}
+	return out, nil
 }
 
 func samePtr[T comparable](a, b *T) bool {

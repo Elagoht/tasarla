@@ -1,0 +1,2 @@
+{{/* changes: a card edit's fields, each as old → new. */}}
+{{define "changes"}}{{with .}}<ul class="changes">{{range .}}<li><span class="changes__field">{{.Field}}</span> <del class="changes__old{{if .OldEmpty}} is-empty{{end}}">{{.Old}}</del> <span class="changes__arrow" aria-hidden="true">→</span> <ins class="changes__new{{if .NewEmpty}} is-empty{{end}}">{{.New}}</ins></li>{{end}}</ul>{{end}}{{end}}

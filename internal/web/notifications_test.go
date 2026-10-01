@@ -96,16 +96,16 @@ func TestFinishingABlockerNotifiesTheBlockedCardsAssignee(t *testing.T) {
 func TestMySettings(t *testing.T) {
 	b := newBoardSetup(t)
 	res := b.member.Submit("/me/settings", "/me/settings", url.Values{"op": {"save"}, "locale": {"en"}, "email_assigned": {"1"}, "email_commented": {"1"}})
-	if res.Status != http.StatusSeeOther {
-		t.Fatalf("save = %d", res.Status)
+	if res.Status != http.StatusSeeOther || res.Location() != "/en/me/settings" {
+		t.Fatalf("save = %d %q, want the settings in English", res.Status, res.Location())
 	}
 	member := b.h.user("member@example.com")
 	prefs, _ := b.h.store.NotificationPrefs(context.Background(), member.ID)
 	if member.Locale != "en" || !prefs["assigned"] || prefs["mentioned"] || !prefs["commented"] {
 		t.Fatalf("locale %q prefs %v", member.Locale, prefs)
 	}
-	mustContain(t, b.member.Get("/me/settings").Body, "Kaydedildi.", `value="en" selected`)
-	if res := b.member.Submit("/me/settings", "/me/settings", url.Values{"op": {"save"}, "locale": {"fr"}}); res.Status != http.StatusBadRequest {
+	mustContain(t, b.member.Get("/en/me/settings").Body, "Saved.", `value="en" selected`)
+	if res := b.member.Submit("/en/me/settings", "/en/me/settings", url.Values{"op": {"save"}, "locale": {"fr"}}); res.Status != http.StatusBadRequest {
 		t.Fatalf("unknown locale = %d, want 400", res.Status)
 	}
 

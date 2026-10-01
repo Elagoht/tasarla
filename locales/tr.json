@@ -162,7 +162,14 @@
     "add_description": "Açıklama eklemek için tıklayın…",
     "no_description": "Açıklama yok.",
     "no_blockers": "Bu kartı bloklayan kart yok.",
-    "saved_mark": "Kaydedildi"
+    "saved_mark": "Kaydedildi",
+    "blocked_title": "Bu kart bloklu.",
+    "blocked_by": {
+      "one": "Önce {count} kartın bitmesi gerekiyor.",
+      "other": "Önce {count} kartın bitmesi gerekiyor."
+    },
+    "unblocked": "Bloklu değil",
+    "not_done": "bitmedi"
   },
   "tasks": {
     "title": "Bana atananlar",
@@ -384,9 +391,9 @@
     "deleted": "Dosya silindi."
   },
   "activity": {
-    "title": "Etkinlik",
-    "board_title": "Board etkinliği",
-    "empty": "Henüz etkinlik yok.",
+    "title": "Geçmiş",
+    "board_title": "Board geçmişi",
+    "empty": "Henüz kayıt yok.",
     "someone": "Biri",
     "card_created": "{actor} kartı oluşturdu",
     "card_moved": "{actor} kartı {from} kolonundan {to} kolonuna taşıdı",
@@ -407,7 +414,9 @@
       "estimate": "tahmin",
       "due_date": "son tarih",
       "priority": "öncelik"
-    }
+    },
+    "card_updated_short": "{actor} kartı düzenledi",
+    "none": "—"
   },
   "notify": {
     "assigned": "{actor} sizi bir karta atadı: {card}",
@@ -439,14 +448,15 @@
   },
   "me": {
     "title": "Ayarlarım",
-    "locale": "E-postalarımın dili",
+    "locale": "Hesap dili",
     "email_prefs": "E-posta bildirimleri",
     "save": "Kaydet",
     "saved": "Kaydedildi.",
     "locales": {
       "tr": "Türkçe",
       "en": "English"
-    }
+    },
+    "locale_hint": "Arayüz ve size giden e-postalar bu dilde olur."
   },
   "confirm": {
     "title": "Emin misiniz?",

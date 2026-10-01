@@ -95,6 +95,10 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     panel.dataset.tab = tab.dataset.tabLink;
     history.replaceState(history.state, "", "#card-" + tab.dataset.tabLink);
+    // A link to a place in a tab, not the tab itself, goes there too.
+    if (!tab.matches(".tabs__tab")) {
+      panel.querySelector(tab.getAttribute("href"))?.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
     return;
   }
   // The description shows as text; a click on it, not on a link in it, edits it.

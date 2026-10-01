@@ -1,13 +1,15 @@
+<div class="narrow">
 <header class="page-head">
   <div>
     <h1>{{t "me.title"}}</h1>
   </div>
 </header>
-<form class="panel stack page--narrow" method="post" action="{{pageURL "me-settings"}}">
+<form class="panel stack" method="post" action="{{pageURL "me-settings"}}">
   {{csrfToken}}
   <input type="hidden" name="op" value="save">
   <label class="field field--narrow">
     <span class="field__label">{{t "me.locale"}}</span>
+    <span class="field__hint">{{t "me.locale_hint"}}</span>
     <select class="select" id="me-locale" name="locale">
       {{range .Locales}}<option value="{{.}}" {{if eq . $.Locale}}selected{{end}}>{{t (printf "me.locales.%s" .)}}</option>{{end}}
     </select>
@@ -22,3 +24,4 @@
   </fieldset>
   <div class="actions"><button type="submit" class="btn btn--primary">{{t "me.save"}}</button></div>
 </form>
+</div>

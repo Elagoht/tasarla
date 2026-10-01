@@ -31,8 +31,10 @@ func TestARuleBreakingMoveIsRefusedWithEveryReason(t *testing.T) {
 	if moved.ColumnID != b.cols[0].ID {
 		t.Fatal("the refused move was applied")
 	}
+	b.h.speaks("member@example.com", "en")
 	en := b.member.SubmitFetch("/en"+b.path, "/en"+b.path, moveForm(c, b.cols[1].ID, 0, b.cols[0].ID, c.Version))
 	mustContain(t, en.Body, "You may not move cards into Doing.", "A card needs an estimate to enter Doing.")
+	b.h.speaks("member@example.com", "tr")
 
 	// Without a script: back to the card, with the reasons as messages.
 	res = b.member.Submit(b.cardPath(c), b.path, moveForm(c, b.cols[1].ID, 0, b.cols[0].ID, c.Version))

@@ -33,6 +33,7 @@ func TestCreatingATeamValidatesTheName(t *testing.T) {
 	}
 	mustContain(t, res.Body, "Bu alan zorunludur.")
 
+	h.speaks("admin@example.com", "en")
 	res = admin.Submit("/en/teams", "/en/teams", url.Values{"op": {"create"}, "name": {""}})
 	mustContain(t, res.Body, "This field is required.")
 }
@@ -158,8 +159,9 @@ func idOf(path string) int64 {
 func TestEnglishPagesLinkInEnglish(t *testing.T) {
 	h := newHarness(t, "")
 	b := h.signedIn("ada", "ada@example.com")
-	mustContain(t, b.Get("/en").Body, `href="/en/teams"`)
 	mustContain(t, b.Get("/").Body, `href="/teams"`)
+	h.speaks("ada@example.com", "en")
+	mustContain(t, b.Get("/en").Body, `href="/en/teams"`)
 }
 
 func TestAddingAMemberWithoutARoleIsRefused(t *testing.T) {

@@ -1,32 +1,8 @@
-// The shell: collapsing the sidebar, the mobile menu and fading toasts.
+// The shell: the mobile menu, the account menu and fading toasts.
 
 const shell = document.querySelector("[data-shell]");
 
-function remembered() {
-  try {
-    return localStorage.getItem("sidebar") === "collapsed";
-  } catch {
-    return false;
-  }
-}
-
-function remember(collapsed) {
-  try {
-    localStorage.setItem("sidebar", collapsed ? "collapsed" : "open");
-  } catch {
-    // Storage can be off; the sidebar then simply opens each time.
-  }
-}
-
 if (shell) {
-  if (remembered()) shell.classList.add("is-collapsed");
-
-  shell.querySelector("[data-collapse]")?.addEventListener("click", (event) => {
-    const collapsed = shell.classList.toggle("is-collapsed");
-    event.currentTarget.setAttribute("aria-expanded", String(!collapsed));
-    remember(collapsed);
-  });
-
   const menu = shell.querySelector("[data-menu]");
   menu?.addEventListener("click", () => {
     const open = shell.classList.toggle("is-menu-open");
@@ -77,6 +53,20 @@ document.addEventListener("collage:swap", (e) => {
     if (kept.has(d.dataset.keepOpen) && !d.open) d.open = true;
   }
 });
+
+// The account menu closes on a click elsewhere and on Escape.
+const meMenu = document.querySelector("[data-me-menu]");
+if (meMenu) {
+  document.addEventListener("click", (e) => {
+    if (meMenu.open && e.target instanceof Node && !meMenu.contains(e.target)) meMenu.open = false;
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && meMenu.open) {
+      meMenu.open = false;
+      meMenu.querySelector("summary").focus();
+    }
+  });
+}
 
 for (const toast of document.querySelectorAll("[data-toast]")) {
   setTimeout(() => {

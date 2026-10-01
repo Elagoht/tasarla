@@ -13,11 +13,35 @@ import (
 
 type activityView struct {
 	Text      string
+	Changes   []changeView
 	CardTitle string
 	CardID    int64
 	BoardID   int64
 	When      string
 	ISO       string
+}
+
+// changeView is one field of a card edit, as the reader reads it.
+type changeView struct {
+	Field              string
+	Old, New           string
+	OldEmpty, NewEmpty bool
+}
+
+// changeValue shows a field's raw value: a priority by its name, nothing as a
+// dash, a long text cut short.
+func changeValue(rc *collage.RenderContext, field, raw string) string {
+	switch {
+	case raw == "":
+		return i18n.T(rc, "activity.none")
+	case field == "priority":
+		return i18n.T(rc, "card.priorities."+raw)
+	}
+	r := []rune(strings.Join(strings.Fields(raw), " "))
+	if len(r) > 80 {
+		return string(r[:79]) + "…"
+	}
+	return string(r)
 }
 
 // activityViews turns entries into sentences in the reader's language.
@@ -40,6 +64,13 @@ func activityViews(rc *collage.RenderContext, entries []store.Activity) []activi
 			BoardID:   a.BoardID,
 			When:      a.CreatedAt.Local().Format("2006-01-02 15:04"),
 			ISO:       a.CreatedAt.UTC().Format(time.RFC3339),
+		}
+		if len(p.Changes) > 0 {
+			v.Text = i18n.T(rc, "activity.card_updated_short", "actor", actor)
+			for _, c := range p.Changes {
+				v.Changes = append(v.Changes, changeView{Field: i18n.T(rc, "activity.fields."+c.Field),
+					Old: changeValue(rc, c.Field, c.Old), New: changeValue(rc, c.Field, c.New), OldEmpty: c.Old == "", NewEmpty: c.New == ""})
+			}
 		}
 		if a.CardID != nil {
 			v.CardID = *a.CardID

@@ -2,7 +2,6 @@
   <aside class="sidebar" id="sidebar" aria-label="{{t "nav.main"}}">
     <div class="sidebar__top">
       <a class="brand" href="{{pageURL "home"}}"><span class="brand__mark">{{template "icon" "board"}}</span><span class="brand__name">{{t "app.name"}}</span></a>
-      <button type="button" class="btn btn--quiet btn--sm btn--icon collapse-toggle" data-collapse aria-label="{{t "nav.collapse"}}" aria-controls="sidebar">{{template "icon" "chevron-left"}}</button>
     </div>
 
     <nav class="nav" aria-label="{{t "nav.main"}}">
@@ -30,20 +29,20 @@
     <div class="sidebar__foot">
       <a class="nav__item{{if or (eq .Page "teams") (eq .Page "team")}} is-active{{end}}" href="{{pageURL "teams"}}">{{template "icon" "team"}}<span class="nav__label">{{t "nav.teams"}}</span></a>
       {{if .User.IsAdmin}}<a class="nav__item{{if eq .Page "admin-users"}} is-active{{end}}" href="{{pageURL "admin-users"}}">{{template "icon" "lock"}}<span class="nav__label">{{t "nav.users"}}</span></a>{{end}}
-      <a class="me" href="{{pageURL "me-settings"}}" title="{{t "me.title"}}">
-        <span class="avatar" data-hue="{{.Hue}}">{{.Initial}}</span>
-        <span class="me__text"><span class="me__name">{{.User.Name}}</span><br><span class="me__mail">{{.User.Email}}</span></span>
-      </a>
-      <div class="sidebar__row">
-        <span class="lang" aria-label="{{t "locale.switcher"}}">
-          {{if eq .Locale "tr"}}<span aria-current="true">TR</span>{{else}}{{with localeURL "tr"}}<a hreflang="tr" lang="tr" href="{{.}}">TR</a>{{end}}{{end}}
-          {{if eq .Locale "en"}}<span aria-current="true">EN</span>{{else}}{{with localeURL "en"}}<a hreflang="en" lang="en" href="{{.}}">EN</a>{{end}}{{end}}
-        </span>
-        <form method="post" action="{{actionURL "logout"}}">
-          {{csrfToken}}
-          <button type="submit" class="btn btn--quiet btn--sm">{{template "icon" "logout"}} {{t "auth.logout"}}</button>
-        </form>
-      </div>
+      <details class="me-menu" data-me-menu>
+        <summary class="me">
+          <span class="avatar" data-hue="{{.Hue}}" aria-hidden="true">{{.Initial}}</span>
+          <span class="me__text"><span class="me__name">{{.User.Name}}</span><span class="me__mail">{{.User.Email}}</span></span>
+          <span class="me__chevron" aria-hidden="true">{{template "icon" "chevron-up"}}</span>
+        </summary>
+        <div class="me-menu__list">
+          <a class="nav__item{{if eq .Page "me-settings"}} is-active{{end}}" href="{{pageURL "me-settings"}}">{{template "icon" "settings"}}<span class="nav__label">{{t "me.title"}}</span></a>
+          <form method="post" action="{{actionURL "logout"}}">
+            {{csrfToken}}
+            <button type="submit" class="nav__item nav__item--button">{{template "icon" "logout"}}<span class="nav__label">{{t "auth.logout"}}</span></button>
+          </form>
+        </div>
+      </details>
     </div>
   </aside>
 

@@ -9,6 +9,7 @@
   {{range .Activity}}
   <li class="timeline__item">
     <span class="timeline__text">{{.Text}}{{if .CardID}} · <a href="{{pageURL "card" "id" .BoardID "card" .CardID}}">{{.CardTitle}}</a>{{end}}</span>
+    {{template "changes" .Changes}}
     <time class="muted small" datetime="{{.ISO}}">{{.When}}</time>
   </li>
   {{end}}

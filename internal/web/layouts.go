@@ -3,6 +3,8 @@ package web
 import (
 	"context"
 	"errors"
+	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -95,10 +97,47 @@ func initial(name string) string {
 func (h *handlers) appLayout() *collage.Fragment {
 	return collage.NewFragment("app", "layouts/app.html").
 		WithSlotFragment("badge", h.badge).
-		WithGuard(session.RequireUser("/login")).
+		WithGuard(h.signedInInOwnLocale(session.RequireUser("/login"))).
 		WithDataHandler(collage.Load(h.loadApp)).
 		Required().
 		Build()
+}
+
+// signedInInOwnLocale is signedIn, and then shows the interface in the
+// account's language: a page asked for in another locale is sent to the same
+// path in the account's (spec: the account language, set on My settings).
+// Only page loads are moved; a form or a script's fetch is answered where it
+// was sent.
+func (h *handlers) signedInInOwnLocale(signedIn collage.GuardFunc) collage.GuardFunc {
+	return func(ctx context.Context, r *http.Request) (*collage.GuardDecision, error) {
+		if d, err := signedIn(ctx, r); d != nil || err != nil {
+			return d, err
+		}
+		u, ok := auth.UserFrom(ctx)
+		if !ok || (r.Method != http.MethodGet && r.Method != http.MethodHead) || r.Header.Get(collage.FetchHeader) != "" {
+			return nil, nil
+		}
+		current, rest := h.defaultLocale, r.URL.Path
+		for _, l := range config.Locales {
+			if l != h.defaultLocale && (rest == "/"+l || strings.HasPrefix(rest, "/"+l+"/")) {
+				current, rest = l, strings.TrimPrefix(rest, "/"+l)
+			}
+		}
+		if u.Locale == current || !slices.Contains(config.Locales, u.Locale) {
+			return nil, nil
+		}
+		target := rest
+		if u.Locale != h.defaultLocale {
+			target = strings.TrimSuffix("/"+u.Locale+rest, "/") // "/en", not "/en/"
+		}
+		if target == "" {
+			target = "/"
+		}
+		if r.URL.RawQuery != "" {
+			target += "?" + r.URL.RawQuery
+		}
+		return &collage.GuardDecision{Status: http.StatusSeeOther, Location: target}, nil
+	}
 }
 
 func (h *handlers) loadApp(ctx context.Context, rc *collage.RenderContext) (appView, error) {

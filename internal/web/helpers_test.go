@@ -103,6 +103,14 @@ func (h *harness) signedIn(subject, email string) *webtest.Browser {
 	return b
 }
 
+// speaks sets the account language of the user with email.
+func (h *harness) speaks(email, locale string) {
+	h.t.Helper()
+	if err := h.store.SetLocale(context.Background(), h.user(email).ID, locale); err != nil {
+		h.t.Fatal(err)
+	}
+}
+
 func (h *harness) user(email string) store.User {
 	h.t.Helper()
 	u, err := h.store.UserByEmail(context.Background(), email)

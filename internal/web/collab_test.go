@@ -110,7 +110,8 @@ func TestActivityShowsWhoDidWhatAndWhen(t *testing.T) {
 	b.member.Submit(b.cardPath(c), b.cardPath(c), fieldForm(moved, "title", "Renamed"))
 
 	page := b.member.Get(b.cardPath(c)).Body
-	mustContain(t, page, "Lead kartı Todo kolonundan Doing kolonuna taşıdı", "Member kartı düzenledi: başlık", `datetime="`)
+	mustContain(t, page, "Lead kartı Todo kolonundan Doing kolonuna taşıdı", "Member kartı düzenledi",
+		`<del class="changes__old">Card</del>`, `<ins class="changes__new">Renamed</ins>`, `datetime="`)
 	board := b.member.Get(b.path + "/activity")
 	if board.Status != http.StatusOK {
 		t.Fatalf("board activity = %d", board.Status)

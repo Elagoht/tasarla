@@ -162,7 +162,14 @@
     "add_description": "Click to add a description…",
     "no_description": "No description.",
     "no_blockers": "No card blocks this one.",
-    "saved_mark": "Saved"
+    "saved_mark": "Saved",
+    "blocked_title": "This card is blocked.",
+    "blocked_by": {
+      "one": "{count} card has to be done first.",
+      "other": "{count} cards have to be done first."
+    },
+    "unblocked": "Not blocked",
+    "not_done": "not done"
   },
   "tasks": {
     "title": "My tasks",
@@ -384,9 +391,9 @@
     "deleted": "File deleted."
   },
   "activity": {
-    "title": "Activity",
-    "board_title": "Board activity",
-    "empty": "No activity yet.",
+    "title": "History",
+    "board_title": "Board history",
+    "empty": "Nothing recorded yet.",
     "someone": "Someone",
     "card_created": "{actor} created the card",
     "card_moved": "{actor} moved the card from {from} to {to}",
@@ -407,7 +414,9 @@
       "estimate": "estimate",
       "due_date": "due date",
       "priority": "priority"
-    }
+    },
+    "card_updated_short": "{actor} edited the card",
+    "none": "—"
   },
   "notify": {
     "assigned": "{actor} assigned you to a card: {card}",
@@ -439,14 +448,15 @@
   },
   "me": {
     "title": "My settings",
-    "locale": "Language of my e-mails",
+    "locale": "Account language",
     "email_prefs": "E-mail notifications",
     "save": "Save",
     "saved": "Saved.",
     "locales": {
       "tr": "Türkçe",
       "en": "English"
-    }
+    },
+    "locale_hint": "The interface and the e-mails you get are in this language."
   },
   "confirm": {
     "title": "Are you sure?",

@@ -42,6 +42,11 @@ type handlers struct {
 	store *store.Store
 	files *files.Dir
 	log   *slog.Logger
+	// defaultLocale is the locale whose paths have no prefix.
+	defaultLocale string
+	// urlIn is a page's path in a given locale; i18n translates in one.
+	urlIn func(name, locale string, params map[string]string) (string, error)
+	i18n  *i18n.Plugin
 
 	// Fragments that actions answer with; set when their pages are built.
 	columns *collage.Fragment
@@ -103,7 +108,8 @@ func New(d Deps) (*App, error) {
 	}
 
 	notFound, serverError, authFailed := notFoundPage(), errorPage(), authFailedPage()
-	h := &handlers{store: d.Store, files: d.Attachments, log: d.Logger}
+	h := &handlers{store: d.Store, files: d.Attachments, log: d.Logger, defaultLocale: d.Config.DefaultLocale,
+		urlIn: app.URL, i18n: translations}
 	h.notifier = &notify.Notifier{
 		Store: d.Store, I18n: translations, BaseURL: d.Config.BaseURL,
 		URL: app.URL, Invalidate: app.InvalidateTags, Log: d.Logger,

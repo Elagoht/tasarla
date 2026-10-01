@@ -31,6 +31,18 @@ type ActivityPayload struct {
 	Title    string   `json:"title,omitempty"`
 	Text     string   `json:"text,omitempty"`
 	Filename string   `json:"filename,omitempty"`
+	// Changes are a card edit's values, before and after; entries written
+	// before they were kept have only Fields.
+	Changes []FieldChange `json:"changes,omitempty"`
+}
+
+// FieldChange is one field of a card edit: its name as in Fields, and its
+// value before and after, raw ("" for none): a date as YYYY-MM-DD, a priority
+// as its number, an assignee as their name.
+type FieldChange struct {
+	Field string `json:"field"`
+	Old   string `json:"old"`
+	New   string `json:"new"`
 }
 
 // Activity is one entry of a board's history.
