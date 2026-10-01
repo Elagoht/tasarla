@@ -18,7 +18,7 @@ func pendingMails(t *testing.T, h *harness) []store.OutboxMessage {
 	h.store.ProcessOutbox(context.Background(), time.Now().Add(time.Minute), 100, func(m store.OutboxMessage) error {
 		got = append(got, m)
 		return errSMTPDown
-	})
+	}, nil)
 	return got
 }
 

@@ -231,7 +231,9 @@
     "add_role": "Rol ekle",
     "save_members": "Üyeleri kaydet",
     "role_exists": "Bu adla bir rol zaten var.",
-    "none": "Henüz yok."
+    "none": "Henüz yok.",
+    "role_in_use": "Bu rolü kullanan bir yetki var; önce yetkiyi silin.",
+    "column_in_use": "Bu kolondan başlayan bir taşıma yetkisi var; önce yetkiyi silin."
   },
   "rules": {
     "transition": "{from} kolonundan {to} kolonuna geçiş tanımlı değil.",

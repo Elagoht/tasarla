@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -94,6 +95,9 @@ type attachmentView struct {
 // maxAttachment is the largest file a card takes (spec §9).
 const maxAttachment = 5 << 20
 
+// maxUploadBody is the largest card form body read; past it collage answers 413.
+const maxUploadBody = 64 << 20
+
 type panelLabel struct {
 	Label   store.Label
 	Checked bool
@@ -113,10 +117,12 @@ func (h *handlers) cardPage() *collage.Page {
 	for _, l := range config.Locales {
 		b = b.WithFragmentPath(l, "/boards/{id}/cards/{card}/panel", h.panel)
 	}
-	// The body limit leaves room for a 5 MB file and the rest of the form, so
-	// that the form's own "over 5 MB" message is reached before collage's 413.
+	// The body limit is well above the 5 MB a file may have, so that any file
+	// over it is answered with the form's own message rather than collage's
+	// bare 413 (spec §9's 5 MB + 64 KB limit left every file between that and
+	// a browser's limit with no message). files.Save still refuses past 5 MB.
 	post := collage.NewAction("card-post").WithMethods(http.MethodPost).
-		WithMaxBodyBytes(maxAttachment + 64<<10).WithHandler(h.cardPost).Build()
+		WithMaxBodyBytes(maxUploadBody).WithHandler(h.cardPost).Build()
 	return b.WithActionFor(post).Dynamic().Build()
 }
 
@@ -490,7 +496,18 @@ func (h *handlers) commentOp(ctx context.Context, rc *collage.RenderContext, v *
 			return h.refuseCard(rc, v), nil
 		}
 		body := strings.TrimSpace(v.Value("comment_body"))
-		err = h.store.EditComment(ctx, cc.Board.ID, cc.Card.ID, id, cc.User.ID, body, store.ResolveMentions(body, members))
+		before := h.commentMentions(ctx, cc.Card.ID, id)
+		mentions := store.ResolveMentions(body, members)
+		err = h.store.EditComment(ctx, cc.Board.ID, cc.Card.ID, id, cc.User.ID, body, mentions)
+		if err == nil {
+			var added []int64
+			for _, m := range mentions {
+				if !slices.Contains(before, m) {
+					added = append(added, m)
+				}
+			}
+			h.notifyMentioned(ctx, cc.boardContext, cc.Card, body, added)
+		}
 	case "comment_delete":
 		id, ok := formInt64(v, "comment_id")
 		if !ok {
@@ -555,4 +572,18 @@ func humanSize(n int64) string {
 		return strconv.FormatFloat(float64(n)/(1<<10), 'f', 0, 64) + " KB"
 	}
 	return strconv.FormatInt(n, 10) + " B"
+}
+
+// commentMentions returns who a comment mentions now.
+func (h *handlers) commentMentions(ctx context.Context, cardID, commentID int64) []int64 {
+	comments, err := h.store.CardComments(ctx, cardID)
+	if err != nil {
+		return nil
+	}
+	for _, c := range comments {
+		if c.ID == commentID {
+			return c.MentionIDs
+		}
+	}
+	return nil
 }

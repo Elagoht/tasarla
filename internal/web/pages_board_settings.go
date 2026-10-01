@@ -243,6 +243,9 @@ func (h *handlers) boardSettingsPost(ctx context.Context, rc *collage.RenderCont
 		if errors.Is(err, store.ErrColumnNotEmpty) {
 			return h.settingsDone(rc, bc, flash.Error, i18n.T(rc, "settings.column_not_empty"))
 		}
+		if errors.Is(err, store.ErrInUse) {
+			return h.settingsDone(rc, bc, flash.Error, i18n.T(rc, "settings.column_in_use"))
+		}
 	case "label_add":
 		v.Field("label_name").Required().MaxLen(40)
 		v.Field("label_color").Required().OneOf(labelPalette...)
@@ -388,6 +391,9 @@ func (h *handlers) ruleSettings(ctx context.Context, rc *collage.RenderContext, 
 			return bad, nil
 		}
 		err = h.store.DeleteBoardRole(ctx, boardID, role)
+		if errors.Is(err, store.ErrInUse) {
+			return h.settingsDone(rc, bc, flash.Error, i18n.T(rc, "settings.role_in_use"))
+		}
 	case "permission_add":
 		to, ok := formInt64(v, "to_column")
 		subject := v.Value("subject")

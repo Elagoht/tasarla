@@ -231,7 +231,9 @@
     "add_role": "Add role",
     "save_members": "Save members",
     "role_exists": "A role with this name already exists.",
-    "none": "None yet."
+    "none": "None yet.",
+    "role_in_use": "A permission uses this role; delete the permission first.",
+    "column_in_use": "A move permission starts from this column; delete the permission first."
   },
   "rules": {
     "transition": "Moving from {from} to {to} is not allowed.",
