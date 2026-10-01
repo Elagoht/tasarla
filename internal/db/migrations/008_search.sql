@@ -4,10 +4,14 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- kanban_fold is the text a search compares: lower case, the dotless ı as i,
 -- and the combining dot some C libraries leave after lowering İ dropped, so
--- that ı, I, i and İ all match one another.
+-- that ı, I, i and İ all match one another. lower() runs under pg_c_utf8
+-- (PostgreSQL 17), whose case mapping is the same whatever the database's
+-- own collation is: under a C or libc collation lower() would leave İ, Ğ, Ş
+-- and the rest of the non-ASCII capitals as they were, and an index built
+-- there would disagree with one built elsewhere.
 CREATE FUNCTION kanban_fold(t text) RETURNS text
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
-    RETURN translate(lower(t), 'ı' || chr(775), 'i');
+    RETURN translate(lower(t COLLATE pg_c_utf8), 'ı' || chr(775), 'i');
 
 CREATE INDEX cards_title_fold_trgm ON cards USING gin (kanban_fold(title) gin_trgm_ops);
 CREATE INDEX cards_description_fold_trgm ON cards USING gin (kanban_fold(description) gin_trgm_ops);

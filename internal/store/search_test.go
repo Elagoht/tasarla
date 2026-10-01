@@ -26,6 +26,26 @@ func TestSearchFindsOnlyTheReadersTeams(t *testing.T) {
 	}
 }
 
+// The fold must not depend on the database's collation.
+func TestFoldIgnoresTheCollation(t *testing.T) {
+	f := newBoardFixture(t)
+	var got string
+	if err := f.s.Pool().QueryRow(context.Background(),
+		`SELECT kanban_fold('IĞDIR İSTANBUL ŞÇÖÜ' COLLATE "C")`).Scan(&got); err != nil {
+		t.Fatal(err)
+	}
+	if want := "iğdir istanbul şçöü"; got != want {
+		t.Errorf("fold = %q, want %q", got, want)
+	}
+}
+
+func TestSearchHugePageIsClamped(t *testing.T) {
+	f := newBoardFixture(t)
+	if _, _, err := f.s.Search(context.Background(), f.member.ID, "rapor", int(^uint(0)>>1)); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSearchExcerptsAndOrder(t *testing.T) {
 	f := newBoardFixture(t)
 	ctx := context.Background()

@@ -8,6 +8,10 @@ import (
 // SearchPageSize is how many hits one page of a search shows.
 const SearchPageSize = 50
 
+// MaxSearchPage is the last page a search will turn to; further ones are the
+// same as it, which keeps (page-1)*SearchPageSize far from overflowing.
+const MaxSearchPage = 10000
+
 // SearchHit is a card a search found.
 type SearchHit struct {
 	Card      Card
@@ -28,9 +32,7 @@ func (s *Store) Search(ctx context.Context, userID int64, q string, page int) ([
 	if utf8.RuneCountInString(q) < 2 {
 		return nil, false, nil
 	}
-	if page < 1 {
-		page = 1
-	}
+	page = min(max(page, 1), MaxSearchPage)
 	rows, err := s.pool.Query(ctx, `
 		WITH found AS (
 		  SELECT k.*, b.name AS board_name, t.name AS team_name,
