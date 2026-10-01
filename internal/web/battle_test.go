@@ -6,6 +6,9 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"kanban/internal/rules"
+	"kanban/internal/store"
 )
 
 // Battle test: text the database cannot hold is refused, never a 500.
@@ -96,5 +99,28 @@ func TestABoardHasOneAddress(t *testing.T) {
 		if res := b.member.Get(p); res.Status != http.StatusNotFound || strings.Contains(res.Body, "Sprint") {
 			t.Errorf("GET %s = %d, want 404", p, res.Status)
 		}
+	}
+}
+
+// Battle test: "Add card" sent by board.js is answered with the columns, a
+// refused card with the reason and 422 — not a page the first live copy of
+// the board would wipe.
+func TestAddingACardFromTheBoardScriptGetsTheColumns(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	res := b.member.SubmitFetch(b.path, b.path, url.Values{"op": {"create_card"}, "title": {"Fine"}})
+	if res.Status != http.StatusOK || strings.Contains(res.Body, "<html") || !strings.Contains(res.Body, "Fine") {
+		t.Fatalf("create by fetch = %d:\n%s", res.Status, res.Body)
+	}
+	if err := b.h.store.AddCondition(ctx, b.board.ID, store.ColumnCondition{ColumnID: b.cols[0].ID, Phase: rules.PhaseEnter, Kind: rules.HasEstimate}); err != nil {
+		t.Fatal(err)
+	}
+	res = b.member.SubmitFetch(b.path, b.path, url.Values{"op": {"create_card"}, "title": {"Refused"}})
+	if res.Status != http.StatusUnprocessableEntity || strings.Contains(res.Body, "<html") || !strings.Contains(res.Body, "data-board-alert") {
+		t.Fatalf("refused create by fetch = %d:\n%s", res.Status, res.Body)
+	}
+	res = b.member.SubmitFetch(b.path, b.path, url.Values{"op": {"create_card"}, "title": {""}})
+	if res.Status != http.StatusUnprocessableEntity || strings.Contains(res.Body, "<html") {
+		t.Fatalf("blank create by fetch = %d", res.Status)
 	}
 }

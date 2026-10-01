@@ -301,7 +301,8 @@
       "enter": "{column} kolonuna girerken kartın {condition} olmalı.",
       "exit": "{column} kolonundan çıkarken kartın {condition} olmalı.",
       "wip": "{column} kolonunda aynı anda en fazla {limit} kart olabilir.",
-      "person_wip": "Bir kişinin {columns} kolonlarında en fazla {limit} kartı olabilir."
+      "person_wip": "Bir kişinin {columns} kolonlarında en fazla {limit} kartı olabilir.",
+      "from_one": "{column} kolonuna yalnızca {sources} kolonundan gelinebilir."
     },
     "phrase": {
       "has_assignee": "atanan bir kişisi",

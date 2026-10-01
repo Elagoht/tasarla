@@ -301,7 +301,8 @@
       "enter": "A card entering {column} needs {condition}.",
       "exit": "A card leaving {column} needs {condition}.",
       "wip": "{column} holds at most {limit} cards at a time.",
-      "person_wip": "A person may have at most {limit} cards in {columns}."
+      "person_wip": "A person may have at most {limit} cards in {columns}.",
+      "from_one": "Cards may enter {column} only from {sources}."
     },
     "phrase": {
       "has_assignee": "an assignee",

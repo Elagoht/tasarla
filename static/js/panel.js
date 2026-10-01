@@ -16,9 +16,11 @@ function initPanel(panel) {
 
 // Saves go one at a time: each carries the card's version, which only the
 // answer to the one before brings. A field changed meanwhile waits its turn.
+// The save is sent here rather than through collage-live's form handling, so
+// that the queue moves on that save's own answer — not on a push that happens
+// to arrive while it is out — and the panel is held still until it lands.
 let inflight = null;
 const queue = [];
-let timer = 0;
 
 function save(form) {
   // A form changed again while its own save is out is sent again after it.
@@ -26,18 +28,36 @@ function save(form) {
     if (!queue.includes(form)) queue.push(form);
     return;
   }
-  inflight = form;
-  clearTimeout(timer);
-  // An answer identical to the one before puts nothing in and says nothing.
-  timer = setTimeout(next, 8000);
-  form.requestSubmit();
+  send(form);
 }
 
-function next() {
-  clearTimeout(timer);
-  inflight = null;
-  const form = queue.shift();
-  if (form && form.isConnected) save(form);
+async function send(form) {
+  const live = window.collageLive;
+  const panel = form.closest("#card-panel");
+  inflight = form;
+  live?.pause(panel);
+  try {
+    const res = await fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { "Collage-Fetch": "1", Accept: "text/html" },
+      credentials: "same-origin",
+    });
+    const destination = res.status === 204 && res.headers.get("Collage-Location");
+    if (destination) return location.assign(destination);
+    // 200: the panel as saved; 422: as it is, with why this field was refused.
+    if (res.ok || res.status === 422) live?.put(panel, await res.text());
+    else live?.refresh(panel);
+  } catch {
+    live?.refresh(panel);
+  } finally {
+    // The answer goes in here, and with it the version the next save carries;
+    // this form is no longer out, so its fields take what the answer says.
+    if (inflight === form) inflight = null;
+    live?.resume(panel);
+    const following = queue.shift();
+    if (following && following.isConnected) send(following);
+  }
 }
 
 // What the server answered is what a field shows, except the one being typed
@@ -46,7 +66,7 @@ function next() {
 // what the page now says.
 function syncFields(panel) {
   for (const form of panel.querySelectorAll("form[data-autosave]")) {
-    if (queue.includes(form)) continue;
+    if (form === inflight || queue.includes(form)) continue;
     for (const el of form.elements) {
       if (el === document.activeElement) continue;
       if (el instanceof HTMLSelectElement) {
@@ -136,19 +156,11 @@ document.addEventListener("collage:swap", (e) => {
     initPanel(panel);
     syncFields(panel);
     markSaved(panel);
-    next();
   }
-});
-
-// A save that failed outright leaves the panel as it was, marked stale.
-document.addEventListener("collage:stale", (e) => {
-  const panel = e.target;
-  if (panel instanceof HTMLElement && panel.id === "card-panel") next();
 });
 
 // A closed drawer takes its panel with it, and any save waiting for it.
 document.addEventListener("card:closed", () => {
-  clearTimeout(timer);
   inflight = null;
   queue.length = 0;
 });

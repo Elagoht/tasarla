@@ -264,7 +264,11 @@ func sentenceViews(rc *collage.RenderContext, ss []store.Sentence, cols []store.
 			if len(s.Columns) == 0 {
 				v.Text, v.Warning = i18n.T(rc, "settings.sentence.from_none", "column", col), true
 			} else {
-				v.Text = i18n.T(rc, "settings.sentence.from", "column", col, "sources", names(s.Columns))
+				key := "settings.sentence.from"
+				if len(s.Columns) == 1 {
+					key = "settings.sentence.from_one" // "kolonundan", not "kolonlarından"
+				}
+				v.Text = i18n.T(rc, key, "column", col, "sources", names(s.Columns))
 			}
 		case store.SentenceCondition:
 			kind := s.ConditionKind

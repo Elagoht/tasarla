@@ -231,7 +231,12 @@ func (h *handlers) boardPost(ctx context.Context, rc *collage.RenderContext) (*c
 func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, bc boardContext) (*collage.ActionResult, error) {
 	v.Field("title").Required().MaxLen(200)
 	if !v.Valid() {
-		return validate.Refuse(rc, v, rc.Page), nil
+		res := validate.Refuse(rc, v, rc.Page)
+		if isFetch(rc) {
+			// board.js sends the form: the columns, with the title and its error.
+			res.Page, res.Fragment = nil, h.columns
+		}
+		return res, nil
 	}
 	cols, err := h.store.Columns(ctx, bc.Board.ID)
 	if err != nil {
@@ -259,11 +264,19 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 	if msgs := violationMessages(rc, err); msgs != nil {
 		rc.Set(noticeKey, msgs)
 		res := collage.RenderPage(rc.Page)
+		if isFetch(rc) {
+			res = collage.RenderFragment(h.columns)
+		}
 		res.Status = http.StatusUnprocessableEntity
 		return res, nil
 	}
 	if err != nil {
 		return nil, err
+	}
+	if isFetch(rc) {
+		res := collage.RenderFragment(h.columns)
+		res.InvalidateTags = []string{boardTag(bc.Board.ID)}
+		return res, nil
 	}
 	res, err := h.redirectTo(rc, "board", "id", strconv.FormatInt(bc.Board.ID, 10))
 	if res != nil {

@@ -69,6 +69,42 @@ async function onDrop(evt) {
   }
 }
 
+// "Add card" is sent from here, and its answer — the columns — put in place.
+// A refused card keeps its form open with the title typed, under the reason;
+// a page load would lose both to the first live copy of the board.
+async function addCard(form) {
+  const column = form.querySelector('input[name="column"]')?.value;
+  const title = form.querySelector('textarea[name="title"]')?.value ?? "";
+  live()?.pause(board);
+  try {
+    const res = await fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { "Collage-Fetch": "1", Accept: "text/html" },
+      credentials: "same-origin",
+    });
+    if (res.ok || res.status === 422) {
+      live()?.put(board, await res.text());
+      live()?.resume(board);
+      const again = board.querySelector(`.add-card__form input[name="column"][value="${CSS.escape(column ?? "")}"]`)?.closest("details");
+      if (again) {
+        const area = again.querySelector("textarea");
+        again.open = true;
+        if (area) {
+          area.value = res.ok ? "" : title;
+          area.focus();
+        }
+      }
+      return;
+    }
+    live()?.resume(board);
+    live()?.refresh(board);
+  } catch {
+    live()?.resume(board);
+    live()?.refresh(board);
+  }
+}
+
 // A refused move is explained above the columns for a few seconds.
 function dismissAlerts() {
   for (const alert of board.querySelectorAll("[data-board-alert]")) {
@@ -80,6 +116,12 @@ function dismissAlerts() {
 }
 
 if (board) {
+  board.addEventListener("submit", (e) => {
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement) || !form.matches(".add-card__form")) return;
+    e.preventDefault();
+    addCard(form);
+  });
   board.addEventListener("collage:swap", () => {
     setupSortables();
     dismissAlerts();

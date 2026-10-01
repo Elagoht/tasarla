@@ -265,7 +265,9 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 		}
 	}
 	for _, m := range v.Members {
-		v.Handles = append(v.Handles, "@"+store.MentionHandle(m.User))
+		if m.User.ID != cc.User.ID { // no one mentions themselves
+			v.Handles = append(v.Handles, "@"+store.MentionHandle(m.User))
+		}
 	}
 	attachments, err := h.store.CardAttachments(ctx, card.ID)
 	if err != nil {
