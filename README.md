@@ -20,7 +20,8 @@ Birkaç takımın günlük iş takibi için kullandığı, kuralları board baş
   - Outbox üzerinden e-posta, alıcının dilinde.
   - Son tarih hatırlatmaları.
   - `/me/settings` üzerinden dil ve e-posta tercihleri.
-- **Dil:** TR + EN. Dil yalnızca URL'den belirlenir: `/…` varsayılan dil, `/en/…` İngilizce.
+- **Dil:** TR + EN. Dil yalnızca URL'den belirlenir: `/…` varsayılan dil, `/en/…` İngilizce. Saat dilimi `TIMEZONE` ile verilir.
+- **Filtre ve arama:** board'da metin, atanan kişi, etiket, öncelik ve son tarihe göre filtre; uymayan kartlar soluklaşır ve filtre canlı güncellemelerde korunur. `/search`, takımlardaki bütün kartlarda arar.
 
 ## Geliştirme
 
@@ -33,6 +34,7 @@ export KANBAN_TEST_DATABASE_URL='postgres://kanban:kanban@localhost:55432/kanban
 go test ./... -race                   # veritabanı testleri bu değişken yoksa atlanır
 ```
 
+- **PostgreSQL eklentisi:** migration 008, `pg_trgm`'i kurar (`CREATE EXTENSION`). `pg_trgm` güvenilir (trusted) bir eklentidir: veritabanının sahibi olan kullanıcı superuser olmadan kurabilir. Uygulamanın kullanıcısı veritabanının sahibi değilse eklentiyi bir kez elle kurun.
 - **Gerçek giriş yerelde denenemeyebilir.** Callback adresi IdP'de kayıtlı redirect URI'dir, `OIDC_REDIRECT_URL` ile verilir ve `BASE_URL` ile aynı origin'de olmalıdır. Kayıtlı adres `localhost` değilse gerçek giriş yerelde yapılamaz; testler sahte bir issuer kullanır (`internal/auth/authtest`).
 - **Çıkış:** sonrasında `<BASE_URL>/login` adresine dönülür.
 - **Migration'lar** binary'ye gömülüdür ve açılışta çalışır.
