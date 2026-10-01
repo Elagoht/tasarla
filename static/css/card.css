@@ -139,6 +139,8 @@ textarea.cardp__title:focus { outline: none; border-color: var(--accent); box-sh
 .completed-note > span:not(.completed-note__mark) { flex: 1; }
 .completed-note__mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ok); color: var(--sheet); flex: none; }
 .completed-note__mark .icon { width: 14px; height: 14px; }
+.completed-note__state { flex-basis: 100%; }
+.completed-note__state:empty { display: none; }
 
 /* An archived card: what it is, and the way back. */
 .archived-note { align-items: center; }

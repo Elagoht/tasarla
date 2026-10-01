@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"kanban/internal/rules"
+	"kanban/internal/store"
 )
 
 func TestTheArchiveListsAndRestoresCards(t *testing.T) {
@@ -104,17 +107,27 @@ func TestCompletingAndReopeningACard(t *testing.T) {
 	panel := b.member.Get(b.cardPath(c)).Body
 	mustContain(t, panel, "Tamamlandı", "Bitenlere git")
 	got, _ := b.h.store.Card(ctx, b.board.ID, c.ID)
+	// Reopening from the panel, refused by the column's rules, says why.
+	if err := b.h.store.AddCondition(ctx, b.board.ID, store.ColumnCondition{ColumnID: b.cols[1].ID, Phase: rules.PhaseEnter, Kind: rules.HasEstimate}); err != nil {
+		t.Fatal(err)
+	}
+	refused := b.member.SubmitFetch(b.cardPath(c), b.cardPath(c), url.Values{"op": {"move_to"}, "to_column": {id(b.cols[1].ID)},
+		"expected_from": {id(b.cols[2].ID)}, "expected_version": {strconv.Itoa(got.Version)}})
+	if refused.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("refused reopen = %d", refused.Status)
+	}
+	mustContain(t, refused.Body, "Doing kolonuna girmek için kartın bir tahmini olmalı.")
 	// Reopening into a done column is refused; into another one it goes back.
 	if res := b.member.Submit(b.path+"/done", b.path+"/done", url.Values{"op": {"reopen"}, "card": {id(c.ID)},
 		"to_column": {id(b.cols[2].ID)}, "expected_version": {strconv.Itoa(got.Version)}}); res.Status != http.StatusBadRequest {
 		t.Errorf("reopen into done = %d, want 400", res.Status)
 	}
 	res := b.member.Submit(b.path+"/done", b.path+"/done", url.Values{"op": {"reopen"}, "card": {id(c.ID)},
-		"to_column": {id(b.cols[1].ID)}, "expected_version": {strconv.Itoa(got.Version)}})
+		"to_column": {id(b.cols[0].ID)}, "expected_version": {strconv.Itoa(got.Version)}})
 	if res.Status != http.StatusSeeOther {
 		t.Fatalf("reopen = %d", res.Status)
 	}
-	if got, _ := b.h.store.Card(ctx, b.board.ID, c.ID); got.CompletedAt != nil || got.ColumnID != b.cols[1].ID {
+	if got, _ := b.h.store.Card(ctx, b.board.ID, c.ID); got.CompletedAt != nil || got.ColumnID != b.cols[0].ID {
 		t.Fatalf("after reopen: %+v", got)
 	}
 	mustContain(t, b.member.Get(b.path).Body, "Ship it")

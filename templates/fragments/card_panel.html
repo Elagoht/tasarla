@@ -54,6 +54,8 @@
       <button type="submit" class="btn btn--secondary btn--sm">{{template "icon" "arrow-left"}} {{t "done.reopen"}}</button>
     </form>
     {{end}}
+    {{/* Why a reopening was refused: it moves the card, so its notices are the column's. */}}
+    <div class="completed-note__state">{{template "field-state" (.Field "column")}}</div>
   </div>
   {{end}}
   {{if .OpenBlockers}}<a class="blocked-banner" href="#card-deps" data-tab-link="details">{{template "icon" "lock"}}<span><strong>{{t "card.blocked_title"}}</strong> {{tn "card.blocked_by" .OpenBlockers}}</span></a>{{end}}
