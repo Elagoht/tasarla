@@ -122,7 +122,7 @@
     --accent-strong: #a49cff;
     --accent-soft: #27245a;
     --accent-line: #433e8f;
-    --on-accent: #ffffff;
+    --on-accent: #0b0a16; /* dark text on the light accent fill: white would be 3.7:1 */
     --danger: #ff8a8f;
     --danger-strong: #ffb0b3;
     --danger-soft: #3a1c27;
