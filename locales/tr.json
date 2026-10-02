@@ -630,6 +630,7 @@
   },
   "markdown": {
     "hint": "Markdown desteklenir",
+    "code": "kod",
     "bold": "kalın",
     "italic": "eğik",
     "strike": "üstü çizili",

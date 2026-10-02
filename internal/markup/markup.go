@@ -66,6 +66,11 @@ func onlyTaskCheckboxes(s string) string {
 	})
 }
 
+// clean is the last step of Markdown: the policy, then the checkbox rule.
+func clean(rendered []byte) string {
+	return onlyTaskCheckboxes(string(policy.SanitizeBytes(rendered)))
+}
+
 // Markdown renders s, GitHub-flavoured, line breaks kept and raw HTML left
 // out, and keeps only the elements and links a card may show.
 func Markdown(s string) template.HTML {
@@ -73,5 +78,5 @@ func Markdown(s string) template.HTML {
 	if err := md.Convert([]byte(s), &buf); err != nil {
 		return template.HTML(template.HTMLEscapeString(s))
 	}
-	return template.HTML(policy.SanitizeBytes(buf.Bytes()))
+	return template.HTML(clean(buf.Bytes()))
 }
