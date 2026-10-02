@@ -581,5 +581,9 @@
       "11": "Nov",
       "12": "Dec"
     }
+  },
+  "calendar": {
+    "feed_me": "Kanban — assigned to me",
+    "feed_board": "Kanban — {board}"
   }
 }

@@ -581,5 +581,9 @@
       "11": "Kas",
       "12": "Ara"
     }
+  },
+  "calendar": {
+    "feed_me": "Kanban — bana atananlar",
+    "feed_board": "Kanban — {board}"
   }
 }
