@@ -12,6 +12,7 @@ import (
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
@@ -30,10 +31,68 @@ func (shiftHeadings) Transform(doc *ast.Document, _ text.Reader, _ parser.Contex
 	})
 }
 
+// literalHTML renders raw HTML, and images, as the text the user typed:
+// goldmark without WithUnsafe would drop that text with the markup. Everything
+// written here is escaped, so none of it can become an element.
+type literalHTML struct{}
+
+func (literalHTML) RegisterFuncs(r renderer.NodeRendererFuncRegisterer) {
+	r.Register(ast.KindRawHTML, renderRawHTML)
+	r.Register(ast.KindHTMLBlock, renderHTMLBlock)
+	r.Register(ast.KindImage, renderImage)
+}
+
+func renderRawHTML(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+	if !entering {
+		return ast.WalkSkipChildren, nil
+	}
+	raw := n.(*ast.RawHTML)
+	for i := 0; i < raw.Segments.Len(); i++ {
+		seg := raw.Segments.At(i)
+		_, _ = w.Write(util.EscapeHTML(seg.Value(source)))
+	}
+	return ast.WalkSkipChildren, nil
+}
+
+// renderHTMLBlock shows an HTML block as one paragraph of escaped text, with
+// its line breaks kept.
+func renderHTMLBlock(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+	if !entering {
+		return ast.WalkContinue, nil
+	}
+	b := n.(*ast.HTMLBlock)
+	var lines [][]byte
+	for i := 0; i < b.Lines().Len(); i++ {
+		seg := b.Lines().At(i)
+		lines = append(lines, seg.Value(source))
+	}
+	if b.HasClosure() {
+		lines = append(lines, b.ClosureLine.Value(source))
+	}
+	_, _ = w.WriteString("<p>")
+	for i, line := range lines {
+		if i > 0 {
+			_, _ = w.WriteString("<br>\n")
+		}
+		_, _ = w.Write(util.EscapeHTML(bytes.TrimRight(line, "\r\n")))
+	}
+	_, _ = w.WriteString("</p>\n")
+	return ast.WalkContinue, nil
+}
+
+// renderImage shows an image as its alt text: card text never loads pictures.
+// The alt text is the node's children, which render as ordinary inlines.
+func renderImage(_ util.BufWriter, _ []byte, _ ast.Node, _ bool) (ast.WalkStatus, error) {
+	return ast.WalkContinue, nil
+}
+
 var md = goldmark.New(
 	goldmark.WithExtensions(extension.GFM),
 	goldmark.WithParserOptions(parser.WithASTTransformers(util.Prioritized(shiftHeadings{}, 100))),
-	goldmark.WithRendererOptions(html.WithHardWraps()),
+	goldmark.WithRendererOptions(
+		html.WithHardWraps(),
+		renderer.WithNodeRenderers(util.Prioritized(literalHTML{}, 100)),
+	),
 )
 
 var policy = func() *bluemonday.Policy {
@@ -71,8 +130,8 @@ func clean(rendered []byte) string {
 	return onlyTaskCheckboxes(string(policy.SanitizeBytes(rendered)))
 }
 
-// Markdown renders s, GitHub-flavoured, line breaks kept and raw HTML left
-// out, and keeps only the elements and links a card may show.
+// Markdown renders s, GitHub-flavoured, line breaks kept and raw HTML shown
+// as text, and keeps only the elements and links a card may show.
 func Markdown(s string) template.HTML {
 	var buf bytes.Buffer
 	if err := md.Convert([]byte(s), &buf); err != nil {

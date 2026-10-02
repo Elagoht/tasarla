@@ -50,6 +50,33 @@ var unsafeOutput = map[string]*regexp.Regexp{
 	"a dangerous URL in href": regexp.MustCompile(`(href|src)\s*=\s*"?\s*(javascript|data|vbscript):`),
 }
 
+// Raw HTML is never markup, but the text the user typed stays visible.
+func TestMarkdownShowsRawHTMLAsText(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want []string
+	}{
+		{"inline generic", "Use Array<string> here", []string{"Use Array&lt;string&gt; here"}},
+		{"inline br", "the <br> tag breaks lines", []string{"the &lt;br&gt; tag breaks lines"}},
+		{"block div", "<div>\nimportant note\n</div>\nafter", []string{"&lt;div&gt;<br>", "important note<br>", "&lt;/div&gt;", "after"}},
+		{"comment", "<!-- c -->x", []string{"&lt;!-- c --&gt;x"}},
+		{"unclosed details", "<details>\nhidden reason\n\nnext para", []string{"&lt;details&gt;<br>", "hidden reason", "<p>next para</p>"}},
+		{"image alt", "![logo](https://x.io/a.png)", []string{"<p>logo</p>"}},
+	}
+	for _, c := range cases {
+		out := string(Markdown(c.in))
+		for _, w := range c.want {
+			if !strings.Contains(out, w) {
+				t.Errorf("%s: %q → %q, want it to contain %q", c.name, c.in, out, w)
+			}
+		}
+		if strings.Contains(out, "<img") || strings.Contains(out, "<div") || strings.Contains(out, "<details") || strings.Contains(out, "<!--") {
+			t.Errorf("%s: %q → %q became markup", c.name, c.in, out)
+		}
+	}
+}
+
 func TestMarkdownRenders(t *testing.T) {
 	cases := []struct {
 		in   string
