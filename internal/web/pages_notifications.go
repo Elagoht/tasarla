@@ -129,9 +129,63 @@ func (h *handlers) notificationsPost(ctx context.Context, rc *collage.RenderCont
 }
 
 type meSettingsView struct {
-	Locale  string
-	Locales []string
-	Prefs   []prefView
+	Locale      string
+	Locales     []string
+	Prefs       []prefView
+	HasCalendar bool
+	// Calendar holds the addresses just made; it is set only in the answer
+	// to creating or resetting, since the token is not kept in the clear.
+	Calendar *calendarLinks
+	// CalendarBoards are the endings (boards/{id}.ics) of the user's boards,
+	// shown while a token exists so a later-joined board can be subscribed.
+	CalendarBoards []calendarBoardLink
+}
+
+const calendarKey = "calendar"
+
+type calendarLinks struct {
+	Me     string
+	Boards []calendarBoardLink
+}
+
+type calendarBoardLink struct {
+	Name, URL string
+}
+
+// calendarLinks builds the feed addresses for a fresh token: one for the
+// cards assigned to the user and one per board of their teams.
+func (h *handlers) calendarLinks(ctx context.Context, userID int64, token string) (*calendarLinks, error) {
+	base := h.baseURL + "/cal/" + token
+	links := &calendarLinks{Me: base + "/me.ics"}
+	boards, err := h.userBoards(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	for _, b := range boards {
+		links.Boards = append(links.Boards, calendarBoardLink{Name: b.Name, URL: base + "/" + boardFeedEnding(b.ID)})
+	}
+	return links, nil
+}
+
+func boardFeedEnding(boardID int64) string {
+	return "boards/" + strconv.FormatInt(boardID, 10) + ".ics"
+}
+
+// userBoards are the boards, not archived, of every team the user is in.
+func (h *handlers) userBoards(ctx context.Context, userID int64) ([]store.Board, error) {
+	teams, err := h.store.TeamsOf(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	var out []store.Board
+	for _, t := range teams {
+		boards, err := h.store.BoardsOfTeam(ctx, t.Team.ID)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, boards...)
+	}
+	return out, nil
 }
 
 type prefView struct {
@@ -164,6 +218,21 @@ func (h *handlers) loadMeSettings(ctx context.Context, rc *collage.RenderContext
 	for _, k := range store.NotifyKinds {
 		view.Prefs = append(view.Prefs, prefView{Kind: k, Email: prefs[k]})
 	}
+	if view.HasCalendar, err = h.store.HasCalendarToken(ctx, user.ID); err != nil {
+		return meSettingsView{}, err
+	}
+	if view.HasCalendar {
+		boards, err := h.userBoards(ctx, user.ID)
+		if err != nil {
+			return meSettingsView{}, err
+		}
+		for _, b := range boards {
+			view.CalendarBoards = append(view.CalendarBoards, calendarBoardLink{Name: b.Name, URL: boardFeedEnding(b.ID)})
+		}
+	}
+	if l, ok := collage.Get[*calendarLinks](rc, calendarKey); ok {
+		view.Calendar = l
+	}
 	return view, nil
 }
 
@@ -176,7 +245,29 @@ func (h *handlers) meSettingsPost(ctx context.Context, rc *collage.RenderContext
 	if badText(rc) {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
-	if v.Value("op") != "save" || !slices.Contains(config.Locales, v.Value("locale")) {
+	switch v.Value("op") {
+	case "calendar_create", "calendar_reset":
+		token, err := h.store.NewCalendarToken(ctx, user.ID)
+		if err != nil {
+			return nil, err
+		}
+		links, err := h.calendarLinks(ctx, user.ID, token)
+		if err != nil {
+			return nil, err
+		}
+		rc.Set(calendarKey, links)
+		return collage.RenderPage(rc.Page), nil
+	case "calendar_clear":
+		if err := h.store.ClearCalendarToken(ctx, user.ID); err != nil {
+			return nil, err
+		}
+		flash.Add(rc, flash.Success, i18n.T(rc, "calendar.cleared"))
+		return h.redirectTo(rc, "me-settings")
+	case "save":
+	default:
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	if !slices.Contains(config.Locales, v.Value("locale")) {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
 	prefs := map[string]bool{}

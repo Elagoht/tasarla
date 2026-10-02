@@ -7,7 +7,7 @@ require (
 	github.com/Elagoht/collage-flash v0.1.2
 	github.com/Elagoht/collage-i18n v0.2.1
 	github.com/Elagoht/collage-live v0.4.0
-	github.com/Elagoht/collage-secure v0.1.4
+	github.com/Elagoht/collage-secure v0.1.5
 	github.com/Elagoht/collage-session v0.2.1
 	github.com/Elagoht/collage-validate v0.1.3
 	github.com/coreos/go-oidc/v3 v3.21.0

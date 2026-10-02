@@ -23,8 +23,11 @@ Birkaç takımın günlük iş takibi için kullandığı, kuralları board baş
   - Outbox üzerinden e-posta, alıcının dilinde.
   - Son tarih hatırlatmaları.
   - `/me/settings` üzerinden dil ve e-posta tercihleri.
+  - **Takvim:** `/me/settings` üzerinden kişiye özel bir adresle bana atanan kartlar ya da bir board'un kartları takvim uygulamasına (iCal) eklenir; adres sıfırlanabilir.
 - **Dil:** TR + EN. Dil yalnızca URL'den belirlenir: `/…` varsayılan dil, `/en/…` İngilizce. Saat dilimi `TIMEZONE` ile verilir.
 - **Filtre ve arama:** board'da metin, atanan kişi, etiket, öncelik ve son tarihe göre filtre; uymayan kartlar soluklaşır ve filtre canlı güncellemelerde korunur. `/search`, takımlardaki bütün kartlarda arar.
+
+Takvim adresleri (`/cal/…`) oturum gerektirmez; kimliği adresteki token belirler. Ters vekil ya da erişim kuralları `/cal/` yolunu dışarıya açık bırakmalıdır.
 
 ## Geliştirme
 

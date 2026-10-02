@@ -8,8 +8,8 @@ github.com/Elagoht/collage-i18n v0.2.1 h1:xVxsHZSycPfFawbtIf1qrmJxRyI2SyP2YGps/s
 github.com/Elagoht/collage-i18n v0.2.1/go.mod h1:tiIpGgAkJVWlYSlzPm40ZNkAOKbYqCKQff3g3JOR8pU=
 github.com/Elagoht/collage-live v0.4.0 h1:B4BCMjtR4lIeCDIvq4XIj+2oXtMXoE19VZJTWTS3cUs=
 github.com/Elagoht/collage-live v0.4.0/go.mod h1:K7NfafIaDafSlVYIcOadONW4shPJ37JErLlUMBK4Ics=
-github.com/Elagoht/collage-secure v0.1.4 h1:9PRh/ie9hoFkhQ+fNrs2f2OM3whbFZK8/Z0U+4LcRHA=
-github.com/Elagoht/collage-secure v0.1.4/go.mod h1:yBvX0UTWL8/viLwI3sD1D3w/cWhkFO2oZe8UrfJXuNM=
+github.com/Elagoht/collage-secure v0.1.5 h1:kW4t0VxXwIFX7mJEYrzxbEdnQny8mQw982bgXC1bFPw=
+github.com/Elagoht/collage-secure v0.1.5/go.mod h1:yBvX0UTWL8/viLwI3sD1D3w/cWhkFO2oZe8UrfJXuNM=
 github.com/Elagoht/collage-session v0.2.1 h1:+GXEFXT0idJPUGZZgL4R1SWX2AvbKBR5ftdCuhowvU8=
 github.com/Elagoht/collage-session v0.2.1/go.mod h1:wNKVFR2d5EVhQPm6IrwhdpNIdwa6vRYwhZGoG8KshoU=
 github.com/Elagoht/collage-validate v0.1.3 h1:SmskwVWLid47Hib2PH7/+t9FFr2q/apUt9Iy/R3k47Y=
