@@ -1,5 +1,9 @@
 # 005 — collage-secure: a CSP strips conditional headers from every request, not only HTML pages
 
+> **Resolved in collage-secure v0.1.5** (2026-10-02): only `If-None-Match: *` is dropped;
+> every other conditional request reaches its handler as sent. The app is on v0.1.5 and
+> `TestCalendarFeeds` gets its `304`.
+
 - **Type:** bug (the code goes against a documented statement)
 - **Packages:** `github.com/Elagoht/collage-secure` v0.1.4, with `github.com/Elagoht/collage` v0.39.2
 - **Found while:** Kanban, Phase 3 (calendar feeds). `/cal/{token}/me.ics` is served by a handler registered with `app.Handle`. It answers `text/calendar` with an `ETag` and should answer `If-None-Match` with `304`, so that calendar apps polling every few minutes do not download the feed again each time.
