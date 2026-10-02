@@ -38,8 +38,16 @@ func TestEveryBlueprintBuilds(t *testing.T) {
 			tpls, _ := s.Templates(ctx, b.ID)
 			rules, _ := s.BoardRules(ctx, b.ID)
 			c := bp.Counts()
+			built, err := s.Board(ctx, b.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rulesBuilt := len(rules.Permissions) + len(rules.Conditions)
+			if built.PersonWIPLimit != nil {
+				rulesBuilt++
+			}
 			if len(cols) != c.Columns || len(labels) != c.Labels || len(tpls) != c.Templates ||
-				len(rules.Permissions)+len(rules.Conditions) > c.Rules {
+				rulesBuilt != c.Rules {
 				t.Errorf("%s/%s: built %d cols %d labels %d templates %+v, want %+v", locale, bp.Key, len(cols), len(labels), len(tpls), rules, c)
 			}
 			for _, tp := range tpls {

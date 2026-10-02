@@ -185,6 +185,24 @@ func TestTrim(t *testing.T) {
 		}
 	}
 
+	person := func(p store.BoardPlan) []string {
+		var names []string
+		for _, c := range p.Columns {
+			if c.CountsPersonWIP {
+				names = append(names, c.Name)
+			}
+		}
+		return names
+	}
+	sw, _ := blueprint.Find("software")
+	swFull := blueprint.Render(sw, strict(t, "en"))
+	if got := person(blueprint.Trim(swFull, blueprint.Options{WIP: true})); len(got) != 0 {
+		t.Fatalf("person-WIP columns %v without the rules", got)
+	}
+	if got := person(blueprint.Trim(swFull, blueprint.AllOptions())); len(got) != 2 {
+		t.Fatal("all options lost the person-WIP columns")
+	}
+
 	if !slices.EqualFunc(blueprint.Trim(full, blueprint.AllOptions()).Columns, full.Columns, func(a, b store.PlanColumn) bool {
 		return a.Name == b.Name && (a.WIP == nil) == (b.WIP == nil)
 	}) {

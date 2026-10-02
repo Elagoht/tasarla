@@ -8,6 +8,9 @@ if (form) {
   const boxes = [...form.querySelectorAll('input[type="checkbox"][name="include"]')];
   const box = (name) => boxes.find((b) => b.value === name);
 
+  // What the recurring box held before card templates were unticked.
+  let recurringWas = null;
+
   const update = () => {
     const chosen = form.querySelector('input[name="blueprint"]:checked');
     const has = new Set((chosen?.dataset.has ?? "").split(" ").filter(Boolean));
@@ -16,7 +19,13 @@ if (form) {
     const recurring = box("recurring");
     if (templates && recurring && has.has("recurring")) {
       recurring.disabled = !templates.checked;
-      if (!templates.checked) recurring.checked = false;
+      if (!templates.checked) {
+        if (recurringWas === null) recurringWas = recurring.checked;
+        recurring.checked = false;
+      } else if (recurringWas !== null) {
+        recurring.checked = recurringWas;
+        recurringWas = null;
+      }
     }
   };
 

@@ -34,13 +34,12 @@
         <input class="input" id="board-name" name="board_name" value="{{fieldValue "board_name"}}" required maxlength="100">
         {{with fieldError "board_name"}}<span class="field__error">{{.}}</span>{{end}}
       </label>
-      {{$chosen := or (fieldValue "blueprint") "simple"}}
       <fieldset class="field">
         <legend class="field__label">{{t "board.blueprint"}}</legend>
         <div class="blueprints">
           {{range .Blueprints}}
           <label class="blueprint">
-            <input type="radio" name="blueprint" value="{{.Key}}"{{if eq .Key $chosen}} checked{{end}} data-has="{{.Has}}">
+            <input type="radio" name="blueprint" value="{{.Key}}"{{if .Checked}} checked{{end}} data-has="{{.Has}}">
             <span class="blueprint__name">{{.Name}}</span>
             <span class="blueprint__summary">{{.Summary}}</span>
             <span class="blueprint__columns">{{.Columns}}</span>

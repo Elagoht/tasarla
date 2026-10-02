@@ -14,9 +14,19 @@ type blueprintCard struct {
 	Key, Name, Summary, Columns string
 	Counts                      blueprint.Counts
 	Has                         string // the parts it holds, for blueprint-form.js
+	Checked                     bool   // the one the form comes back with
 }
 
 func blueprintCards(rc *collage.RenderContext) []blueprintCard {
+	// A refused form comes back with what was sent; an unknown key falls back
+	// to the default so one card is always checked.
+	chosen := ""
+	if rc.Request != nil && rc.Request.PostForm != nil {
+		chosen = rc.Request.PostForm.Get("blueprint")
+	}
+	if _, ok := blueprint.Find(chosen); !ok {
+		chosen = blueprint.Default
+	}
 	var out []blueprintCard
 	for _, bp := range blueprint.All() {
 		keys := bp.ColumnKeys()
@@ -35,7 +45,7 @@ func blueprintCards(rc *collage.RenderContext) []blueprintCard {
 			}
 		}
 		out = append(out, blueprintCard{Key: bp.Key, Name: i18n.T(rc, bp.NameKey()), Summary: i18n.T(rc, bp.SummaryKey()),
-			Columns: strings.Join(names, " → "), Counts: bp.Counts(), Has: strings.Join(has, " ")})
+			Columns: strings.Join(names, " → "), Counts: bp.Counts(), Has: strings.Join(has, " "), Checked: bp.Key == chosen})
 	}
 	return out
 }

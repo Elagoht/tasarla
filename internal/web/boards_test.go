@@ -254,6 +254,24 @@ func TestCreateBoardFromBlueprintInEnglish(t *testing.T) {
 			t.Errorf("an English board shows %q", bad)
 		}
 	}
+	templates := lead.Get(res.Location() + "/settings?tab=templates").Body
+	labels := lead.Get(res.Location() + "/settings?tab=labels").Body
+	mustContain(t, templates, "Bug report")
+	mustContain(t, labels, "Critical")
+	for _, bad := range []string{"Hata raporu", "Kritik"} {
+		if strings.Contains(templates, bad) || strings.Contains(labels, bad) {
+			t.Errorf("an English board shows %q in its labels or templates", bad)
+		}
+	}
+}
+
+// A blueprint value nobody knows comes back as the simple card, not as none.
+func TestBoardFormUnknownBlueprintFallsBack(t *testing.T) {
+	h := newHarness(t, "")
+	lead := h.signedIn("lead", "lead@example.com")
+	path := teamWith(t, h, "lead@example.com", "")
+	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"Fine"}, "blueprint": {"kanban-pro"}})
+	mustContain(t, res.Body, `name="blueprint" value="simple" checked`)
 }
 
 // Unticked boxes are not sent; include_present says the form had them.

@@ -81,6 +81,11 @@ func Trim(p store.BoardPlan, o Options) store.BoardPlan {
 			out.PersonWIP = p.PersonWIP
 		}
 	}
+	if out.PersonWIP == nil {
+		for i := range out.Columns {
+			out.Columns[i].CountsPersonWIP = false
+		}
+	}
 	return out
 }
 
