@@ -669,5 +669,233 @@
     "4": "Cum",
     "5": "Cmt",
     "6": "Paz"
+  },
+  "blueprints": {
+    "simple": {
+      "name": "Basit",
+      "summary": "Üç kolonlu, kuralsız düz bir board.",
+      "columns": {
+        "todo": "Yapılacak",
+        "doing": "Yapılıyor",
+        "done": "Bitti"
+      }
+    },
+    "scrum": {
+      "name": "Scrum",
+      "summary": "Backlog'dan sprinte, incelemeden bitişe; kullanıcı hikâyeleri ve haftalık retrospektifle.",
+      "columns": {
+        "backlog": "Backlog",
+        "sprint": "Sprint",
+        "doing": "Yapılıyor",
+        "review": "İncelemede",
+        "done": "Bitti"
+      },
+      "labels": {
+        "story": "Hikâye",
+        "bug": "Hata",
+        "debt": "Teknik borç",
+        "research": "Araştırma"
+      },
+      "templates": {
+        "story": {
+          "name": "Kullanıcı hikâyesi",
+          "title": "Yeni kullanıcı hikâyesi",
+          "description": "**Hikâye**\n[rol] olarak [ne] istiyorum, böylece [neden].\n\n**Kabul kriterleri**\nAşağıdaki kontrol listesinde.",
+          "checklist": {
+            "1": "Kabul kriteri 1",
+            "2": "Kabul kriteri 2",
+            "3": "Testler yazıldı"
+          }
+        },
+        "bug": {
+          "name": "Hata",
+          "title": "Yeni hata",
+          "description": "**Adımlar**\n\n**Beklenen**\n\n**Gerçekleşen**",
+          "checklist": {
+            "1": "Yeniden üretildi",
+            "2": "Düzeltildi",
+            "3": "Test eklendi"
+          }
+        },
+        "retro": {
+          "name": "Haftalık retrospektif",
+          "title": "Retrospektif",
+          "description": "**İyi gidenler**\n\n**Geliştirilecekler**\n\n**Aksiyonlar**",
+          "checklist": {
+            "1": "Önceki aksiyonlar gözden geçirildi",
+            "2": "Notlar toplandı",
+            "3": "Aksiyonlar atandı"
+          }
+        }
+      }
+    },
+    "bugs": {
+      "name": "Hata takibi",
+      "summary": "Bildirilen hatalar önceliklendirilir, düzeltilir ve test edilir; kapatmayı lider yapar.",
+      "columns": {
+        "new": "Yeni",
+        "triaged": "Önceliklendirildi",
+        "fixing": "Düzeltiliyor",
+        "testing": "Test ediliyor",
+        "closed": "Kapandı"
+      },
+      "labels": {
+        "critical": "Kritik",
+        "regression": "Regresyon",
+        "ui": "Arayüz",
+        "server": "Sunucu"
+      },
+      "templates": {
+        "report": {
+          "name": "Hata raporu",
+          "title": "Yeni hata raporu",
+          "description": "**Adımlar**\n\n**Beklenen**\n\n**Gerçekleşen**\n\n**Ortam**\nTarayıcı, sürüm, cihaz",
+          "checklist": {
+            "1": "Yeniden üretildi",
+            "2": "Kök neden bulundu",
+            "3": "Düzeltme test edildi"
+          }
+        }
+      }
+    },
+    "software": {
+      "name": "Yazılım geliştirme",
+      "summary": "Hazır işler geliştirilir, kod incelemesinden ve testten geçip yayına çıkar.",
+      "columns": {
+        "backlog": "Backlog",
+        "ready": "Hazır",
+        "dev": "Geliştirme",
+        "review": "Kod incelemesi",
+        "test": "Test",
+        "live": "Yayında"
+      },
+      "labels": {
+        "feature": "Özellik",
+        "improvement": "İyileştirme",
+        "infra": "Altyapı"
+      },
+      "templates": {
+        "feature": {
+          "name": "Özellik",
+          "title": "Yeni özellik",
+          "description": "**Amaç**\n\n**Kapsam**\n\n**Kapsam dışı**",
+          "checklist": {
+            "1": "Tasarım onaylandı",
+            "2": "Kod yazıldı",
+            "3": "Kod incelendi",
+            "4": "Belgelendi"
+          }
+        },
+        "task": {
+          "name": "Teknik görev",
+          "title": "Yeni teknik görev",
+          "description": "**Ne**\n\n**Neden**",
+          "checklist": {
+            "1": "Yapıldı",
+            "2": "İncelendi",
+            "3": "Yayına alındı"
+          }
+        }
+      }
+    },
+    "content": {
+      "name": "İçerik takvimi",
+      "summary": "Fikirler yazılır, editörden geçer, tarihlenir ve yayımlanır.",
+      "columns": {
+        "ideas": "Fikirler",
+        "writing": "Yazılıyor",
+        "editing": "Editörde",
+        "scheduled": "Planlandı",
+        "published": "Yayında"
+      },
+      "labels": {
+        "blog": "Blog",
+        "social": "Sosyal medya",
+        "newsletter": "Bülten",
+        "video": "Video"
+      },
+      "templates": {
+        "blog": {
+          "name": "Blog yazısı",
+          "title": "Yeni blog yazısı",
+          "description": "**Konu**\n\n**Hedef okur**\n\n**Anahtar kelimeler**",
+          "checklist": {
+            "1": "Taslak",
+            "2": "Görseller",
+            "3": "SEO",
+            "4": "Yayın"
+          }
+        },
+        "newsletter": {
+          "name": "Haftalık bülten",
+          "title": "Haftalık bülten",
+          "description": "**Bu haftanın konuları**",
+          "checklist": {
+            "1": "İçerik seçildi",
+            "2": "Yazıldı",
+            "3": "Deneme gönderildi",
+            "4": "Gönderildi"
+          }
+        }
+      }
+    },
+    "hiring": {
+      "name": "İşe alım",
+      "summary": "Adaylar başvurudan teklife ilerler; teklif aşamasına adayı lider taşır.",
+      "columns": {
+        "applied": "Başvurular",
+        "screen": "Ön görüşme",
+        "interview": "Teknik mülakat",
+        "offer": "Teklif",
+        "hired": "İşe alındı"
+      },
+      "labels": {
+        "frontend": "Ön yüz",
+        "backend": "Arka yüz",
+        "design": "Tasarım",
+        "intern": "Stajyer"
+      },
+      "templates": {
+        "candidate": {
+          "name": "Aday",
+          "title": "Yeni aday",
+          "description": "**Pozisyon**\n\n**CV**\n\n**Görüşme notları**",
+          "checklist": {
+            "1": "CV incelendi",
+            "2": "Ön görüşme yapıldı",
+            "3": "Teknik mülakat yapıldı",
+            "4": "Referanslar arandı"
+          }
+        }
+      }
+    },
+    "support": {
+      "name": "Destek talepleri",
+      "summary": "Talepler incelenir, gerekirse yanıt beklenir ve çözülür.",
+      "columns": {
+        "new": "Yeni",
+        "investigating": "İnceleniyor",
+        "waiting": "Yanıt bekleniyor",
+        "solved": "Çözüldü"
+      },
+      "labels": {
+        "urgent": "Acil",
+        "billing": "Fatura",
+        "account": "Hesap",
+        "bug": "Hata"
+      },
+      "templates": {
+        "ticket": {
+          "name": "Destek talebi",
+          "title": "Yeni destek talebi",
+          "description": "**Talep eden**\n\n**Sorun**\n\n**Yapılanlar**",
+          "checklist": {
+            "1": "Talep anlaşıldı",
+            "2": "Yanıt verildi",
+            "3": "Çözüm doğrulandı"
+          }
+        }
+      }
+    }
   }
 }

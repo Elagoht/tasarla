@@ -669,5 +669,233 @@
     "4": "Fri",
     "5": "Sat",
     "6": "Sun"
+  },
+  "blueprints": {
+    "simple": {
+      "name": "Simple",
+      "summary": "A plain board with three columns and no rules.",
+      "columns": {
+        "todo": "To do",
+        "doing": "In progress",
+        "done": "Done"
+      }
+    },
+    "scrum": {
+      "name": "Scrum",
+      "summary": "From backlog to sprint, from review to done; with user stories and a weekly retrospective.",
+      "columns": {
+        "backlog": "Backlog",
+        "sprint": "Sprint",
+        "doing": "In progress",
+        "review": "In review",
+        "done": "Done"
+      },
+      "labels": {
+        "story": "Story",
+        "bug": "Bug",
+        "debt": "Tech debt",
+        "research": "Research"
+      },
+      "templates": {
+        "story": {
+          "name": "User story",
+          "title": "New user story",
+          "description": "**Story**\nAs a [role], I want [what], so that [why].\n\n**Acceptance criteria**\nIn the checklist below.",
+          "checklist": {
+            "1": "Acceptance criterion 1",
+            "2": "Acceptance criterion 2",
+            "3": "Tests written"
+          }
+        },
+        "bug": {
+          "name": "Bug",
+          "title": "New bug",
+          "description": "**Steps**\n\n**Expected**\n\n**Actual**",
+          "checklist": {
+            "1": "Reproduced",
+            "2": "Fixed",
+            "3": "Test added"
+          }
+        },
+        "retro": {
+          "name": "Weekly retrospective",
+          "title": "Retrospective",
+          "description": "**What went well**\n\n**What to improve**\n\n**Actions**",
+          "checklist": {
+            "1": "Last actions reviewed",
+            "2": "Notes collected",
+            "3": "Actions assigned"
+          }
+        }
+      }
+    },
+    "bugs": {
+      "name": "Bug tracking",
+      "summary": "Reported bugs are triaged, fixed and tested; the lead closes them.",
+      "columns": {
+        "new": "New",
+        "triaged": "Triaged",
+        "fixing": "Fixing",
+        "testing": "Testing",
+        "closed": "Closed"
+      },
+      "labels": {
+        "critical": "Critical",
+        "regression": "Regression",
+        "ui": "UI",
+        "server": "Server"
+      },
+      "templates": {
+        "report": {
+          "name": "Bug report",
+          "title": "New bug report",
+          "description": "**Steps**\n\n**Expected**\n\n**Actual**\n\n**Environment**\nBrowser, version, device",
+          "checklist": {
+            "1": "Reproduced",
+            "2": "Root cause found",
+            "3": "Fix tested"
+          }
+        }
+      }
+    },
+    "software": {
+      "name": "Software development",
+      "summary": "Ready work is built, passes code review and testing, and ships.",
+      "columns": {
+        "backlog": "Backlog",
+        "ready": "Ready",
+        "dev": "Development",
+        "review": "Code review",
+        "test": "Testing",
+        "live": "Live"
+      },
+      "labels": {
+        "feature": "Feature",
+        "improvement": "Improvement",
+        "infra": "Infrastructure"
+      },
+      "templates": {
+        "feature": {
+          "name": "Feature",
+          "title": "New feature",
+          "description": "**Goal**\n\n**Scope**\n\n**Out of scope**",
+          "checklist": {
+            "1": "Design approved",
+            "2": "Code written",
+            "3": "Code reviewed",
+            "4": "Documented"
+          }
+        },
+        "task": {
+          "name": "Technical task",
+          "title": "New technical task",
+          "description": "**What**\n\n**Why**",
+          "checklist": {
+            "1": "Done",
+            "2": "Reviewed",
+            "3": "Deployed"
+          }
+        }
+      }
+    },
+    "content": {
+      "name": "Content calendar",
+      "summary": "Ideas are written, edited, scheduled and published.",
+      "columns": {
+        "ideas": "Ideas",
+        "writing": "Writing",
+        "editing": "Editing",
+        "scheduled": "Scheduled",
+        "published": "Published"
+      },
+      "labels": {
+        "blog": "Blog",
+        "social": "Social media",
+        "newsletter": "Newsletter",
+        "video": "Video"
+      },
+      "templates": {
+        "blog": {
+          "name": "Blog post",
+          "title": "New blog post",
+          "description": "**Topic**\n\n**Audience**\n\n**Keywords**",
+          "checklist": {
+            "1": "Draft",
+            "2": "Images",
+            "3": "SEO",
+            "4": "Publish"
+          }
+        },
+        "newsletter": {
+          "name": "Weekly newsletter",
+          "title": "Weekly newsletter",
+          "description": "**This week's topics**",
+          "checklist": {
+            "1": "Content picked",
+            "2": "Written",
+            "3": "Test sent",
+            "4": "Sent"
+          }
+        }
+      }
+    },
+    "hiring": {
+      "name": "Hiring",
+      "summary": "Candidates move from application to offer; the lead moves them to offer.",
+      "columns": {
+        "applied": "Applications",
+        "screen": "Screening",
+        "interview": "Technical interview",
+        "offer": "Offer",
+        "hired": "Hired"
+      },
+      "labels": {
+        "frontend": "Frontend",
+        "backend": "Backend",
+        "design": "Design",
+        "intern": "Intern"
+      },
+      "templates": {
+        "candidate": {
+          "name": "Candidate",
+          "title": "New candidate",
+          "description": "**Role**\n\n**CV**\n\n**Interview notes**",
+          "checklist": {
+            "1": "CV reviewed",
+            "2": "Screening done",
+            "3": "Technical interview done",
+            "4": "References checked"
+          }
+        }
+      }
+    },
+    "support": {
+      "name": "Support requests",
+      "summary": "Requests are investigated, wait for a reply when needed, and get solved.",
+      "columns": {
+        "new": "New",
+        "investigating": "Investigating",
+        "waiting": "Waiting for reply",
+        "solved": "Solved"
+      },
+      "labels": {
+        "urgent": "Urgent",
+        "billing": "Billing",
+        "account": "Account",
+        "bug": "Bug"
+      },
+      "templates": {
+        "ticket": {
+          "name": "Support request",
+          "title": "New support request",
+          "description": "**Requested by**\n\n**Problem**\n\n**Done so far**",
+          "checklist": {
+            "1": "Request understood",
+            "2": "Replied",
+            "3": "Solution confirmed"
+          }
+        }
+      }
+    }
   }
 }
