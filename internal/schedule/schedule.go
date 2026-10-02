@@ -13,11 +13,20 @@ type Spec struct {
 }
 
 // Latest is the last moment at or before now that s names, in loc; zero when
-// s names none (an unknown kind, or weekly with no day).
+// s names none (an unknown kind, or weekly with no day). A time the clocks
+// skip is the moment just after the gap; a time they pass twice is the first.
 func Latest(s Spec, loc *time.Location, now time.Time) time.Time {
 	now = now.In(loc)
 	y, m, d := now.Date()
-	at := func(y int, m time.Month, d int) time.Time { return time.Date(y, m, d, s.Hour, s.Minute, 0, 0, loc) }
+	at := func(y int, m time.Month, d int) time.Time {
+		t := time.Date(y, m, d, s.Hour, s.Minute, 0, 0, loc)
+		// A wall-clock time the clocks pass twice when they fall back is its
+		// first occurrence; time.Date gives the second.
+		if e := t.Add(-time.Hour); e.Hour() == t.Hour() && e.Minute() == t.Minute() {
+			return e
+		}
+		return t
+	}
 	switch s.Kind {
 	case "daily":
 		for i := 0; i < 2; i++ {
