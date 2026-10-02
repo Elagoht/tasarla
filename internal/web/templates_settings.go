@@ -60,6 +60,7 @@ type templateForm struct {
 	Priority    string
 	Assignee    string
 	Column      string
+	Estimate    string
 	DueInDays   string
 	Labels      []int64
 	Checklist   string
@@ -118,6 +119,9 @@ func templateFormOf(t store.Template) templateForm {
 	}
 	if t.DueInDays != nil {
 		f.DueInDays = strconv.Itoa(*t.DueInDays)
+	}
+	if t.Estimate != nil {
+		f.Estimate = strconv.FormatFloat(*t.Estimate, 'f', -1, 64)
 	}
 	return f
 }
@@ -201,7 +205,7 @@ func (h *handlers) saveTemplate(ctx context.Context, rc *collage.RenderContext, 
 		ID: v.Value("template_id"), Name: strings.TrimSpace(v.Value("template_name")),
 		Title: strings.TrimSpace(v.Value("template_title")), Description: v.Value("template_description"),
 		Priority: v.Value("template_priority"), Assignee: v.Value("template_assignee"), Column: v.Value("template_column"),
-		DueInDays: strings.TrimSpace(v.Value("due_in_days")), Checklist: v.Value("checklist"),
+		Estimate: strings.TrimSpace(v.Value("template_estimate")), DueInDays: strings.TrimSpace(v.Value("due_in_days")), Checklist: v.Value("checklist"),
 		Kind: v.Value("schedule_kind"), MonthDay: strings.TrimSpace(v.Value("monthday")), Time: v.Value("schedule_time"),
 	}
 	var id int64
@@ -229,7 +233,7 @@ func (h *handlers) saveTemplate(ctx context.Context, rc *collage.RenderContext, 
 	}
 
 	in := store.TemplateInput{Name: form.Name, Title: form.Title, Description: form.Description, ColumnID: &column, LabelIDs: labels}
-	v.Field("template_name").Required().MaxLen(100)
+	v.Field("template_name").Required().MaxLen(60)
 	v.Field("template_title").Required().MaxLen(200)
 	v.Field("template_description").MaxLen(10000)
 	v.Field("template_priority").OneOf("1", "2", "3", "4")
@@ -250,6 +254,13 @@ func (h *handlers) saveTemplate(ctx context.Context, rc *collage.RenderContext, 
 			v.Fail("template_assignee", i18n.T(rc, "rules.assignee_not_member"))
 		}
 		in.AssigneeID = &assignee
+	}
+	if form.Estimate != "" {
+		e, ok := parseEstimate(form.Estimate)
+		if !ok {
+			v.Fail("template_estimate", i18n.T(rc, "card.estimate_invalid"))
+		}
+		in.Estimate = &e
 	}
 	v.Field("due_in_days").Range(0, 365).Message(i18n.T(rc, "settings.template_invalid_due"))
 	if d, err := strconv.Atoi(form.DueInDays); err == nil {

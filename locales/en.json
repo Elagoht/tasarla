@@ -349,6 +349,7 @@
     "template_description": "Description",
     "template_priority": "Priority",
     "template_assignee": "Assignee",
+    "template_estimate": "Estimate",
     "template_column": "Column",
     "template_due_in_days": "Due: N days after it is opened",
     "template_labels": "Labels",

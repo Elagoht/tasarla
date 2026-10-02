@@ -349,6 +349,7 @@
     "template_description": "Açıklama",
     "template_priority": "Öncelik",
     "template_assignee": "Atanan kişi",
+    "template_estimate": "Tahmin",
     "template_column": "Kolon",
     "template_due_in_days": "Son tarih: açılıştan N gün sonra",
     "template_labels": "Etiketler",

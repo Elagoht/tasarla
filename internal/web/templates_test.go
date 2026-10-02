@@ -24,7 +24,7 @@ func (b boardSetup) templateForm(t *testing.T, name string) url.Values {
 		"op": {"template_save"}, "template_id": {""},
 		"template_name": {name}, "template_title": {"Weekly report"}, "template_description": {"Write it up."},
 		"template_priority": {"3"}, "template_assignee": {id(b.h.user("member@example.com").ID)},
-		"template_column": {id(b.cols[1].ID)}, "due_in_days": {"2"},
+		"template_column": {id(b.cols[1].ID)}, "template_estimate": {"2,5"}, "due_in_days": {"2"},
 		"checklist":     {"Gather numbers\r\n\r\n  Send mail  \n"},
 		"schedule_kind": {"weekly"}, "weekday": {"0", "2"}, "monthday": {"1"}, "schedule_time": {"09:30"},
 	}
@@ -63,7 +63,7 @@ func TestLeadSavesATemplate(t *testing.T) {
 	tpl := ts[0]
 	if tpl.Name != "Weekly" || tpl.Title != "Weekly report" || tpl.Description != "Write it up." ||
 		tpl.Priority == nil || *tpl.Priority != 3 || tpl.AssigneeID == nil || *tpl.AssigneeID != b.h.user("member@example.com").ID ||
-		tpl.ColumnID == nil || *tpl.ColumnID != b.cols[1].ID || tpl.DueInDays == nil || *tpl.DueInDays != 2 ||
+		tpl.ColumnID == nil || *tpl.ColumnID != b.cols[1].ID || tpl.Estimate == nil || *tpl.Estimate != 2.5 || tpl.DueInDays == nil || *tpl.DueInDays != 2 ||
 		len(tpl.LabelIDs) != 1 || tpl.LabelIDs[0] != label.ID ||
 		strings.Join(tpl.Checklist, "|") != "Gather numbers|Send mail" {
 		t.Fatalf("template = %+v", tpl)
@@ -76,14 +76,18 @@ func TestLeadSavesATemplate(t *testing.T) {
 
 	// The edit form shows what was saved; saving it unchanged keeps the schedule running.
 	edit := b.templatesPath() + "&edit=" + id(tpl.ID)
-	mustContain(t, b.lead.Get(edit).Body, `value="Weekly"`, `name="weekday" value="2" checked`, `value="`+id(label.ID)+`" checked`, "Send mail")
+	mustContain(t, b.lead.Get(edit).Body, `value="Weekly"`, `name="template_estimate" value="2.5"`, `name="weekday" value="2" checked`, `value="`+id(label.ID)+`" checked`, "Send mail")
 	form := b.templateForm(t, "Weekly")
 	form.Set("template_id", id(tpl.ID))
-	form.Set("monthday", "17") // hidden for a weekly schedule: not part of it
+	form.Set("template_estimate", "2.5") // as the edit form shows it
+	form.Set("monthday", "17")           // hidden for a weekly schedule: not part of it
 	if res := b.lead.Submit(edit, edit, form); res.Status != http.StatusSeeOther {
 		t.Fatalf("template update = %d:\n%s", res.Status, res.Body)
 	}
 	again, _ := b.h.store.Template(ctx, b.board.ID, tpl.ID)
+	if again.Estimate == nil || *again.Estimate != 2.5 {
+		t.Fatalf("estimate after an edit = %v", again.Estimate)
+	}
 	if again.Schedule != want || again.ScheduleSince == nil || !again.ScheduleSince.Equal(*tpl.ScheduleSince) {
 		t.Fatalf("an unchanged schedule moved: %+v since %v, was %v", again.Schedule, again.ScheduleSince, tpl.ScheduleSince)
 	}
@@ -113,6 +117,7 @@ func TestBadTemplatesAreShownAgain(t *testing.T) {
 		wants []string
 	}{
 		{"empty name", map[string]string{"template_name": " "}, []string{"Bu alan zorunludur."}},
+		{"name too long", map[string]string{"template_name": strings.Repeat("ş", 61)}, []string{"En fazla 60 karakter olabilir."}},
 		{"same name", map[string]string{"template_name": "Taken"}, []string{"Bu adla bir şablon zaten var."}},
 		{"due too far", map[string]string{"due_in_days": "400"}, []string{"0 ile 365 arasında"}},
 		{"weekly without a day", map[string]string{"weekday": ""}, []string{"En az bir gün seçin."}},

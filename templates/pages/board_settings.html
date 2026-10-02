@@ -328,7 +328,7 @@
           <a class="list-rows__title" href="{{$self}}?tab=templates&edit={{.ID}}">{{.Name}}</a>
           <span class="muted small">{{t (printf "settings.template_schedule_%s" (or .Schedule "none"))}}</span>
         </div>
-        {{if .NoColumn}}<div class="alert" role="alert">{{template "icon" "flag"}}<span>{{t "settings.template_no_column"}}</span></div>{{end}}
+        {{if .NoColumn}}<div class="alert">{{template "icon" "flag"}}<span>{{t "settings.template_no_column"}}</span></div>{{end}}
         {{with .Run}}{{if .Failed}}<div class="alert">{{template "icon" "flag"}}<div><span>{{t "settings.template_failed"}}</span><ul>{{range .Messages}}<li>{{.}}</li>{{end}}</ul></div></div>
         {{else}}<p class="muted small">{{t "settings.template_created"}}</p>{{end}}{{end}}
       </div>
@@ -354,7 +354,7 @@
     <div class="field-row">
       <label class="field">
         <span class="field__label">{{t "settings.template_name"}}</span>
-        <input class="input" name="template_name" value="{{.Name}}" required maxlength="100">
+        <input class="input" name="template_name" value="{{.Name}}" required maxlength="60">
         {{with .Error "template_name"}}<span class="field__error">{{.}}</span>{{end}}
       </label>
       <label class="field">
@@ -390,6 +390,11 @@
         <select class="select" name="template_column" required>
           {{range $.AllCols}}<option value="{{.ID}}" {{if eq (printf "%d" .ID) $f.Column}}selected{{end}}>{{.Name}}</option>{{end}}
         </select>
+      </label>
+      <label class="field">
+        <span class="field__label">{{t "settings.template_estimate"}}</span>
+        <input class="input input--small" name="template_estimate" value="{{.Estimate}}" inputmode="decimal" placeholder="–">
+        {{with .Error "template_estimate"}}<span class="field__error">{{.}}</span>{{end}}
       </label>
       <label class="field">
         <span class="field__label">{{t "settings.template_due_in_days"}}</span>
