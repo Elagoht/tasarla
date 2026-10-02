@@ -628,6 +628,17 @@
     "no_column": "The template has no target column.",
     "column_closed": "Cards are not made in the template's target column."
   },
+  "markdown": {
+    "hint": "Markdown is supported",
+    "bold": "bold",
+    "italic": "italic",
+    "strike": "struck",
+    "heading": "heading",
+    "item": "item",
+    "task": "to do",
+    "quote": "quote",
+    "link": "link"
+  },
   "weekdays": {
     "0": "Mon",
     "1": "Tue",

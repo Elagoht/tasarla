@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"html/template"
 	"regexp"
+	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
@@ -49,6 +50,21 @@ var policy = func() *bluemonday.Policy {
 	p.AllowAttrs("checked", "disabled").Matching(regexp.MustCompile(`^(|checked|disabled)$`)).OnElements("input")
 	return p
 }()
+
+var inputTag = regexp.MustCompile(`<input\b[^>]*>`)
+
+// onlyTaskCheckboxes drops every <input> that is not a disabled checkbox.
+// bluemonday matches attributes one at a time and cannot require a pair, so
+// this enforces it: the sole <input> goldmark makes is a task-list checkbox,
+// and a form control a user could use must never reach a card.
+func onlyTaskCheckboxes(s string) string {
+	return inputTag.ReplaceAllStringFunc(s, func(tag string) string {
+		if strings.Contains(tag, ` type="checkbox"`) && strings.Contains(tag, ` disabled=""`) {
+			return tag
+		}
+		return ""
+	})
+}
 
 // Markdown renders s, GitHub-flavoured, line breaks kept and raw HTML left
 // out, and keeps only the elements and links a card may show.

@@ -19,7 +19,7 @@ func TestCommentsAndMentions(t *testing.T) {
 		t.Fatalf("comment = %d:\n%s", res.Status, res.Body)
 	}
 	page := b.member.Get(b.cardPath(c)).Body
-	mustContain(t, page, "Please review @lead<br>", `<a href="https://example.com/x?a=1&amp;b=" rel="noopener noreferrer nofollow">https://example.com/x?a=1&amp;b=</a>&lt;2&gt;`,
+	mustContain(t, page, "<p>Please review @lead<br>", `<a href="https://example.com/x?a=1&amp;b=" rel="nofollow noreferrer">https://example.com/x?a=1&amp;b=</a>&lt;2&gt;`,
 		`<option value="@lead">`)
 	comments, _ := b.h.store.CardComments(ctx, c.ID)
 	if len(comments) != 1 || len(comments[0].MentionIDs) != 1 || comments[0].MentionIDs[0] != b.h.user("lead@example.com").ID {

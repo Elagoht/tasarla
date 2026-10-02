@@ -628,6 +628,17 @@
     "no_column": "Şablonun hedef kolonu yok.",
     "column_closed": "Şablonun hedef kolonunda kart açılmıyor."
   },
+  "markdown": {
+    "hint": "Markdown desteklenir",
+    "bold": "kalın",
+    "italic": "eğik",
+    "strike": "üstü çizili",
+    "heading": "başlık",
+    "item": "madde",
+    "task": "yapılacak",
+    "quote": "alıntı",
+    "link": "bağlantı"
+  },
   "weekdays": {
     "0": "Pzt",
     "1": "Sal",
