@@ -2,6 +2,8 @@ package notify_test
 
 import (
 	"context"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -289,5 +291,84 @@ func TestRunTemplateReadsTheTemplateAgain(t *testing.T) {
 	}
 	if _, runs := f.counts(t, tpl.ID); runs != 1 {
 		t.Errorf("runs = %d, want 1 (nothing recorded once off)", runs)
+	}
+}
+
+// A card a run made is shown on open boards, says in its history that the
+// schedule opened it, and its assignee hears of it from the template's editor.
+func TestRecurrerTellsOfTheCardItMade(t *testing.T) {
+	f := newFixture(t)
+	ctx := context.Background()
+	col := f.cols[0].ID
+	tpl, err := f.s.CreateTemplate(ctx, f.board.ID, store.TemplateInput{
+		Name: "Haftalık", Title: "Haftalık rapor", ColumnID: &col, AssigneeID: &f.bob.ID,
+		Schedule: store.Schedule{Kind: "weekly", Weekdays: 1, Hour: 9},
+	}, f.ada.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(ctx, `UPDATE card_templates SET schedule_since = $2 WHERE id = $1`, tpl.ID, at("2026-09-01 00:00")); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.recurrer(at("2026-10-05 10:00")).Tick(ctx); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := f.s.Template(ctx, f.board.ID, tpl.ID)
+	if got.LastRun == nil || got.LastRun.CardID == nil {
+		t.Fatalf("last run = %+v", got.LastRun)
+	}
+	cardID := *got.LastRun.CardID
+
+	boardTag := "board:" + strconv.FormatInt(f.board.ID, 10)
+	if !slices.Contains(f.tags, boardTag) {
+		t.Errorf("invalidated %v, want %s among them", f.tags, boardTag)
+	}
+
+	ns, err := f.s.Notifications(ctx, f.bob.ID, 10)
+	if err != nil || len(ns) != 1 || ns[0].Kind != store.NotifyAssigned || ns[0].CardID == nil || *ns[0].CardID != cardID ||
+		ns[0].Payload.ActorName != "Ada" || ns[0].Payload.CardTitle != "Haftalık rapor" || ns[0].Payload.BoardName != "Sprint" {
+		t.Fatalf("assignee's notifications = %+v, %v", ns, err)
+	}
+	if n, _ := f.s.UnreadCount(ctx, f.ada.ID); n != 0 {
+		t.Errorf("the template's editor was notified: %d", n)
+	}
+
+	acts, err := f.s.CardActivity(ctx, cardID, 10)
+	if err != nil || len(acts) != 1 || acts[0].Kind != store.ActivityCardScheduled ||
+		acts[0].Payload.Title != "Haftalık rapor" || acts[0].Payload.Text != "Haftalık" || acts[0].ActorName != "Ada" {
+		t.Fatalf("activity = %+v, %v", acts, err)
+	}
+}
+
+// A template into a column where cards are not made records why, and its
+// editor hears of it.
+func TestRecurrerRecordsAClosedColumn(t *testing.T) {
+	f := newFixture(t)
+	ctx := context.Background()
+	done := f.cols[1].ID
+	tpl, err := f.s.CreateTemplate(ctx, f.board.ID, store.TemplateInput{
+		Name: "Haftalık", Title: "Haftalık rapor", ColumnID: &done,
+		Schedule: store.Schedule{Kind: "weekly", Weekdays: 1, Hour: 9},
+	}, f.ada.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(ctx, `UPDATE card_templates SET schedule_since = $2 WHERE id = $1`, tpl.ID, at("2026-09-01 00:00")); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.recurrer(at("2026-10-05 10:00")).Tick(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if cards, runs := f.counts(t, tpl.ID); cards != 0 || runs != 1 {
+		t.Fatalf("%d cards, %d runs; want 0, 1", cards, runs)
+	}
+	got, _ := f.s.Template(ctx, f.board.ID, tpl.ID)
+	if run := got.LastRun; run == nil || run.Status != "failed" ||
+		len(run.Violations) != 1 || run.Violations[0].Code != store.ViolationColumnClosed {
+		t.Fatalf("last run = %+v", got.LastRun)
+	}
+	ns, _ := f.s.Notifications(ctx, f.ada.ID, 10)
+	if len(ns) != 1 || ns[0].Kind != store.NotifyTemplateFailed {
+		t.Fatalf("editor's notifications = %+v", ns)
 	}
 }

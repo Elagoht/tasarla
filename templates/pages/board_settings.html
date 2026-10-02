@@ -388,7 +388,7 @@
       <label class="field">
         <span class="field__label">{{t "settings.template_column"}}</span>
         <select class="select" name="template_column" required>
-          {{range $.AllCols}}<option value="{{.ID}}" {{if eq (printf "%d" .ID) $f.Column}}selected{{end}}>{{.Name}}</option>{{end}}
+          {{range $.CreatableCols}}<option value="{{.ID}}" {{if eq (printf "%d" .ID) $f.Column}}selected{{end}}>{{.Name}}</option>{{end}}
         </select>
       </label>
       <label class="field">

@@ -319,14 +319,15 @@ func (h *handlers) boardPost(ctx context.Context, rc *collage.RenderContext) (*c
 
 func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, bc boardContext) (*collage.ActionResult, error) {
 	// A template gives the card its title, so a form that chose one may leave
-	// the title empty.
+	// the title empty; a title typed all the same is the card's.
 	templateID, err := templateChoice(v)
 	if err != nil {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
 	if templateID == 0 {
-		v.Field("title").Required().MaxLen(200)
+		v.Field("title").Required()
 	}
+	v.Field("title").MaxLen(200)
 	if !v.Valid() {
 		res := validate.Refuse(rc, v, rc.Page)
 		if isFetch(rc) {
@@ -357,7 +358,8 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 			return collage.NoContent(http.StatusBadRequest), nil
 		}
 	}
-	var dropped bool
+	title := strings.TrimSpace(v.Value("title"))
+	var made store.FromTemplate
 	if templateID != 0 {
 		templates, terr := h.store.Templates(ctx, bc.Board.ID)
 		if terr != nil {
@@ -366,11 +368,9 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 		if !slices.ContainsFunc(templates, func(t store.Template) bool { return t.ID == templateID }) {
 			return collage.NoContent(http.StatusBadRequest), nil
 		}
-		var made store.FromTemplate
-		made, err = h.store.CreateCardFromTemplate(ctx, bc.Board.ID, templateID, target.ID, bc.User.ID, h.loc, time.Now())
-		dropped = made.AssigneeDropped
+		made, err = h.store.CreateCardFromTemplate(ctx, bc.Board.ID, templateID, target.ID, title, bc.User.ID, h.loc, time.Now())
 	} else {
-		_, err = h.store.CreateCard(ctx, bc.Board.ID, target.ID, strings.TrimSpace(v.Value("title")), bc.User.ID)
+		_, err = h.store.CreateCard(ctx, bc.Board.ID, target.ID, title, bc.User.ID)
 	}
 	if msgs := violationMessages(rc, err); msgs != nil {
 		rc.Set(noticeKey, msgs)
@@ -381,9 +381,14 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 		res.Status = http.StatusUnprocessableEntity
 		return res, nil
 	}
+	if errors.Is(err, store.ErrNotFound) {
+		return collage.NoContent(http.StatusBadRequest), nil // the template or the column was deleted meanwhile
+	}
 	if err != nil {
 		return nil, err
 	}
+	h.notifyAssigned(ctx, bc, store.Card{}, made.Card)
+	dropped := made.AssigneeDropped
 	if isFetch(rc) {
 		if dropped {
 			rc.Set(noticeKey, []string{i18n.T(rc, "board.template_assignee_dropped")})

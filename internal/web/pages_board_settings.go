@@ -42,6 +42,8 @@ type settingsView struct {
 	Subjects  []string
 	Kinds     []string
 	AllCols   []store.Column
+	// CreatableCols are the columns cards are made in: a template's choices.
+	CreatableCols []store.Column
 	// Builders are the sentences a new rule is written in, by kind, with
 	// blanks where its fields go.
 	Builders map[string][]sentencePart
@@ -169,6 +171,9 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 	}
 	if view.AllCols, err = h.store.Columns(ctx, bc.Board.ID); err != nil {
 		return view, err
+	}
+	if len(view.AllCols) > 0 {
+		view.CreatableCols = creatableColumns(view.AllCols)
 	}
 	if draft, ok := collage.Get[columnsDraft](rc, draftKey); ok {
 		view.Columns, view.ColumnsProblem, view.Tab = draft.Rows, draft.Problem, "columns"

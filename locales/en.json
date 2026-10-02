@@ -436,6 +436,7 @@
     "empty": "Nothing recorded yet.",
     "someone": "Someone",
     "card_created": "{actor} created the card",
+    "card_created_by_schedule": "{actor} opened the card on schedule from the template {text}",
     "card_moved": "{actor} moved the card from {from} to {to}",
     "card_updated": "{actor} edited the card: {fields}",
     "card_archived": "{actor} archived the card",
@@ -622,7 +623,8 @@
   },
   "templates": {
     "owner_gone": "The person who last saved the template is no longer in the team.",
-    "no_column": "The template has no target column."
+    "no_column": "The template has no target column.",
+    "column_closed": "Cards are not made in the template's target column."
   },
   "weekdays": {
     "0": "Mon",

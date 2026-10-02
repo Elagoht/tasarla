@@ -19,8 +19,9 @@ type Recurrer struct {
 }
 
 // Tick runs each scheduled template's latest moment, once. Moments missed
-// while the app was down are not made up for: only the latest is run. A
-// moment that made no card is told to the template's last editor, or to the
+// while the app was down are not made up for: only the latest is run. A card
+// made is shown on open boards, and its assignee hears of it from the
+// template's last editor. A moment that made no card is told to the template's last editor, or to the
 // team's leads when that editor has left the team. A template that fails is
 // logged and the others go on.
 func (r Recurrer) Tick(ctx context.Context) error {
@@ -50,7 +51,11 @@ func (r Recurrer) Tick(ctx context.Context) error {
 			r.Notifier.Log.Error("notify: recurrer", "template", tpl.ID, "at", at, "err", err)
 			continue
 		}
-		if !out.Ran || out.Card != nil {
+		if out.Card != nil {
+			r.made(ctx, st, out)
+			continue
+		}
+		if !out.Ran {
 			continue
 		}
 		recipients := []int64{out.Owner}
@@ -74,6 +79,29 @@ func (r Recurrer) Tick(ctx context.Context) error {
 		_ = r.Notifier.Emit(ctx, events...)
 	}
 	return nil
+}
+
+// made tells of the card a run made: open boards get it, and its assignee
+// hears they were assigned, by the template's last editor.
+func (r Recurrer) made(ctx context.Context, st store.ScheduledTemplate, out store.RunOutcome) {
+	card := *out.Card
+	if err := r.Notifier.Invalidate(ctx, "board:"+strconv.FormatInt(card.BoardID, 10)); err != nil {
+		r.Notifier.Log.Error("notify: recurrer invalidate", "board", card.BoardID, "err", err)
+	}
+	if card.AssigneeID == nil {
+		return
+	}
+	var actorName string
+	if owner, err := r.Store.UserByID(ctx, out.Owner); err != nil {
+		r.Notifier.Log.Error("notify: recurrer owner", "user", out.Owner, "err", err)
+	} else {
+		actorName = owner.Name
+	}
+	// Emit logs a failure itself.
+	_ = r.Notifier.Emit(ctx, Event{
+		Kind: store.NotifyAssigned, To: *card.AssigneeID, Actor: out.Owner, ActorName: actorName,
+		Card: card, BoardName: st.BoardName,
+	})
 }
 
 // Run ticks until ctx is cancelled.

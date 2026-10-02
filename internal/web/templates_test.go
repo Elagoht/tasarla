@@ -209,6 +209,18 @@ func TestTheLastRunIsShown(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	// Cards are not made in Doing yet.
+	run(time.Now().Add(-2 * time.Hour))
+	mustContain(t, b.lead.Get(b.templatesPath()).Body, "Son çalışma başarısız:", "Şablonun hedef kolonunda kart açılmıyor.")
+	b.h.speaks("lead@example.com", "en")
+	mustContain(t, b.lead.Get("/en"+b.templatesPath()).Body, "Cards are not made in the template&#39;s target column.")
+	b.h.speaks("lead@example.com", "tr")
+
+	rows := []store.ColumnRow{{ID: b.cols[0].ID, Name: "Todo", AllowCreate: true}, {ID: doing, Name: "Doing", AllowCreate: true},
+		{ID: b.cols[2].ID, Name: "Done", IsDone: true}}
+	if err := b.h.store.SaveColumns(ctx, b.board.ID, rows); err != nil {
+		t.Fatal(err)
+	}
 	run(time.Now().Add(-time.Hour))
 	mustContain(t, b.lead.Get(b.templatesPath()).Body, "Son çalışma: kart açıldı")
 
@@ -372,4 +384,84 @@ func TestAFailedTemplateRunIsToldWithoutACardLink(t *testing.T) {
 	b.h.speaks("member@example.com", "en")
 	mustContain(t, b.member.Get("/en/notifications").Body, "The template Weekly on Sprint could not make its card.")
 	mustContain(t, b.member.Get("/en/me/settings").Body, "When a scheduled template cannot make its card", `name="email_template_failed"`)
+}
+
+// The template form offers only the columns cards are made in, as the board does.
+func TestATemplateOffersOnlyCreatableColumns(t *testing.T) {
+	b := newBoardSetup(t)
+	body := b.lead.Get(b.newTemplatePath()).Body
+	start := strings.Index(body, `name="template_column"`)
+	if start < 0 {
+		t.Fatal("no column select")
+	}
+	sel := body[start:]
+	sel = sel[:strings.Index(sel, "</select>")]
+	mustContain(t, sel, `<option value="`+id(b.cols[0].ID)+`"`)
+	for _, c := range b.cols[1:] {
+		if strings.Contains(sel, `<option value="`+id(c.ID)+`"`) {
+			t.Errorf("column %s is offered, though cards are not made in it", c.Name)
+		}
+	}
+}
+
+func TestATypedTitleOverridesTheTemplates(t *testing.T) {
+	b := newBoardSetup(t)
+	tpl := b.templateOnBoard(t, store.TemplateInput{Description: "From the template"})
+	form := url.Values{"op": {"create_card"}, "column": {id(b.cols[0].ID)}, "title": {strings.Repeat("x", 201)}, "template": {id(tpl.ID)}}
+	if res := b.member.Submit(b.path, b.path, form); res.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("a 201-character title with a template = %d, want 422", res.Status)
+	}
+	form.Set("title", "  This week's report  ")
+	if res := b.member.Submit(b.path, b.path, form); res.Status != http.StatusSeeOther {
+		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
+	}
+	cards, err := b.h.store.BoardCards(context.Background(), b.board.ID)
+	if err != nil || len(cards) != 1 {
+		t.Fatalf("cards = %+v, %v", cards, err)
+	}
+	if c := cards[0].Card; c.Title != "This week's report" || c.Description != "From the template" {
+		t.Fatalf("card = %q / %q, want the typed title and the template's description", c.Title, c.Description)
+	}
+}
+
+func TestATemplateCardsAssigneeIsNotified(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	member := b.h.user("member@example.com")
+	tpl := b.templateOnBoard(t, store.TemplateInput{AssigneeID: &member.ID})
+	form := url.Values{"op": {"create_card"}, "column": {id(b.cols[0].ID)}, "template": {id(tpl.ID)}}
+	if res := b.lead.Submit(b.path, b.path, form); res.Status != http.StatusSeeOther {
+		t.Fatalf("create = %d", res.Status)
+	}
+	ns, err := b.h.store.Notifications(ctx, member.ID, 10)
+	if err != nil || len(ns) != 1 || ns[0].Kind != store.NotifyAssigned || ns[0].CardID == nil ||
+		ns[0].Payload.ActorName != b.h.user("lead@example.com").Name || ns[0].Payload.CardTitle != "Weekly report" {
+		t.Fatalf("assignee's notifications = %+v, %v", ns, err)
+	}
+	// Making one for oneself tells nobody.
+	self := b.templateOnBoard(t, store.TemplateInput{Name: "Mine", AssigneeID: &member.ID})
+	form.Set("template", id(self.ID))
+	if res := b.member.Submit(b.path, b.path, form); res.Status != http.StatusSeeOther {
+		t.Fatalf("create = %d", res.Status)
+	}
+	if n, _ := b.h.store.UnreadCount(ctx, member.ID); n != 1 {
+		t.Errorf("unread = %d, want 1", n)
+	}
+}
+
+// A card a schedule opened says so in its history, in the reader's language.
+func TestAScheduledCardsHistorySaysSo(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	todo := b.cols[0].ID
+	tpl := b.templateOnBoard(t, store.TemplateInput{ColumnID: &todo, Schedule: store.Schedule{Kind: "daily", MonthDay: 1, Hour: 9}})
+	out, err := b.h.store.RunTemplate(ctx, store.ScheduledTemplate{Template: tpl, TeamID: b.team.ID}, time.Now(), time.UTC)
+	if err != nil || out.Card == nil {
+		t.Fatalf("run = %+v, %v", out, err)
+	}
+	lead := b.h.user("lead@example.com").Name
+	mustContain(t, b.member.Get(b.cardPath(*out.Card)).Body, lead+" kartı Weekly şablonundan zamanlanarak açtı")
+	mustContain(t, b.member.Get(b.path+"/activity").Body, lead+" kartı Weekly şablonundan zamanlanarak açtı")
+	b.h.speaks("member@example.com", "en")
+	mustContain(t, b.member.Get("/en"+b.cardPath(*out.Card)).Body, lead+" opened the card on schedule from the template Weekly")
 }

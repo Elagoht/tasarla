@@ -436,6 +436,7 @@
     "empty": "Henüz kayıt yok.",
     "someone": "Biri",
     "card_created": "{actor} kartı oluşturdu",
+    "card_created_by_schedule": "{actor} kartı {text} şablonundan zamanlanarak açtı",
     "card_moved": "{actor} kartı {from} kolonundan {to} kolonuna taşıdı",
     "card_updated": "{actor} kartı düzenledi: {fields}",
     "card_archived": "{actor} kartı arşivledi",
@@ -622,7 +623,8 @@
   },
   "templates": {
     "owner_gone": "Şablonu son kaydeden kişi artık takımda değil.",
-    "no_column": "Şablonun hedef kolonu yok."
+    "no_column": "Şablonun hedef kolonu yok.",
+    "column_closed": "Şablonun hedef kolonunda kart açılmıyor."
   },
   "weekdays": {
     "0": "Pzt",
