@@ -84,9 +84,13 @@ a.nav__heading:hover { color: var(--accent-strong); }
 .workspace { min-width: 0; display: flex; flex-direction: column; }
 .main { flex: 1; min-width: 0; width: 100%; padding: var(--s6) var(--s6) var(--s7); }
 .main--wide { padding-left: var(--s5); padding-right: 0; }
-/* A wide screen keeps the reading pages to a column in the middle; the board
-   takes all the width it has. */
-.main:not(.main--wide) { max-width: 1240px; margin-inline: auto; }
+/* A wide screen keeps every page to a column in the middle. The board can be
+   widened to all the width it has (board-width.js); max-width animates
+   between a length and a percentage, so the column grows from the middle. */
+.main { max-width: 77.5rem; margin-inline: auto; }
+.main--wide { transition: max-width 320ms var(--ease); }
+.main--wide.is-expanded { max-width: 100%; }
+@media (prefers-reduced-motion: reduce) { .main--wide { transition: none; } }
 .narrow { max-width: 680px; margin-inline: auto; }
 .page { max-width: 980px; }
 .page--narrow { max-width: 640px; }

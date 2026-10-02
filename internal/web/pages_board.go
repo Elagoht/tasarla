@@ -82,6 +82,7 @@ type boardView struct {
 	Team    store.Team
 	Access  authz.BoardAccess
 	Filter  filterView
+	Wide    bool // the viewer widened the board
 }
 
 type columnsView struct {
@@ -187,7 +188,7 @@ func (h *handlers) loadBoard(ctx context.Context, rc *collage.RenderContext) (bo
 		return boardView{}, err
 	}
 	fv.ShowLane = true
-	return boardView{Notices: notices, Board: bc.Board, Team: bc.Team, Access: bc.Access, Filter: fv}, nil
+	return boardView{Notices: notices, Board: bc.Board, Team: bc.Team, Access: bc.Access, Filter: fv, Wide: boardWide(rc.Request)}, nil
 }
 
 func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (columnsView, []string, error) {

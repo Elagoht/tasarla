@@ -100,6 +100,9 @@ func (b *Browser) SubmitFetch(page, action string, form url.Values) Response {
 	return b.Fetch(action, form)
 }
 
+// SetCookie stores a cookie the way a page's script would set one.
+func (b *Browser) SetCookie(name, value string) { b.cookies[name] = value }
+
 // Cookies returns what the browser holds, for a request made outside it.
 func (b *Browser) Cookies() []*http.Cookie {
 	var out []*http.Cookie

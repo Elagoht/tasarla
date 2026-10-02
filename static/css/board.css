@@ -26,7 +26,7 @@
   padding: var(--s3); border-radius: var(--r-lg);
   background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow-paper);
 }
-.column__head { display: flex; align-items: center; gap: var(--s2); padding: 2px var(--s1) var(--s2); border-bottom: 1px solid var(--line); }
+.column__head { display: flex; align-items: center; gap: var(--s2); padding: 0.125rem var(--s1) var(--s2); border-bottom: 0.0625rem solid var(--line); }
 .column__dot { width: 10px; height: 10px; border-radius: 4px; background: var(--chip-dot, var(--accent)); flex: none; }
 .column__name { font-size: var(--text-md); font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .column__done { color: var(--ok); display: inline-flex; }

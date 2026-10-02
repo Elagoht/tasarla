@@ -114,7 +114,9 @@
     "wip_limit": "Cards / WIP limit",
     "dismiss": "Dismiss",
     "tab": "Board",
-    "views": "Board views"
+    "views": "Board views",
+    "widen": "Widen",
+    "narrow": "Narrow"
   },
   "card": {
     "title": "Title",

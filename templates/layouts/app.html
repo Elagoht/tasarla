@@ -55,7 +55,7 @@
       <button type="button" class="btn btn--quiet btn--icon" data-menu aria-label="{{t "nav.menu"}}" aria-controls="sidebar">{{template "icon" "menu"}}</button>
       <a class="brand" href="{{pageURL "home"}}"><span class="brand__mark">{{template "icon" "board"}}</span>{{t "app.name"}}</a>
     </div>
-    <main class="main{{if .Wide}} main--wide{{end}}" id="main">
+    <main class="main{{if .Wide}} main--wide{{if .Expanded}} is-expanded{{end}}{{end}}" id="main">
       {{slot "content"}}
     </main>
   </div>

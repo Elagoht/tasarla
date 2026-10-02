@@ -114,7 +114,9 @@
     "wip_limit": "Kart sayısı / WIP limiti",
     "dismiss": "Kapat",
     "tab": "Board",
-    "views": "Board görünümleri"
+    "views": "Board görünümleri",
+    "widen": "Genişlet",
+    "narrow": "Daralt"
   },
   "card": {
     "title": "Başlık",
