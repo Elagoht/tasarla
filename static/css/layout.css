@@ -7,7 +7,22 @@
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--s4);
   padding: var(--s4) var(--s3);
-  background: var(--shelf); border-right: 1px solid var(--line);
+  background: var(--side-bg); border-right: 1px solid var(--side-edge);
+  /* Inside the sidebar, the page's tokens take the sidebar's values, so its
+     links, headings, search box and account menu need no rules of their own. */
+  --ink: var(--side-ink);
+  --ink-soft: var(--side-ink-soft);
+  --ink-muted: var(--side-ink-muted);
+  --ink-faint: var(--side-ink-faint);
+  --line: var(--side-line);
+  --line-strong: var(--side-line);
+  --sheet: var(--side-raised);
+  --shelf: var(--side-hover);
+  --shelf-strong: var(--side-hover);
+  --accent-strong: var(--side-link);
+  --danger-soft: var(--side-danger-bg);
+  --danger: var(--side-danger-ink);
+  color: var(--ink);
 }
 .sidebar__top { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); padding: 0 var(--s2); }
 .brand { display: inline-flex; align-items: center; gap: var(--s2); color: var(--ink); text-decoration: none; font-family: var(--font-display); font-weight: 750; font-size: var(--text-lg); letter-spacing: -0.02em; }
@@ -29,8 +44,8 @@ a.nav__heading:hover { color: var(--accent-strong); }
   color: var(--ink-soft); font-weight: 700; font-size: var(--text-sm); text-decoration: none;
 }
 .nav__item:hover { background: var(--shelf-strong); color: var(--ink); }
-.nav__item.is-active { background: var(--sheet); border-color: var(--line); color: var(--ink); box-shadow: var(--shadow-paper); }
-.nav__item.is-active .nav__tab { box-shadow: 0 0 0 2px var(--sheet), 0 0 0 3px var(--chip-dot, var(--accent)); }
+.nav__item.is-active { background: var(--side-active); border-color: transparent; color: var(--side-ink); box-shadow: none; }
+.nav__item.is-active .nav__tab { box-shadow: 0 0 0 2px var(--side-active), 0 0 0 3px var(--chip-dot, var(--accent)); }
 .nav__item .badge { margin-left: auto; }
 .nav__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav__tab { width: 8px; height: 8px; border-radius: 3px; background: var(--chip-dot, var(--accent)); flex: none; margin: 0 4px; }
@@ -100,3 +115,5 @@ a.nav__heading:hover { color: var(--accent-strong); }
 
 .sidebar__search { padding: 0 var(--s3) var(--s3); }
 .sidebar__search .input { width: 100%; }
+/* The faint ink falls short of 3:1 on the raised search box in the dark theme. */
+.sidebar .input::placeholder { color: var(--side-ink-muted); }
