@@ -87,7 +87,7 @@ func renderImage(_ util.BufWriter, _ []byte, _ ast.Node, _ bool) (ast.WalkStatus
 }
 
 var md = goldmark.New(
-	goldmark.WithExtensions(extension.GFM),
+	goldmark.WithExtensions(extension.GFM, markExtension{}),
 	goldmark.WithParserOptions(parser.WithASTTransformers(util.Prioritized(shiftHeadings{}, 100))),
 	goldmark.WithRendererOptions(
 		html.WithHardWraps(),
@@ -97,7 +97,7 @@ var md = goldmark.New(
 
 var policy = func() *bluemonday.Policy {
 	p := bluemonday.NewPolicy()
-	p.AllowElements("p", "br", "strong", "em", "del", "code", "pre", "blockquote", "ul", "ol", "li",
+	p.AllowElements("p", "br", "strong", "em", "del", "mark", "code", "pre", "blockquote", "ul", "ol", "li",
 		"h2", "h3", "h4", "h5", "h6", "table", "thead", "tbody", "tr", "th", "td", "hr")
 	p.AllowAttrs("href").OnElements("a")
 	p.AllowURLSchemes("http", "https", "mailto")

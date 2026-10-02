@@ -650,6 +650,7 @@
     "bold": "bold",
     "italic": "italic",
     "strike": "struck",
+    "mark": "highlighted",
     "heading": "heading",
     "item": "item",
     "task": "to do",

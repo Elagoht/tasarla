@@ -113,3 +113,22 @@ func TestMarkdownRenders(t *testing.T) {
 		t.Error("raw <b> survived")
 	}
 }
+
+func TestMarkdownMarksText(t *testing.T) {
+	cases := map[string]string{
+		"ama ==hepsini== kapsıyor": "ama <mark>hepsini</mark> kapsıyor",
+		"==**kalın** işaret==":     "<mark><strong>kalın</strong> işaret</mark>",
+		"a == b":                   "a == b",
+		"=tek=":                    "=tek=",
+		"===üç===":                 "===üç===",
+		"`==kod==`":                "<code>==kod==</code>",
+	}
+	for in, want := range cases {
+		if out := string(Markdown(in)); !strings.Contains(out, want) {
+			t.Errorf("%q → %q, want it to contain %q", in, out, want)
+		}
+	}
+	if out := string(Markdown("==<b onclick=x>a</b>==")); strings.Contains(out, "onclick=") && strings.Contains(out, "<b") {
+		t.Errorf("raw HTML inside a mark became markup: %q", out)
+	}
+}
