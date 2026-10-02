@@ -14,7 +14,6 @@ import (
 	i18n "github.com/Elagoht/collage-i18n"
 	validate "github.com/Elagoht/collage-validate"
 	"github.com/Elagoht/collage/pkg/collage"
-	"github.com/jackc/pgx/v5/pgconn"
 
 	"kanban/internal/rules"
 	"kanban/internal/store"
@@ -335,7 +334,7 @@ func (h *handlers) boardSettingsPost(ctx context.Context, rc *collage.RenderCont
 			return validate.Refuse(rc, v, rc.Page), nil
 		}
 		_, err = h.store.CreateLabel(ctx, boardID, strings.TrimSpace(v.Value("label_name")), v.Value("label_color"))
-		if isUniqueViolation(err) {
+		if store.IsUniqueViolation(err) {
 			v.Fail("label_name", i18n.T(rc, "settings.label_exists"))
 			return validate.Refuse(rc, v, rc.Page), nil
 		}
@@ -495,7 +494,7 @@ func (h *handlers) roleSettings(ctx context.Context, rc *collage.RenderContext, 
 			}
 			err = h.store.RenameBoardRole(ctx, boardID, role, name)
 		}
-		if isUniqueViolation(err) {
+		if store.IsUniqueViolation(err) {
 			return h.settingsDone(rc, bc, "roles", flash.Error, i18n.T(rc, "settings.role_exists"))
 		}
 	case "role_members":
@@ -631,10 +630,4 @@ func (h *handlers) addRule(ctx context.Context, rc *collage.RenderContext, v *va
 		return nil, err
 	}
 	return h.settingsDone(rc, bc, "rules", flash.Success, i18n.T(rc, "settings.saved"))
-}
-
-// isUniqueViolation reports a PostgreSQL unique constraint failure.
-func isUniqueViolation(err error) bool {
-	var pg *pgconn.PgError
-	return errors.As(err, &pg) && pg.Code == "23505"
 }

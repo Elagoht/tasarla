@@ -70,7 +70,8 @@ type TemplateInput struct {
 const templateColumns = `id, board_id, name, title, description, priority, estimate::float8, assignee_id, column_id,
 	due_in_days, schedule_kind, schedule_weekdays, schedule_monthday, schedule_time, schedule_since, updated_by, updated_at`
 
-func isUniqueViolation(err error) bool {
+// IsUniqueViolation reports a PostgreSQL unique constraint failure.
+func IsUniqueViolation(err error) bool {
 	var pg *pgconn.PgError
 	return errors.As(err, &pg) && pg.Code == "23505"
 }
@@ -245,7 +246,7 @@ func (s *Store) saveTemplate(ctx context.Context, boardID, id int64, in Template
 			sc.Kind, int16(sc.Weekdays), int16(monthDay), at, actorID))
 	}
 	if err != nil {
-		if isUniqueViolation(err) {
+		if IsUniqueViolation(err) {
 			return Template{}, ErrTemplateName
 		}
 		return Template{}, err
