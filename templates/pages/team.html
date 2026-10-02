@@ -24,12 +24,16 @@
     {{else}}
     <div class="empty empty--small"><p>{{t "board.empty"}}</p></div>
     {{end}}
-    {{if .CanManage}}
-    <form class="stack" method="post" action="{{$self}}" data-blueprint-form>
+  </section>
+
+  {{if .CanManage}}
+  <section class="stack stack--sm">
+    <h2 class="h3">{{t "board.new_board"}}</h2>
+    <form class="stack stack--lg blueprint-form" method="post" action="{{$self}}" data-blueprint-form>
       {{csrfToken}}
       <input type="hidden" name="op" value="create_board">
       <input type="hidden" name="include_present" value="1">
-      <label class="field">
+      <label class="field blueprint-form__name">
         <span class="field__label">{{t "board.name"}}</span>
         <input class="input" id="board-name" name="board_name" value="{{fieldValue "board_name"}}" required maxlength="100">
         {{with fieldError "board_name"}}<span class="field__error">{{.}}</span>{{end}}
@@ -63,8 +67,8 @@
       <div><button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "board.create"}}</button></div>
     </form>
     <script type="module" src="{{asset "/static/js/blueprint-form.js"}}"></script>
-    {{end}}
   </section>
+  {{end}}
 
   <section class="stack stack--sm">
     <h2 class="h3">{{t "team.members"}} <span class="muted small">{{len .Members}}</span></h2>

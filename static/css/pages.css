@@ -105,6 +105,10 @@ a.notification__text:hover { color: var(--accent-strong); }
 mark { background: var(--accent-soft); color: inherit; border-radius: 0.125rem; padding: 0 0.0625rem; }
 .pager { display: flex; gap: var(--s2); justify-content: flex-end; }
 
+/* The create-board form: a name of reading width, then the blueprints. A
+   legend is no grid item of its fieldset, so it takes the field's gap itself. */
+.blueprint-form__name { max-width: 30rem; }
+.blueprint-form legend.field__label { margin-bottom: var(--s2); }
 /* The create form's ready-made boards: a radio card each. */
 .blueprints { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
 .blueprint {

@@ -138,7 +138,8 @@
         "one": "{count} kural",
         "other": "{count} kural"
       }
-    }
+    },
+    "new_board": "Yeni board"
   },
   "card": {
     "title": "Başlık",

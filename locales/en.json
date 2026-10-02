@@ -138,7 +138,8 @@
         "one": "{count} rule",
         "other": "{count} rules"
       }
-    }
+    },
+    "new_board": "New board"
   },
   "card": {
     "title": "Title",
