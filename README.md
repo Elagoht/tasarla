@@ -8,6 +8,7 @@ Birkaç takımın günlük iş takibi için kullandığı, kuralları board baş
 - **Takımlar ve board'lar:** takım lead'leri board açar. Board'a erişim takım üyeliğiyle verilir, takım dışındakiler 404 görür.
 - **Kartlar:** başlık, açıklama, atanan kişi, tahmin, son tarih, öncelik, etiketler, kontrol listesi, bağımlılıklar (döngü engellenir), arşiv.
   - **Şablonlar:** board ayarlarında kart şablonları; şablondan kart açma; günlük, haftalık ya da aylık zamanlamayla kartı kendiliğinden açma. Kurallar reddederse şablon sahibine bildirim gider.
+  - **Markdown:** kart açıklaması ve yorumlar Markdown olarak gösterilir (GFM: tablo, görev listesi, üstü çizili); ham HTML ve görseller gösterilmez.
 - **Taşıma:**
   - SortableJS ile sürükle-bırak; değişiklik açık board'lara collage-live ile anında itilir.
   - Bayat bir kartı taşımak 409 döner.
