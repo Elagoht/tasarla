@@ -15,11 +15,16 @@ type Worker struct {
 	Send     func(ctx context.Context, m store.OutboxMessage) error
 	Interval time.Duration // default 30s
 	Log      *slog.Logger
+	Now      func() time.Time // default time.Now
 }
 
 // Tick sends whatever is due now.
 func (w Worker) Tick(ctx context.Context) error {
-	sent, failed, err := w.Store.ProcessOutbox(ctx, time.Now(), 20, func(m store.OutboxMessage) error {
+	now := time.Now
+	if w.Now != nil {
+		now = w.Now
+	}
+	sent, failed, err := w.Store.ProcessOutbox(ctx, now(), 20, func(m store.OutboxMessage) error {
 		// An e-mail being sent when shutdown begins is finished, not cut off.
 		err := w.Send(context.WithoutCancel(ctx), m)
 		if err != nil {

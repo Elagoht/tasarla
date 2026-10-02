@@ -174,10 +174,11 @@ func TestWorkerSendsTheOutbox(t *testing.T) {
 	card, _ := f.s.CreateCard(ctx, f.board.ID, f.cols[0].ID, "C", f.ada.ID)
 	f.n.Emit(ctx, notify.Event{Kind: store.NotifyAssigned, To: f.bob.ID, Actor: f.ada.ID, ActorName: "Ada", Card: card})
 	var sent []string
+	// The database's clock may run a little ahead of ours: due "now" means a moment after the insert.
 	w := notify.Worker{Store: f.s, Send: func(_ context.Context, m store.OutboxMessage) error {
 		sent = append(sent, m.To)
 		return nil
-	}, Log: f.n.Log}
+	}, Log: f.n.Log, Now: func() time.Time { return time.Now().Add(time.Second) }}
 	if err := w.Tick(ctx); err != nil {
 		t.Fatal(err)
 	}

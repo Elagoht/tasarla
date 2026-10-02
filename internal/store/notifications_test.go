@@ -92,7 +92,8 @@ func TestOutboxRetriesThenGivesUp(t *testing.T) {
 	f.s.CreateNotification(ctx, store.NewNotification{UserID: f.member.ID, Kind: store.NotifyAssigned, CardID: &a.ID,
 		Email: &store.OutboxMessage{To: "member@example.com", Subject: "s", HTML: "h", Text: "t"}})
 	down := errors.New("smtp down")
-	now := time.Now()
+	// The database's clock may run a little ahead of ours: due "now" means a moment after the insert.
+	now := time.Now().Add(time.Second)
 	for i := 1; i <= 8; i++ {
 		sent, failed, err := f.s.ProcessOutbox(ctx, now, 20, func(store.OutboxMessage) error { return down }, nil)
 		if err != nil {
