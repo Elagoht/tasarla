@@ -89,11 +89,6 @@
     "self_change": "Kendi rolünüzü değiştiremezsiniz."
   },
   "board": {
-    "default_columns": {
-      "todo": "Yapılacak",
-      "doing": "Yapılıyor",
-      "done": "Bitti"
-    },
     "boards": "Board'lar",
     "empty": "Henüz board yok.",
     "name": "Board adı",
@@ -116,7 +111,34 @@
     "tab": "Board",
     "views": "Board görünümleri",
     "widen": "Genişlet",
-    "narrow": "Daralt"
+    "narrow": "Daralt",
+    "blueprint": "Şablon",
+    "blueprint_unknown": "Bu şablon yok.",
+    "include": "Aktarılacaklar",
+    "include_wip": "WIP limitleri",
+    "include_labels": "Etiketler",
+    "include_templates": "Kart şablonları",
+    "include_recurring": "Tekrarlar",
+    "include_rules": "Kurallar",
+    "include_hint": "Kolonlar her zaman gelir.",
+    "blueprint_count": {
+      "columns": {
+        "one": "{count} kolon",
+        "other": "{count} kolon"
+      },
+      "labels": {
+        "one": "{count} etiket",
+        "other": "{count} etiket"
+      },
+      "templates": {
+        "one": "{count} kart şablonu",
+        "other": "{count} kart şablonu"
+      },
+      "rules": {
+        "one": "{count} kural",
+        "other": "{count} kural"
+      }
+    }
   },
   "card": {
     "title": "Başlık",

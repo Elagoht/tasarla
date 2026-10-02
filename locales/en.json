@@ -89,11 +89,6 @@
     "self_change": "You cannot change your own role."
   },
   "board": {
-    "default_columns": {
-      "todo": "To do",
-      "doing": "In progress",
-      "done": "Done"
-    },
     "boards": "Boards",
     "empty": "There are no boards yet.",
     "name": "Board name",
@@ -116,7 +111,34 @@
     "tab": "Board",
     "views": "Board views",
     "widen": "Widen",
-    "narrow": "Narrow"
+    "narrow": "Narrow",
+    "blueprint": "Template",
+    "blueprint_unknown": "There is no such template.",
+    "include": "Bring along",
+    "include_wip": "WIP limits",
+    "include_labels": "Labels",
+    "include_templates": "Card templates",
+    "include_recurring": "Recurring cards",
+    "include_rules": "Rules",
+    "include_hint": "Columns always come along.",
+    "blueprint_count": {
+      "columns": {
+        "one": "{count} column",
+        "other": "{count} columns"
+      },
+      "labels": {
+        "one": "{count} label",
+        "other": "{count} labels"
+      },
+      "templates": {
+        "one": "{count} card template",
+        "other": "{count} card templates"
+      },
+      "rules": {
+        "one": "{count} rule",
+        "other": "{count} rules"
+      }
+    }
   },
   "card": {
     "title": "Title",

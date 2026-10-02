@@ -218,3 +218,89 @@ func TestAddingACardInAColumn(t *testing.T) {
 		t.Errorf("a column cards are not made in = %d, want 400", res.Status)
 	}
 }
+
+func TestCreateBoardFromBlueprint(t *testing.T) {
+	h := newHarness(t, "")
+	lead := h.signedIn("lead", "lead@example.com")
+	path := teamWith(t, h, "lead@example.com", "")
+	form := lead.Get(path).Body
+	mustContain(t, form, `name="blueprint" value="simple" checked`, `name="blueprint" value="scrum"`, `data-has="wip labels templates recurring rules"`,
+		`name="include" value="recurring" checked`, `name="include_present" value="1"`, "Hata takibi", "Backlog → Sprint → Yapılıyor → İncelemede → Bitti")
+	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"Platform sprint"}, "blueprint": {"scrum"},
+		"include_present": {"1"}, "include": {"wip", "labels", "templates", "recurring", "rules"}})
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
+	}
+	mustContain(t, lead.Get(res.Location()).Body, "Backlog", "Sprint", "İncelemede")
+	settings := lead.Get(res.Location() + "/settings?tab=templates").Body
+	mustContain(t, settings, "Kullanıcı hikâyesi", "Haftalık retrospektif")
+}
+
+func TestCreateBoardFromBlueprintInEnglish(t *testing.T) {
+	h := newHarness(t, "")
+	lead := h.signedIn("lead", "lead@example.com")
+	path := teamWith(t, h, "lead@example.com", "")
+	// An English speaker's pages are under /en; their board is built in English.
+	h.speaks("lead@example.com", "en")
+	en := "/en" + path
+	res := lead.Submit(en, en, url.Values{"op": {"create_board"}, "board_name": {"Bugs"}, "blueprint": {"bugs"}})
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
+	}
+	body := lead.Get(res.Location()).Body
+	mustContain(t, body, "Triaged", "Fixing", "Closed")
+	for _, bad := range []string{"Önceliklendirildi", "blueprints."} {
+		if strings.Contains(body, bad) {
+			t.Errorf("an English board shows %q", bad)
+		}
+	}
+}
+
+// Unticked boxes are not sent; include_present says the form had them.
+func TestBoardFormIncludes(t *testing.T) {
+	h := newHarness(t, "")
+	lead := h.signedIn("lead", "lead@example.com")
+	path := teamWith(t, h, "lead@example.com", "")
+	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"Bare"}, "blueprint": {"scrum"},
+		"include_present": {"1"}, "include": {"recurring"}})
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("create = %d", res.Status)
+	}
+	boardID, err := strconv.ParseInt(strings.TrimPrefix(res.Location(), "/boards/"), 10, 64)
+	if err != nil {
+		t.Fatalf("location %q", res.Location())
+	}
+	ctx := context.Background()
+	labels, _ := h.store.Labels(ctx, boardID)
+	tpls, _ := h.store.Templates(ctx, boardID)
+	rules, _ := h.store.BoardRules(ctx, boardID)
+	cols, _ := h.store.Columns(ctx, boardID)
+	if len(cols) != 5 || len(labels) != 0 || len(tpls) != 0 || len(rules.Conditions) != 0 || cols[2].WIPLimit != nil {
+		t.Fatalf("bare scrum built %d cols, %d labels, %d templates, %+v", len(cols), len(labels), len(tpls), rules)
+	}
+}
+
+func TestBoardFormRefusesAnUnknownBlueprint(t *testing.T) {
+	h := newHarness(t, "")
+	lead := h.signedIn("lead", "lead@example.com")
+	path := teamWith(t, h, "lead@example.com", "")
+	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"X"}, "blueprint": {"kanban-pro"}})
+	if res.Status == http.StatusSeeOther {
+		t.Fatal("an unknown blueprint built a board")
+	}
+	mustContain(t, res.Body, "Bu şablon yok.")
+}
+
+func TestBoardFormKeepsTheChosenBlueprint(t *testing.T) {
+	h := newHarness(t, "")
+	lead := h.signedIn("lead", "lead@example.com")
+	path := teamWith(t, h, "lead@example.com", "")
+	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {""}, "blueprint": {"hiring"}})
+	if res.Status == http.StatusSeeOther {
+		t.Fatal("an empty name built a board")
+	}
+	mustContain(t, res.Body, `name="blueprint" value="hiring" checked`)
+	if strings.Contains(res.Body, `name="blueprint" value="simple" checked`) {
+		t.Error("the refused form went back to Simple")
+	}
+}

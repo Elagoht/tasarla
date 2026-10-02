@@ -25,15 +25,43 @@
     <div class="empty empty--small"><p>{{t "board.empty"}}</p></div>
     {{end}}
     {{if .CanManage}}
-    <form class="field-row" method="post" action="{{$self}}">
+    <form class="stack" method="post" action="{{$self}}" data-blueprint-form>
       {{csrfToken}}
       <input type="hidden" name="op" value="create_board">
+      <input type="hidden" name="include_present" value="1">
       <label class="field">
         <span class="field__label">{{t "board.name"}}</span>
         <input class="input" id="board-name" name="board_name" value="{{fieldValue "board_name"}}" required maxlength="100">
         {{with fieldError "board_name"}}<span class="field__error">{{.}}</span>{{end}}
       </label>
-      <button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "board.create"}}</button>
+      {{$chosen := or (fieldValue "blueprint") "simple"}}
+      <fieldset class="field">
+        <legend class="field__label">{{t "board.blueprint"}}</legend>
+        <div class="blueprints">
+          {{range .Blueprints}}
+          <label class="blueprint">
+            <input type="radio" name="blueprint" value="{{.Key}}"{{if eq .Key $chosen}} checked{{end}} data-has="{{.Has}}">
+            <span class="blueprint__name">{{.Name}}</span>
+            <span class="blueprint__summary">{{.Summary}}</span>
+            <span class="blueprint__columns">{{.Columns}}</span>
+            <span class="blueprint__counts">{{tn "board.blueprint_count.columns" .Counts.Columns}}{{if .Counts.Labels}} · {{tn "board.blueprint_count.labels" .Counts.Labels}}{{end}}{{if .Counts.Templates}} · {{tn "board.blueprint_count.templates" .Counts.Templates}}{{end}}{{if .Counts.Rules}} · {{tn "board.blueprint_count.rules" .Counts.Rules}}{{end}}</span>
+          </label>
+          {{end}}
+        </div>
+        {{with fieldError "blueprint"}}<span class="field__error">{{.}}</span>{{end}}
+      </fieldset>
+      <fieldset class="field">
+        <legend class="field__label">{{t "board.include"}}</legend>
+        <div class="includes">
+          <label class="check-pill"><input type="checkbox" name="include" value="wip" checked> {{t "board.include_wip"}}</label>
+          <label class="check-pill"><input type="checkbox" name="include" value="labels" checked> {{t "board.include_labels"}}</label>
+          <label class="check-pill"><input type="checkbox" name="include" value="templates" checked> {{t "board.include_templates"}}</label>
+          <label class="check-pill"><input type="checkbox" name="include" value="recurring" checked> {{t "board.include_recurring"}}</label>
+          <label class="check-pill"><input type="checkbox" name="include" value="rules" checked> {{t "board.include_rules"}}</label>
+        </div>
+        <span class="field__hint">{{t "board.include_hint"}}</span>
+      </fieldset>
+      <div><button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "board.create"}}</button></div>
     </form>
     {{end}}
   </section>
