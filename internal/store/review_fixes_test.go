@@ -129,7 +129,8 @@ func TestOutboxRecordsEachSendAsItGoes(t *testing.T) {
 			Email: &store.OutboxMessage{To: "member@example.com", Subject: "s", HTML: "h", Text: "t"}})
 	}
 	calls := 0
-	_, _, err := f.s.ProcessOutbox(ctx, time.Now(), 20, func(store.OutboxMessage) error {
+	// The database's clock may run a little ahead of ours: due "now" means a moment after the insert.
+	_, _, err := f.s.ProcessOutbox(ctx, time.Now().Add(time.Second), 20, func(store.OutboxMessage) error {
 		calls++
 		if calls == 2 {
 			cancel() // shutdown begins while the second e-mail is going out
@@ -153,7 +154,8 @@ func TestOutboxReportsWhatItGivesUpOn(t *testing.T) {
 	f.s.CreateNotification(ctx, store.NewNotification{UserID: f.member.ID, Kind: store.NotifyAssigned,
 		Email: &store.OutboxMessage{To: "member@example.com", Subject: "s", HTML: "h", Text: "t"}})
 	var gaveUp []string
-	now := time.Now()
+	// The database's clock may run a little ahead of ours: due "now" means a moment after the insert.
+	now := time.Now().Add(time.Second)
 	for i := 0; i < 8; i++ {
 		f.s.ProcessOutbox(ctx, now, 20, func(store.OutboxMessage) error { return errors.New("down") },
 			func(m store.OutboxMessage, err error) { gaveUp = append(gaveUp, m.To+": "+err.Error()) })
