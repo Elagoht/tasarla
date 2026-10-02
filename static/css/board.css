@@ -10,30 +10,30 @@
 .board-head h1 { font-size: var(--text-2xl); font-weight: 800; }
 
 .board { position: relative; }
-.board-alert { margin: 0 var(--s5) var(--s4) 0; max-width: 720px; transition: opacity 250ms var(--ease); }
+.board-alert { margin: 0 var(--s5) var(--s4) 0; max-width: 45rem; transition: opacity 250ms var(--ease); }
 .board-alert.is-leaving { opacity: 0; }
 
 .columns {
   display: flex; align-items: flex-start; gap: var(--s4);
   overflow-x: auto; padding: 0 var(--s5) var(--s5) 0;
-  scroll-snap-type: x proximity; min-height: calc(100vh - 200px);
+  scroll-snap-type: x proximity; min-height: calc(100vh - 12.5rem);
 }
 
 .column {
-  flex: 0 0 300px; scroll-snap-align: start;
+  flex: 0 0 18.75rem; scroll-snap-align: start;
   display: flex; flex-direction: column; gap: var(--s2);
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 11.25rem);
   padding: var(--s3); border-radius: var(--r-lg);
-  background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow-paper);
+  background: var(--sheet); border: 0.0625rem solid var(--line); box-shadow: var(--shadow-paper);
 }
 .column__head { display: flex; align-items: center; gap: var(--s2); padding: 0.125rem var(--s1) var(--s2); border-bottom: 0.0625rem solid var(--line); }
-.column__dot { width: 10px; height: 10px; border-radius: 4px; background: var(--chip-dot, var(--accent)); flex: none; }
+.column__dot { width: 0.625rem; height: 0.625rem; border-radius: 0.25rem; background: var(--chip-dot, var(--accent)); flex: none; }
 .column__name { font-size: var(--text-md); font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .column__done { color: var(--ok); display: inline-flex; }
 .column__count {
-  margin-left: auto; padding: 0 8px; border-radius: var(--r-pill);
-  background: var(--shelf); border: 1px solid var(--line);
-  font-size: var(--text-xs); font-weight: 700; color: var(--ink-soft); font-variant-numeric: tabular-nums; line-height: 20px;
+  margin-left: auto; padding: 0 0.5rem; border-radius: var(--r-pill);
+  background: var(--shelf); border: 0.0625rem solid var(--line);
+  font-size: var(--text-xs); font-weight: 700; color: var(--ink-soft); font-variant-numeric: tabular-nums; line-height: 1.25rem;
 }
 .column__limit { color: var(--ink-muted); font-weight: 400; }
 .column[data-state="full"] .column__count { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
@@ -44,20 +44,20 @@
 .column__over { font-size: var(--text-xs); font-weight: 700; color: var(--danger); padding: 0 var(--s1); }
 
 .column__cards {
-  list-style: none; margin: 0; padding: 2px; display: grid; gap: var(--s2); align-content: start;
-  min-height: 56px; overflow-y: auto; border-radius: var(--r-md);
+  list-style: none; margin: 0; padding: 0.125rem; display: grid; gap: var(--s2); align-content: start;
+  min-height: 3.5rem; overflow-y: auto; border-radius: var(--r-md);
 }
 /* An empty column says so, and stays a place to drop a card. */
 .column__cards:not(:has(.card))::before {
-  content: attr(data-empty); display: grid; place-items: center; min-height: 64px;
-  border: 1.5px dashed var(--line-strong); border-radius: var(--r-md);
+  content: attr(data-empty); display: grid; place-items: center; min-height: 4rem;
+  border: 0.0938rem dashed var(--line-strong); border-radius: var(--r-md);
   color: var(--ink-faint); font-size: var(--text-sm);
 }
 
 .card {
   position: relative; display: grid; gap: var(--s2);
   padding: var(--s3); border-radius: var(--r-md);
-  background: var(--card-bg); border: 1px solid var(--line); box-shadow: var(--shadow-paper);
+  background: var(--card-bg); border: 0.0625rem solid var(--line); box-shadow: var(--shadow-paper);
   cursor: grab; transition: box-shadow 140ms var(--ease), transform 140ms var(--ease), border-color 140ms var(--ease);
 }
 .card:hover { border-color: var(--line-strong); box-shadow: var(--shadow-lift); }
@@ -67,18 +67,18 @@
 .card__title::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
 .card__title:hover { color: var(--ink); }
 .card__title:focus-visible { outline: none; }
-.card:has(.card__title:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card:has(.card__title:focus-visible) { outline: 0.125rem solid var(--accent); outline-offset: 0.125rem; }
 .card__labels { position: relative; }
 .card__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s3); color: var(--ink-muted); font-size: var(--text-xs); font-weight: 700; }
-.card__meta > span { display: inline-flex; align-items: center; gap: 4px; }
-.card__meta .icon { width: 14px; height: 14px; vertical-align: 0; }
+.card__meta > span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.card__meta .icon { width: 0.875rem; height: 0.875rem; vertical-align: 0; }
 .card__assignee { margin-left: auto; }
 .card__due--late { color: var(--danger); }
 .card__checklist.is-complete { color: var(--ok); }
 .card__priority[data-priority="3"] { color: var(--warn); }
 .card__priority[data-priority="4"] { color: var(--danger); }
-.card__blocked { padding: 1px 8px 1px 6px; border-radius: var(--r-pill); background: var(--danger-soft); color: var(--danger); }
-.card--blocked { border-left: 3px solid var(--danger); }
+.card__blocked { padding: 0.0625rem 0.5rem 0.0625rem 0.375rem; border-radius: var(--r-pill); background: var(--danger-soft); color: var(--danger); }
+.card--blocked { border-left: 0.1875rem solid var(--danger); }
 .column[data-done] .card__title { color: var(--ink-soft); }
 
 .card--ghost { opacity: 0.35; background: var(--accent-soft); border-style: dashed; border-color: var(--accent-line); box-shadow: none; }
@@ -95,13 +95,13 @@
 .add-card__open:hover { background: var(--shelf-strong); color: var(--ink); }
 .add-card[open] .add-card__open { display: none; }
 .add-card__form { display: grid; gap: var(--s2); }
-.add-card__title { min-height: 64px; resize: none; font-weight: 700; }
+.add-card__title { min-height: 4rem; resize: none; font-weight: 700; }
 
 /* Completing: a ring draws round a tick over the card, then it folds away. */
 .card--completing { overflow: hidden; border-color: var(--ok); }
 .card--completing > :not(.complete-burst) { opacity: 0.25; transition: opacity 200ms var(--ease); }
 .complete-burst { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
-.complete-burst svg { width: 44px; height: 44px; fill: none; stroke: var(--ok); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; animation: burst-pop 320ms 380ms var(--ease) both; }
+.complete-burst svg { width: 2.75rem; height: 2.75rem; fill: none; stroke: var(--ok); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; animation: burst-pop 320ms 380ms var(--ease) both; }
 .complete-burst__ring { stroke-dasharray: 139; stroke-dashoffset: 139; transform: rotate(-90deg); transform-origin: center; animation: burst-ring 420ms var(--ease) forwards; }
 .complete-burst__tick { stroke-dasharray: 34; stroke-dashoffset: 34; animation: burst-tick 260ms 360ms var(--ease) forwards; }
 @keyframes burst-ring { to { stroke-dashoffset: 0; } }
@@ -119,13 +119,13 @@
 /* The card drawer: a sheet sliding in from the right of the board. */
 .drawer {
   position: fixed; inset: 0 0 0 auto; margin: 0; width: var(--drawer); max-width: 100vw; height: 100dvh; max-height: 100dvh;
-  padding: 0; border: 0; border-left: 1px solid var(--line);
+  padding: 0; border: 0; border-left: 0.0625rem solid var(--line);
   background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-float);
 }
 .drawer[open] { animation: drawer-in 240ms var(--ease); }
 .drawer::backdrop { background: rgb(22 21 43 / 0.28); }
 .drawer__body { height: 100%; overflow-y: auto; }
-@keyframes drawer-in { from { transform: translateX(32px); opacity: 0; } }
+@keyframes drawer-in { from { transform: translateX(2rem); opacity: 0; } }
 
 /* Lanes: the column heads once, then a row of cells per lane, scrolled together. */
 .columns--lanes { flex-direction: column; align-items: stretch; gap: var(--s3); min-height: 0; }
@@ -138,22 +138,22 @@
 }
 .lane__head::before {
   content: ""; width: 0.5rem; height: 0.5rem; flex: none;
-  border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint);
+  border-right: 0.125rem solid var(--ink-faint); border-bottom: 0.125rem solid var(--ink-faint);
   transform: rotate(-45deg); transition: transform 150ms var(--ease);
 }
 .lane[open] > .lane__head::before { transform: rotate(45deg); }
 @media (prefers-reduced-motion: reduce) { .lane__head::before { transition: none; } }
 .lane--former .lane__head { opacity: 0.6; font-style: italic; }
 .lane__cell {
-  flex: 0 0 300px; box-sizing: border-box; padding: var(--s2); border-radius: var(--r-lg);
-  background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow-paper); max-height: none;
+  flex: 0 0 18.75rem; box-sizing: border-box; padding: var(--s2); border-radius: var(--r-lg);
+  background: var(--sheet); border: 0.0625rem solid var(--line); box-shadow: var(--shadow-paper); max-height: none;
 }
 .lane__cell[data-done] .card__title { color: var(--ink-soft); }
 
-@media (max-width: 900px) {
+@media (max-width: 56.25rem) {
   .columns { padding-left: 0; }
-  .column { flex-basis: min(300px, 82vw); }
-  .lane__cell { flex-basis: min(300px, 82vw); }
+  .column { flex-basis: min(18.75rem, 82vw); }
+  .lane__cell { flex-basis: min(18.75rem, 82vw); }
   .board-head { padding-right: var(--s4); }
   .main--wide .board-tabs { margin-right: var(--s4); }
 }
