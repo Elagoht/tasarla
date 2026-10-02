@@ -16,15 +16,18 @@ const (
 	NotifyDueSoon   = "due_soon"
 	NotifyOverdue   = "overdue"
 	NotifyUnblocked = "unblocked"
+
+	NotifyTemplateFailed = "template_failed"
 )
 
 // NotifyKinds lists every kind, in the order settings show them.
-var NotifyKinds = []string{NotifyAssigned, NotifyMentioned, NotifyCommented, NotifyDueSoon, NotifyOverdue, NotifyUnblocked}
+var NotifyKinds = []string{NotifyAssigned, NotifyMentioned, NotifyCommented, NotifyDueSoon, NotifyOverdue, NotifyUnblocked, NotifyTemplateFailed}
 
 // emailByDefault is each kind's e-mail setting until a user changes it.
 var emailByDefault = map[string]bool{
 	NotifyAssigned: true, NotifyMentioned: true, NotifyCommented: false,
 	NotifyDueSoon: true, NotifyOverdue: true, NotifyUnblocked: false,
+	NotifyTemplateFailed: true,
 }
 
 // NotificationPayload is what a notification shows.
