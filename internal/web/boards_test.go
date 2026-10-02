@@ -64,7 +64,13 @@ func TestLeadCreatesABoardFromTheTeamPage(t *testing.T) {
 	h := newHarness(t, "")
 	lead := h.signedIn("lead", "lead@example.com")
 	path := teamWith(t, h, "lead@example.com", "")
-	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"Sprint 1"}})
+	team := lead.Get(path).Body
+	mustContain(t, team, `href="`+path+`/boards/new"`)
+	if strings.Contains(team, `name="board_name"`) {
+		t.Error("the team page still holds the create form")
+	}
+	newPath := path + "/boards/new"
+	res := lead.Submit(newPath, newPath, url.Values{"board_name": {"Sprint 1"}})
 	if res.Status != http.StatusSeeOther || !strings.HasPrefix(res.Location(), "/boards/") {
 		t.Fatalf("create board = %d %q:\n%s", res.Status, res.Location(), res.Body)
 	}
@@ -74,13 +80,26 @@ func TestLeadCreatesABoardFromTheTeamPage(t *testing.T) {
 	mustContain(t, lead.Get("/").Body, "Sprint 1")
 }
 
+// Members see neither the button nor the page, and cannot post to it.
 func TestMembersCannotCreateBoards(t *testing.T) {
 	h := newHarness(t, "")
-	h.signedIn("lead", "lead@example.com")
+	lead := h.signedIn("lead", "lead@example.com")
 	member := h.signedIn("member", "member@example.com")
 	path := teamWith(t, h, "lead@example.com", "member@example.com")
-	if res := member.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"X"}}); res.Status != http.StatusForbidden {
-		t.Fatalf("member create board = %d, want 403", res.Status)
+	newPath := path + "/boards/new"
+	if strings.Contains(member.Get(path).Body, newPath) {
+		t.Error("a member sees the New board button")
+	}
+	if res := member.Get(newPath); res.Status != http.StatusNotFound {
+		t.Fatalf("member GET new board = %d, want 404", res.Status)
+	}
+	// A member who got hold of a lead's form still cannot post it.
+	form := lead.Get(newPath)
+	if form.Status != http.StatusOK {
+		t.Fatalf("lead GET new board = %d", form.Status)
+	}
+	if res := member.Post(newPath, url.Values{"board_name": {"X"}, "_csrf": {webtest.CSRFToken(t, member.Get(path).Body)}}); res.Status != http.StatusNotFound {
+		t.Fatalf("member create board = %d, want 404", res.Status)
 	}
 }
 
@@ -222,11 +241,14 @@ func TestAddingACardInAColumn(t *testing.T) {
 func TestCreateBoardFromBlueprint(t *testing.T) {
 	h := newHarness(t, "")
 	lead := h.signedIn("lead", "lead@example.com")
-	path := teamWith(t, h, "lead@example.com", "")
+	path := teamWith(t, h, "lead@example.com", "") + "/boards/new"
 	form := lead.Get(path).Body
 	mustContain(t, form, `name="blueprint" value="simple" checked`, `name="blueprint" value="scrum"`, `data-has="wip labels templates recurring rules"`,
-		`name="include" value="recurring" checked`, `name="include_present" value="1"`, "Hata takibi", "Backlog → Sprint → Yapılıyor → İncelemede → Bitti")
-	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"Platform sprint"}, "blueprint": {"scrum"},
+		`name="include" value="recurring" checked`, `name="include_present" value="1"`, "Hata takibi",
+		// The preview: columns with their limits, labels, recurring templates and rules as sentences.
+		"İncelemede", "WIP 3", "Hikâye", "Haftalık retrospektif", "Her hafta · Cum · 16:00",
+		"Yapılıyor kolonuna girerken kartın atanan bir kişisi olmalı.", "Kapandı kolonuna yalnızca Takım lideri kart taşıyabilir.")
+	res := lead.Submit(path, path, url.Values{"board_name": {"Platform sprint"}, "blueprint": {"scrum"},
 		"include_present": {"1"}, "include": {"wip", "labels", "templates", "recurring", "rules"}})
 	if res.Status != http.StatusSeeOther {
 		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
@@ -242,8 +264,8 @@ func TestCreateBoardFromBlueprintInEnglish(t *testing.T) {
 	path := teamWith(t, h, "lead@example.com", "")
 	// An English speaker's pages are under /en; their board is built in English.
 	h.speaks("lead@example.com", "en")
-	en := "/en" + path
-	res := lead.Submit(en, en, url.Values{"op": {"create_board"}, "board_name": {"Bugs"}, "blueprint": {"bugs"}})
+	en := "/en" + path + "/boards/new"
+	res := lead.Submit(en, en, url.Values{"board_name": {"Bugs"}, "blueprint": {"bugs"}})
 	if res.Status != http.StatusSeeOther {
 		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
 	}
@@ -269,8 +291,8 @@ func TestCreateBoardFromBlueprintInEnglish(t *testing.T) {
 func TestBoardFormUnknownBlueprintFallsBack(t *testing.T) {
 	h := newHarness(t, "")
 	lead := h.signedIn("lead", "lead@example.com")
-	path := teamWith(t, h, "lead@example.com", "")
-	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"Fine"}, "blueprint": {"kanban-pro"}})
+	path := teamWith(t, h, "lead@example.com", "") + "/boards/new"
+	res := lead.Submit(path, path, url.Values{"board_name": {"Fine"}, "blueprint": {"kanban-pro"}})
 	mustContain(t, res.Body, `name="blueprint" value="simple" checked`)
 }
 
@@ -278,8 +300,8 @@ func TestBoardFormUnknownBlueprintFallsBack(t *testing.T) {
 func TestBoardFormIncludes(t *testing.T) {
 	h := newHarness(t, "")
 	lead := h.signedIn("lead", "lead@example.com")
-	path := teamWith(t, h, "lead@example.com", "")
-	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"Bare"}, "blueprint": {"scrum"},
+	path := teamWith(t, h, "lead@example.com", "") + "/boards/new"
+	res := lead.Submit(path, path, url.Values{"board_name": {"Bare"}, "blueprint": {"scrum"},
 		"include_present": {"1"}, "include": {"recurring"}})
 	if res.Status != http.StatusSeeOther {
 		t.Fatalf("create = %d", res.Status)
@@ -301,8 +323,8 @@ func TestBoardFormIncludes(t *testing.T) {
 func TestBoardFormRefusesAnUnknownBlueprint(t *testing.T) {
 	h := newHarness(t, "")
 	lead := h.signedIn("lead", "lead@example.com")
-	path := teamWith(t, h, "lead@example.com", "")
-	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {"X"}, "blueprint": {"kanban-pro"}})
+	path := teamWith(t, h, "lead@example.com", "") + "/boards/new"
+	res := lead.Submit(path, path, url.Values{"board_name": {"X"}, "blueprint": {"kanban-pro"}})
 	if res.Status == http.StatusSeeOther {
 		t.Fatal("an unknown blueprint built a board")
 	}
@@ -312,8 +334,8 @@ func TestBoardFormRefusesAnUnknownBlueprint(t *testing.T) {
 func TestBoardFormKeepsTheChosenBlueprint(t *testing.T) {
 	h := newHarness(t, "")
 	lead := h.signedIn("lead", "lead@example.com")
-	path := teamWith(t, h, "lead@example.com", "")
-	res := lead.Submit(path, path, url.Values{"op": {"create_board"}, "board_name": {""}, "blueprint": {"hiring"}})
+	path := teamWith(t, h, "lead@example.com", "") + "/boards/new"
+	res := lead.Submit(path, path, url.Values{"board_name": {""}, "blueprint": {"hiring"}})
 	if res.Status == http.StatusSeeOther {
 		t.Fatal("an empty name built a board")
 	}

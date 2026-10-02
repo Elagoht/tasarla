@@ -5,6 +5,7 @@
 .section-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); }
 .section-head__link { display: inline-flex; align-items: center; gap: var(--s2); color: var(--ink); text-decoration: none; }
 .section-head__link:hover { color: var(--accent-strong); }
+.section-head__end { margin-left: auto; }
 .section-head .chip .icon { width: 0.8125rem; height: 0.8125rem; }
 
 .dot { width: 0.625rem; height: 0.625rem; border-radius: 0.25rem; background: var(--chip-dot, var(--accent)); flex: none; }
@@ -105,26 +106,63 @@ a.notification__text:hover { color: var(--accent-strong); }
 mark { background: var(--accent-soft); color: inherit; border-radius: 0.125rem; padding: 0 0.0625rem; }
 .pager { display: flex; gap: var(--s2); justify-content: flex-end; }
 
-/* The create-board form: a name of reading width, then the blueprints. A
-   legend is no grid item of its fieldset, so it takes the field's gap itself. */
-.blueprint-form__name { max-width: 30rem; }
-.blueprint-form legend.field__label { margin-bottom: var(--s2); }
-/* The create form's ready-made boards: a radio card each. */
-.blueprints { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
-.blueprint {
-  position: relative; display: grid; gap: var(--s1); align-content: start;
-  padding: var(--s3) var(--s4); border-radius: var(--r-md); cursor: pointer;
-  background: var(--sheet); border: 0.0625rem solid var(--line); box-shadow: var(--shadow-paper);
-  transition: border-color 120ms var(--ease), background-color 120ms var(--ease);
+/* The new-board page: a name of reading width, a list of blueprints beside
+   the chosen one's preview, and the parts to bring along. A legend is no
+   grid item of its fieldset, so it takes the field's gap itself. */
+.new-board__name { max-width: 30rem; }
+.new-board legend.field__label { margin-bottom: var(--s2); }
+.new-board__foot { justify-content: flex-end; padding-top: var(--s4); border-top: 0.0625rem solid var(--line); }
+
+/* Each radio is followed by its option and its preview. The options stack in
+   the first column; every preview spans the second from the top, and only the
+   checked radio's is shown, so the page needs no script to switch. Rows have
+   no gap of their own: the empty ones the span reaches stay zero high. */
+.bp-picker {
+  display: grid; grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr);
+  column-gap: var(--s5); align-items: start;
 }
-.blueprint:hover { border-color: var(--line-strong); }
-.blueprint:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
-.blueprint:has(input:focus-visible) { box-shadow: 0 0 0 0.1875rem var(--focus); }
-.blueprint input { position: absolute; opacity: 0; pointer-events: none; }
-.blueprint__name { font-weight: 800; color: var(--ink); }
-.blueprint__summary { font-size: var(--text-sm); color: var(--ink-soft); }
-.blueprint__columns { font-size: var(--text-xs); color: var(--ink-muted); overflow-wrap: anywhere; }
-.blueprint__counts { font-size: var(--text-xs); font-weight: 700; color: var(--accent-strong); }
+.bp-picker__radio { position: absolute; opacity: 0; pointer-events: none; }
+.bp-picker__option {
+  grid-column: 1; display: grid; gap: 0.125rem; margin-bottom: var(--s1);
+  padding: var(--s2) var(--s3) var(--s2) var(--s6); border-radius: var(--r-md); cursor: pointer;
+  position: relative; border: 0.0625rem solid transparent;
+}
+.bp-picker__option::before {
+  content: ""; position: absolute; left: var(--s3); top: 0.75rem; width: 1rem; height: 1rem; border-radius: 50%;
+  border: 0.125rem solid var(--line-strong); background: var(--sheet);
+}
+.bp-picker__option:hover { background: var(--shelf); }
+.bp-picker__radio:checked + .bp-picker__option { background: var(--accent-soft); border-color: var(--accent-line); }
+.bp-picker__radio:checked + .bp-picker__option::before { border-color: var(--accent); box-shadow: inset 0 0 0 0.1875rem var(--sheet); background: var(--accent); }
+.bp-picker__radio:focus-visible + .bp-picker__option { box-shadow: 0 0 0 0.1875rem var(--focus); }
+.bp-picker__name { font-weight: 700; color: var(--ink); }
+.bp-picker__summary { font-size: var(--text-xs); color: var(--ink-muted); }
+
+.bp-preview {
+  display: none; grid-column: 2; grid-row: 1 / span 20;
+  padding: var(--s4) var(--s5); border-radius: var(--r-lg);
+  background: var(--shelf); border: 0.0625rem solid var(--line);
+}
+.bp-picker__radio:checked + .bp-picker__option + .bp-preview { display: grid; gap: var(--s3); }
+.bp-preview__title { margin: 0; font-weight: 800; font-size: var(--text-lg); color: var(--ink); }
+.bp-preview__parts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--s3) var(--s4); margin: 0; }
+.bp-preview__parts dt { font-size: var(--text-xs); font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; padding-top: 0.125rem; }
+.bp-preview__parts dd { margin: 0; font-size: var(--text-sm); color: var(--ink-soft); }
+.bp-preview__columns { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); list-style: none; margin: 0; padding: 0; }
+.bp-preview__columns li { color: var(--ink); font-weight: 600; }
+.bp-preview__columns li + li::before { content: "→"; margin-right: var(--s2); color: var(--ink-faint); font-weight: 400; }
+.bp-preview__wip { font-size: var(--text-xs); font-weight: 700; color: var(--accent-strong); }
+.bp-preview__list { display: grid; gap: var(--s1); margin: 0; padding-left: var(--s4); }
+.bp-preview__when { display: inline-flex; align-items: center; gap: 0.25rem; font-size: var(--text-xs); color: var(--ink-muted); }
+.bp-preview__when .icon { width: 0.75rem; height: 0.75rem; }
+
 .includes { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .includes .check-pill:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
-@media (max-width: 40rem) { .blueprints { grid-template-columns: minmax(0, 1fr); } }
+
+/* On a narrow screen the preview opens under its own option. */
+@media (max-width: 48rem) {
+  .bp-picker { grid-template-columns: minmax(0, 1fr); }
+  .bp-preview { grid-column: 1; grid-row: auto; margin-bottom: var(--s3); }
+  .bp-preview__parts { grid-template-columns: minmax(0, 1fr); gap: var(--s1); }
+  .bp-preview__parts dd { margin-bottom: var(--s2); }
+}

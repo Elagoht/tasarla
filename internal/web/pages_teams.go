@@ -14,7 +14,6 @@ import (
 	"github.com/Elagoht/collage/pkg/collage"
 
 	"kanban/internal/authz"
-	"kanban/internal/blueprint"
 	"kanban/internal/store"
 )
 
@@ -32,8 +31,6 @@ type teamView struct {
 	Members   []store.Member
 	Roles     []store.Role
 	CanManage bool
-	// Blueprints are the ready-made boards the create form offers.
-	Blueprints []blueprintCard
 }
 
 func (h *handlers) teamsPage() *collage.Page {
@@ -150,7 +147,6 @@ func (h *handlers) loadTeam(ctx context.Context, rc *collage.RenderContext) (tea
 	user, _ := currentUser(ctx)
 	v := teamView{Me: user.ID, Team: team, Boards: boards, Members: members, Roles: store.Roles, CanManage: access.CanManage}
 	if access.CanManage {
-		v.Blueprints = blueprintCards(rc)
 		v.Archived, err = h.store.ArchivedBoards(ctx, team.ID)
 	}
 	return v, err
@@ -179,8 +175,6 @@ func (h *handlers) teamPost(ctx context.Context, rc *collage.RenderContext) (*co
 		return h.addMember(ctx, rc, v, team)
 	case "set_role", "remove_member":
 		return h.changeMember(ctx, rc, v, team)
-	case "create_board":
-		return h.createBoard(ctx, rc, v, team)
 	case "restore_board":
 		id, ok := formInt64(v, "board_id")
 		if !ok {
@@ -284,31 +278,4 @@ func (h *handlers) changeMember(ctx context.Context, rc *collage.RenderContext, 
 		return nil, err
 	}
 	return h.redirectToTeam(rc, team.ID)
-}
-
-// createBoard builds a board from the chosen blueprint, in the creator's
-// language, with the parts they brought along.
-func (h *handlers) createBoard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, team store.Team) (*collage.ActionResult, error) {
-	v.Field("board_name").Required().MaxLen(100)
-	key := v.Value("blueprint")
-	if key == "" {
-		key = blueprint.Default
-	}
-	bp, ok := blueprint.Find(key)
-	if !ok {
-		v.Fail("blueprint", i18n.T(rc, "board.blueprint_unknown"))
-	}
-	if !v.Valid() {
-		return validate.Refuse(rc, v, rc.Page), nil
-	}
-	u, err := currentUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	plan := blueprint.Plan(bp, func(k string) string { return i18n.T(rc, k) }, includeOptions(rc, v.Value("include_present")))
-	board, err := h.store.CreateBoardFromPlan(ctx, team.ID, strings.TrimSpace(v.Value("board_name")), plan, u.ID)
-	if err != nil {
-		return nil, err
-	}
-	return h.redirectTo(rc, "board", "id", strconv.FormatInt(board.ID, 10))
 }

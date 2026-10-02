@@ -1,0 +1,70 @@
+{{$team := pageURL "team" "id" .Team.ID}}
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{$team}}">{{template "icon" "arrow-left"}} {{.Team.Name}}</a>
+    <h1>{{t "board.new_board"}}</h1>
+  </div>
+</header>
+
+<form class="panel stack stack--lg new-board" method="post" action="{{pageURL "team-new-board" "id" .Team.ID}}" data-blueprint-form>
+  {{csrfToken}}
+  <input type="hidden" name="include_present" value="1">
+  <label class="field new-board__name">
+    <span class="field__label">{{t "board.name"}}</span>
+    <input class="input" id="board-name" name="board_name" value="{{fieldValue "board_name"}}" required maxlength="100" autofocus>
+    {{with fieldError "board_name"}}<span class="field__error">{{.}}</span>{{end}}
+  </label>
+
+  <fieldset class="field">
+    <legend class="field__label">{{t "board.blueprint"}}</legend>
+    {{/* Each radio is followed by its line in the list and its preview, so
+       CSS alone shows the chosen one's preview: it works without scripts. */}}
+    <div class="bp-picker">
+      {{range .Blueprints}}
+      <input class="bp-picker__radio" type="radio" id="bp-{{.Key}}" name="blueprint" value="{{.Key}}"{{if .Checked}} checked{{end}} data-has="{{.Has}}">
+      <label class="bp-picker__option" for="bp-{{.Key}}">
+        <span class="bp-picker__name">{{.Name}}</span>
+        <span class="bp-picker__summary">{{.Summary}}</span>
+      </label>
+      <div class="bp-preview">
+        <p class="bp-preview__title">{{.Name}}</p>
+        <dl class="bp-preview__parts">
+          <dt>{{t "settings.columns"}}</dt>
+          <dd><ol class="bp-preview__columns">{{range .Columns}}<li>{{.Name}}{{with .WIP}} <span class="bp-preview__wip">WIP {{.}}</span>{{end}}</li>{{end}}</ol></dd>
+          {{if .Labels}}
+          <dt>{{t "board.include_labels"}}</dt>
+          <dd><ul class="chips">{{range .Labels}}<li class="chip label" data-color="{{.Color}}">{{.Name}}</li>{{end}}</ul></dd>
+          {{end}}
+          {{if .Templates}}
+          <dt>{{t "board.include_templates"}}</dt>
+          <dd><ul class="bp-preview__list">{{range .Templates}}<li>{{.Name}}{{with .Schedule}} <span class="bp-preview__when">{{template "icon" "clock"}} {{.}}</span>{{end}}</li>{{end}}</ul></dd>
+          {{end}}
+          {{if .Rules}}
+          <dt>{{t "settings.rules"}}</dt>
+          <dd><ul class="bp-preview__list">{{range .Rules}}<li>{{.}}</li>{{end}}</ul></dd>
+          {{end}}
+        </dl>
+      </div>
+      {{end}}
+    </div>
+    {{with fieldError "blueprint"}}<span class="field__error">{{.}}</span>{{end}}
+  </fieldset>
+
+  <fieldset class="field">
+    <legend class="field__label">{{t "board.include"}}</legend>
+    <div class="includes">
+      <label class="check-pill"><input type="checkbox" name="include" value="wip" checked> {{t "board.include_wip"}}</label>
+      <label class="check-pill"><input type="checkbox" name="include" value="labels" checked> {{t "board.include_labels"}}</label>
+      <label class="check-pill"><input type="checkbox" name="include" value="templates" checked> {{t "board.include_templates"}}</label>
+      <label class="check-pill"><input type="checkbox" name="include" value="recurring" checked> {{t "board.include_recurring"}}</label>
+      <label class="check-pill"><input type="checkbox" name="include" value="rules" checked> {{t "board.include_rules"}}</label>
+    </div>
+    <span class="field__hint">{{t "board.include_hint"}}</span>
+  </fieldset>
+
+  <div class="actions new-board__foot">
+    <a class="btn btn--quiet" href="{{$team}}">{{t "confirm.cancel"}}</a>
+    <button type="submit" class="btn btn--primary">{{template "icon" "plus"}} {{t "board.create"}}</button>
+  </div>
+</form>
+<script type="module" src="{{asset "/static/js/blueprint-form.js"}}"></script>
