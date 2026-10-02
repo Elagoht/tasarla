@@ -23,7 +23,7 @@ import (
 // stylesheet colour labels, so no inline style is needed under the CSP.
 var labelPalette = []string{"#e03131", "#f08c00", "#2f9e44", "#1971c2", "#7048e8", "#c2255c", "#0c8599", "#495057"}
 
-var settingsTabs = []string{"general", "columns", "labels", "roles", "rules"}
+var settingsTabs = []string{"general", "columns", "labels", "roles", "rules", "templates"}
 
 type settingsView struct {
 	Tab     string
@@ -45,6 +45,10 @@ type settingsView struct {
 	// Builders are the sentences a new rule is written in, by kind, with
 	// blanks where its fields go.
 	Builders map[string][]sentencePart
+
+	Templates []templateView
+	// EditTemplate is the template form, when ?edit= opens it.
+	EditTemplate *templateForm
 }
 
 // sentencePart is a piece of a rule sentence: text, or the blank named Slot.
@@ -209,6 +213,11 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 		return view, err
 	}
 	view.Sentences = sentenceViews(rc, sentences, view.AllCols, r.Roles, view.Labels)
+	if view.Tab == "templates" {
+		if err := h.loadTemplatesTab(ctx, rc, &view); err != nil {
+			return view, err
+		}
+	}
 	return view, nil
 }
 
@@ -352,6 +361,8 @@ func (h *handlers) boardSettingsPost(ctx context.Context, rc *collage.RenderCont
 	case "rule_delete":
 		err = h.store.DeleteSentence(ctx, boardID, v.Value("key"))
 		tab = "rules"
+	case "template_save", "template_delete":
+		return h.templateSettings(ctx, rc, v, bc)
 	default:
 		return collage.NoContent(http.StatusBadRequest), nil
 	}

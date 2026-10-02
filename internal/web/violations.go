@@ -23,8 +23,14 @@ func violationMessages(rc *collage.RenderContext, err error) []string {
 	if !errors.As(err, &re) {
 		return nil
 	}
-	messages := make([]string, 0, len(re.Violations))
-	for _, v := range re.Violations {
+	return ruleMessages(rc, re.Violations)
+}
+
+// ruleMessages translates violations into the reader's language. A code that
+// is not a condition's is its own catalog key.
+func ruleMessages(rc *collage.RenderContext, vs []rules.Violation) []string {
+	messages := make([]string, 0, len(vs))
+	for _, v := range vs {
 		key := v.Code
 		if kind, ok := strings.CutPrefix(v.Code, "rules.condition."); ok {
 			if kind == rules.HasLabel && v.Params["labels"] == "" {

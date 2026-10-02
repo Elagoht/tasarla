@@ -313,6 +313,133 @@
 </section>
 {{end}}
 
+{{if eq .Tab "templates"}}
+<section class="stack stack--lg">
+  <div class="actions">
+    <span class="actions__spacer"></span>
+    <a class="btn btn--primary" href="{{$self}}?tab=templates&edit=new">{{template "icon" "plus"}} {{t "settings.template_new"}}</a>
+  </div>
+  {{if .Templates}}
+  <ul class="list-rows">
+    {{range .Templates}}
+    <li class="list-rows__row">
+      <div class="stack stack--sm">
+        <div class="list-rows__main">
+          <a class="list-rows__title" href="{{$self}}?tab=templates&edit={{.ID}}">{{.Name}}</a>
+          <span class="muted small">{{t (printf "settings.template_schedule_%s" (or .Schedule "none"))}}</span>
+        </div>
+        {{if .NoColumn}}<div class="alert" role="alert">{{template "icon" "flag"}}<span>{{t "settings.template_no_column"}}</span></div>{{end}}
+        {{with .Run}}{{if .Failed}}<div class="alert">{{template "icon" "flag"}}<div><span>{{t "settings.template_failed"}}</span><ul>{{range .Messages}}<li>{{.}}</li>{{end}}</ul></div></div>
+        {{else}}<p class="muted small">{{t "settings.template_created"}}</p>{{end}}{{end}}
+      </div>
+      <form method="post" action="{{$self}}?tab=templates" data-confirm="{{t "confirm.template_delete"}}">
+        {{csrfToken}}
+        <input type="hidden" name="op" value="template_delete">
+        <input type="hidden" name="template_id" value="{{.ID}}">
+        <button type="submit" class="btn btn--danger btn--sm">{{template "icon" "trash"}} {{t "settings.template_delete"}}</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="empty">{{t "settings.template_empty"}}</p>
+  {{end}}
+
+  {{with .EditTemplate}}
+  {{$f := .}}
+  <form class="panel stack" method="post" action="{{$self}}?tab=templates&edit={{or .ID "new"}}">
+    {{csrfToken}}
+    <input type="hidden" name="op" value="template_save">
+    <input type="hidden" name="template_id" value="{{.ID}}">
+    <div class="field-row">
+      <label class="field">
+        <span class="field__label">{{t "settings.template_name"}}</span>
+        <input class="input" name="template_name" value="{{.Name}}" required maxlength="100">
+        {{with .Error "template_name"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+      <label class="field">
+        <span class="field__label">{{t "settings.template_title"}}</span>
+        <input class="input" name="template_title" value="{{.Title}}" required maxlength="200">
+        {{with .Error "template_title"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+    </div>
+    <label class="field">
+      <span class="field__label">{{t "settings.template_description"}}</span>
+      <textarea class="input" name="template_description" rows="4" maxlength="10000">{{.Description}}</textarea>
+      {{with .Error "template_description"}}<span class="field__error">{{.}}</span>{{end}}
+    </label>
+    <div class="field-row">
+      <label class="field">
+        <span class="field__label">{{t "settings.template_priority"}}</span>
+        <select class="select" name="template_priority">
+          <option value="">{{t "card.none"}}</option>
+          {{range priorityChoices}}<option value="{{.}}" {{if eq (printf "%d" .) $f.Priority}}selected{{end}}>{{t (printf "card.priorities.%d" .)}}</option>{{end}}
+        </select>
+        {{with .Error "template_priority"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+      <label class="field">
+        <span class="field__label">{{t "settings.template_assignee"}}</span>
+        <select class="select" name="template_assignee">
+          <option value="">{{t "card.none"}}</option>
+          {{range $.Members}}<option value="{{.User.ID}}" {{if eq (printf "%d" .User.ID) $f.Assignee}}selected{{end}}>{{.User.Name}}</option>{{end}}
+        </select>
+        {{with .Error "template_assignee"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+      <label class="field">
+        <span class="field__label">{{t "settings.template_column"}}</span>
+        <select class="select" name="template_column" required>
+          {{range $.AllCols}}<option value="{{.ID}}" {{if eq (printf "%d" .ID) $f.Column}}selected{{end}}>{{.Name}}</option>{{end}}
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">{{t "settings.template_due_in_days"}}</span>
+        <input class="input input--small" name="due_in_days" value="{{.DueInDays}}" inputmode="numeric" placeholder="–">
+        {{with .Error "due_in_days"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+    </div>
+    <fieldset class="field">
+      <legend class="field__label">{{t "settings.template_labels"}}</legend>
+      {{if $.Labels}}<div class="checks">{{range $.Labels}}<label class="label-pick" data-color="{{.Color}}"><input type="checkbox" name="template_label" value="{{.ID}}" {{if $f.HasLabel .ID}}checked{{end}}><span class="label-pick__dot" aria-hidden="true"></span>{{.Name}}</label>{{end}}</div>
+      {{else}}<p class="muted small">{{t "card.no_labels"}}</p>{{end}}
+    </fieldset>
+    <label class="field">
+      <span class="field__label">{{t "settings.template_checklist"}}</span>
+      <textarea class="input" name="checklist" rows="4">{{.Checklist}}</textarea>
+      {{with .Error "checklist"}}<span class="field__error">{{.}}</span>{{end}}
+    </label>
+    <div class="field-row">
+      <label class="field">
+        <span class="field__label">{{t "settings.template_schedule"}}</span>
+        <select class="select" name="schedule_kind">
+          {{range .Kinds}}<option value="{{.}}" {{if eq . $f.Kind}}selected{{end}}>{{t (printf "settings.template_schedule_%s" (or . "none"))}}</option>{{end}}
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">{{t "settings.template_time"}}</span>
+        <input class="input input--small" type="time" name="schedule_time" value="{{.Time}}">
+        {{with .Error "schedule_time"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+      <label class="field">
+        <span class="field__label">{{t "settings.template_monthday"}}</span>
+        <input class="input input--small" name="monthday" value="{{.MonthDay}}" inputmode="numeric">
+        {{with .Error "monthday"}}<span class="field__error">{{.}}</span>{{end}}
+      </label>
+    </div>
+    <fieldset class="field">
+      <legend class="field__label">{{t "settings.template_weekdays"}}</legend>
+      <div class="checks">{{range .Days}}<label class="check-pill"><input type="checkbox" name="weekday" value="{{.N}}" {{if .Checked}}checked{{end}}> {{t (printf "weekdays.%d" .N)}}</label>{{end}}</div>
+      {{with .Error "weekday"}}<span class="field__error">{{.}}</span>{{end}}
+    </fieldset>
+    <div class="actions">
+      <a class="btn btn--secondary" href="{{$self}}?tab=templates">{{t "confirm.cancel"}}</a>
+      <span class="actions__spacer"></span>
+      <button type="submit" class="btn btn--primary">{{t "settings.template_save"}}</button>
+    </div>
+  </form>
+  {{end}}
+</section>
+{{end}}
+
 {{if eq .Tab "columns"}}<script src="{{asset "/static/vendor/Sortable.min.js"}}"></script>
 <script type="module" src="{{asset "/static/js/columns-editor.js"}}"></script>{{end}}
 {{if eq .Tab "rules"}}<script type="module" src="{{asset "/static/js/rules.js"}}"></script>{{end}}
