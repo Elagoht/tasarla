@@ -4,6 +4,7 @@
     <h1>{{t "me.title"}}</h1>
   </div>
 </header>
+<div class="stack stack--lg">
 <form class="panel stack" method="post" action="{{pageURL "me-settings"}}">
   {{csrfToken}}
   <input type="hidden" name="op" value="save">
@@ -54,4 +55,5 @@
     {{end}}
   </div>
 </section>
+</div>
 </div>
