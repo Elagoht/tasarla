@@ -72,3 +72,31 @@ func TestNoPriorityNoLine(t *testing.T) {
 		t.Error("a one-day event ends the next day")
 	}
 }
+
+func TestBrokenUTF8DoesntHang(t *testing.T) {
+	// Test that 200 bytes of invalid UTF-8 (\x80) don't cause a hang
+	out := string(Encode(Calendar{Events: []Event{{UID: "u", Start: day("2026-10-05"), End: day("2026-10-05"), Summary: strings.Repeat("\x80", 200)}}}))
+	lines := strings.Split(strings.TrimSuffix(out, "\r\n"), "\r\n")
+	for _, line := range lines {
+		if len(line) > 75 {
+			t.Errorf("line of %d octets: %q", len(line), line)
+		}
+	}
+}
+
+func TestCRLFtoLFConversion(t *testing.T) {
+	out := string(Encode(Calendar{Events: []Event{{UID: "u", Start: day("2026-10-05"), End: day("2026-10-05"), Description: "a\r\nb\rc\nd"}}}))
+	if !strings.Contains(out, "DESCRIPTION:a\\nbc\\nd") {
+		t.Errorf("CRLF and bare CR not handled correctly in:\n%s", out)
+	}
+}
+
+func TestZeroModifiedWritesEpoch(t *testing.T) {
+	out := string(Encode(Calendar{Events: []Event{{UID: "u", Start: day("2026-10-05"), End: day("2026-10-05")}}}))
+	if !strings.Contains(out, "DTSTAMP:19700101T000000Z") {
+		t.Error("zero Modified should write Unix epoch DTSTAMP")
+	}
+	if strings.Contains(out, "LAST-MODIFIED") {
+		t.Error("zero Modified should not write LAST-MODIFIED")
+	}
+}

@@ -83,6 +83,9 @@ func writeFolded(b *strings.Builder, s string) {
 		for cut > 0 && !utf8.RuneStart(s[cut]) {
 			cut--
 		}
+		if cut == 0 {
+			cut = limit
+		}
 		b.WriteString(s[:cut])
 		b.WriteString("\r\n ")
 		s = s[cut:]
