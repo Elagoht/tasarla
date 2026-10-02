@@ -14,7 +14,15 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jackc/tern/v2 v2.4.3
+	github.com/microcosm-cc/bluemonday v1.0.27
+	github.com/yuin/goldmark v1.8.6
 	golang.org/x/oauth2 v0.37.0
+)
+
+require (
+	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
+	golang.org/x/net v0.57.0 // indirect
 )
 
 require (
