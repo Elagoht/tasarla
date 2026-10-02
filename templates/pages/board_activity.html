@@ -4,6 +4,7 @@
     <h1>{{t "activity.board_title"}}</h1>
   </div>
 </header>
+{{template "board-tabs" (boardTabs .Board.ID "activity")}}
 {{if .Activity}}
 <ol class="timeline timeline--page">
   {{range .Activity}}

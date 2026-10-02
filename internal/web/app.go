@@ -92,6 +92,7 @@ func New(d Deps) (*App, error) {
 				"initial":         initial,
 				"withQuery":       withQuery,
 				"ganttLink":       ganttLink,
+				"boardTabs":       boardTabs,
 				"clearQuery":      clearQuery,
 				"priorityChoices": func() []int16 { return []int16{4, 3, 2, 1} },
 				"dueChoices":      func() []store.DueFilter { return dueFilters },

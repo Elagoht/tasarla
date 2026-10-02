@@ -112,7 +112,9 @@
     "open_card": "Open card",
     "no_cards": "No cards",
     "wip_limit": "Cards / WIP limit",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "tab": "Board",
+    "views": "Board views"
   },
   "card": {
     "title": "Title",

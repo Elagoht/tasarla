@@ -1,0 +1,11 @@
+{{/* board-tabs: the board's views as tabs, under the head of the board and of each view. Takes a boardTabsView. */}}
+{{define "board-tabs"}}
+<nav class="tabs board-tabs" aria-label="{{t "board.views"}}">
+  {{$id := .BoardID}}{{$on := .Active}}
+  <a class="tabs__tab{{if eq $on "board"}} is-active{{end}}" href="{{pageURL "board" "id" $id}}"{{if eq $on "board"}} aria-current="page"{{end}}>{{template "icon" "board"}} {{t "board.tab"}}</a>
+  <a class="tabs__tab{{if eq $on "gantt"}} is-active{{end}}" href="{{pageURL "board-gantt" "id" $id}}"{{if eq $on "gantt"}} aria-current="page"{{end}}>{{template "icon" "calendar"}} {{t "gantt.button"}}</a>
+  <a class="tabs__tab{{if eq $on "done"}} is-active{{end}}" href="{{pageURL "board-done" "id" $id}}"{{if eq $on "done"}} aria-current="page"{{end}}>{{template "icon" "check"}} {{t "done.title"}}</a>
+  <a class="tabs__tab{{if eq $on "archive"}} is-active{{end}}" href="{{pageURL "board-archive" "id" $id}}"{{if eq $on "archive"}} aria-current="page"{{end}}>{{template "icon" "archive"}} {{t "archive.title"}}</a>
+  <a class="tabs__tab{{if eq $on "activity"}} is-active{{end}}" href="{{pageURL "board-activity" "id" $id}}"{{if eq $on "activity"}} aria-current="page"{{end}}>{{template "icon" "activity"}} {{t "activity.title"}}</a>
+</nav>
+{{end}}

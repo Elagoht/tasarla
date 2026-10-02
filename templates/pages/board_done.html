@@ -11,6 +11,7 @@
     <button type="submit" class="btn btn--secondary">{{t "archive.search_button"}}</button>
   </form>
 </header>
+{{template "board-tabs" (boardTabs .Board.ID "done")}}
 {{if .Cards}}
 <ul class="list-rows">
   {{range .Cards}}

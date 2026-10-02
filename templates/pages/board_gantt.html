@@ -14,6 +14,7 @@
     <a class="btn btn--quiet btn--sm{{if .Done}} is-on{{end}}" href="{{$self}}?{{ganttLink .Filter.Filter .Scale .Group (not .Done)}}" aria-pressed="{{if .Done}}true{{else}}false{{end}}">{{template "icon" "check"}} {{t "gantt.show_done"}}</a>
   </nav>
 </header>
+{{template "board-tabs" (boardTabs .Board.ID "gantt")}}
 {{template "filter-bar" .Filter}}
 <div class="gantt" id="gantt" data-collage-fragment="{{fragmentURL "board-gantt" "board-gantt-chart" "id" .Board.ID}}?{{.Query}}" data-collage-push>
   {{slot "chart"}}

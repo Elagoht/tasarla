@@ -112,7 +112,9 @@
     "open_card": "Kartı aç",
     "no_cards": "Kart yok",
     "wip_limit": "Kart sayısı / WIP limiti",
-    "dismiss": "Kapat"
+    "dismiss": "Kapat",
+    "tab": "Board",
+    "views": "Board görünümleri"
   },
   "card": {
     "title": "Başlık",

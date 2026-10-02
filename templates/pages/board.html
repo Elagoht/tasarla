@@ -1,17 +1,14 @@
 <header class="page-head board-head">
   <div>
-    <a class="crumb" href="{{pageURL "team" "id" .Board.TeamID}}">{{template "icon" "team"}} {{.Team.Name}}</a>
+    <a class="team-tag" href="{{pageURL "team" "id" .Board.TeamID}}">{{template "icon" "team"}} {{.Team.Name}}</a>
     <h1>{{.Board.Name}}</h1>
   </div>
   <div class="actions">
-    <a class="btn btn--quiet" href="{{pageURL "board-gantt" "id" .Board.ID}}">{{template "icon" "calendar"}} {{t "gantt.button"}}</a>
-    <a class="btn btn--quiet" href="{{pageURL "board-done" "id" .Board.ID}}">{{template "icon" "check"}} {{t "done.title"}}</a>
-    <a class="btn btn--quiet" href="{{pageURL "board-archive" "id" .Board.ID}}">{{template "icon" "archive"}} {{t "archive.title"}}</a>
-    <a class="btn btn--quiet" href="{{pageURL "board-activity" "id" .Board.ID}}">{{template "icon" "activity"}} {{t "activity.title"}}</a>
     <a class="btn btn--quiet" href="{{pageURL "me-settings"}}#calendar">{{template "icon" "calendar"}} {{t "calendar.subscribe"}}</a>
     {{if .Access.CanManage}}<a class="btn btn--secondary" href="{{pageURL "board-settings" "id" .Board.ID}}">{{template "icon" "settings"}} {{t "board.settings"}}</a>{{end}}
   </div>
 </header>
+{{template "board-tabs" (boardTabs .Board.ID "board")}}
 {{template "filter-bar" .Filter}}
 <div id="board" class="board" data-move-url="{{withQuery (pageURL "board" "id" .Board.ID) .Filter.Query}}"
   data-collage-fragment="{{withQuery (fragmentURL "board" "board-columns" "id" .Board.ID) .Filter.Query}}" data-collage-push data-collage-swap="morph">
