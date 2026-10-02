@@ -242,3 +242,134 @@ func TestTheLastRunIsShown(t *testing.T) {
 	}
 	mustContain(t, b.lead.Get("/en"+b.templatesPath()).Body, "The person who last saved the template is no longer in the team.")
 }
+
+// templateOnBoard makes a template titled "Weekly report" named "Weekly".
+func (b boardSetup) templateOnBoard(t *testing.T, in store.TemplateInput) store.Template {
+	t.Helper()
+	if in.Name == "" {
+		in.Name = "Weekly"
+	}
+	if in.Title == "" {
+		in.Title = "Weekly report"
+	}
+	tpl, err := b.h.store.CreateTemplate(context.Background(), b.board.ID, in, b.h.user("lead@example.com").ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tpl
+}
+
+func TestEveryAddCardFormOffersTheTemplates(t *testing.T) {
+	b := newBoardSetup(t)
+	if strings.Contains(b.lead.Get(b.path).Body, `name="template"`) {
+		t.Fatal("a template choice without any template")
+	}
+	tpl := b.templateOnBoard(t, store.TemplateInput{})
+	for _, lane := range []string{"", "?lane=assignee"} {
+		body := b.lead.Get(b.path + lane).Body
+		mustContain(t, body, `name="template"`, `<option value="">Şablonsuz</option>`, `<option value="`+id(tpl.ID)+`">Weekly</option>`)
+		if n := strings.Count(body, `name="template"`); n != strings.Count(body, `class="add-card__form"`) {
+			t.Errorf("lane %q: %d template choices for %d add-card forms", lane, n, strings.Count(body, `class="add-card__form"`))
+		}
+	}
+	if strings.Contains(b.lead.Get(b.path).Body, `name="title" rows="2" required`) {
+		t.Error("the title is still required in the browser, which blocks a template")
+	}
+}
+
+func TestACardIsMadeFromATemplateInTheFormsColumn(t *testing.T) {
+	b := newBoardSetup(t)
+	doing := b.cols[1].ID
+	tpl := b.templateOnBoard(t, store.TemplateInput{ColumnID: &doing})
+	todo := b.cols[0].ID
+
+	res := b.member.Submit(b.path, b.path, url.Values{"op": {"create_card"}, "column": {id(todo)}, "title": {""}, "template": {id(tpl.ID)}})
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("create from template = %d:\n%s", res.Status, res.Body)
+	}
+	cards, err := b.h.store.BoardCards(context.Background(), b.board.ID)
+	if err != nil || len(cards) != 1 {
+		t.Fatalf("cards = %+v, %v", cards, err)
+	}
+	if c := cards[0].Card; c.Title != "Weekly report" || c.ColumnID != todo {
+		t.Fatalf("card = %q in column %d, want the template's title in the form's column %d", c.Title, c.ColumnID, todo)
+	}
+}
+
+func TestADroppedAssigneeIsReported(t *testing.T) {
+	b := newBoardSetup(t)
+	member := b.h.user("member@example.com").ID
+	tpl := b.templateOnBoard(t, store.TemplateInput{AssigneeID: &member})
+	if err := b.h.store.RemoveMember(context.Background(), b.team.ID, member); err != nil {
+		t.Fatal(err)
+	}
+	form := url.Values{"op": {"create_card"}, "column": {id(b.cols[0].ID)}, "template": {id(tpl.ID)}}
+	res := b.lead.SubmitFetch(b.path, b.path, form)
+	if res.Status != http.StatusOK {
+		t.Fatalf("fetch = %d:\n%s", res.Status, res.Body)
+	}
+	mustContain(t, res.Body, "Şablonun atanan kişisi kartı alamadı; kart atanmamış açıldı.", "Weekly report")
+	cards, _ := b.h.store.BoardCards(context.Background(), b.board.ID)
+	if len(cards) != 1 || cards[0].Card.AssigneeID != nil {
+		t.Fatalf("cards = %+v, want one unassigned card", cards)
+	}
+
+	res = b.lead.Submit(b.path, b.path, form)
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("form post = %d", res.Status)
+	}
+	mustContain(t, b.lead.Get(b.path).Body, "Şablonun atanan kişisi kartı alamadı")
+}
+
+func TestATemplateDoesNotExcuseAMissingTitleWithoutOne(t *testing.T) {
+	b := newBoardSetup(t)
+	b.templateOnBoard(t, store.TemplateInput{})
+	res := b.member.Submit(b.path, b.path, url.Values{"op": {"create_card"}, "title": {" "}, "template": {""}})
+	if res.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("no title, no template = %d, want 422", res.Status)
+	}
+	if cards, _ := b.h.store.BoardCards(context.Background(), b.board.ID); len(cards) != 0 {
+		t.Fatalf("cards = %+v", cards)
+	}
+}
+
+func TestAnotherBoardsTemplateIsRefused(t *testing.T) {
+	b := newBoardSetup(t)
+	other, err := b.h.store.CreateBoard(context.Background(), b.team.ID, "Other", []string{"Todo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foreign, err := b.h.store.CreateTemplate(context.Background(), other.ID, store.TemplateInput{Name: "Theirs", Title: "Theirs"}, b.h.user("lead@example.com").ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{id(foreign.ID), "999999", "abc"} {
+		res := b.member.Submit(b.path, b.path, url.Values{"op": {"create_card"}, "title": {"x"}, "template": {bad}})
+		if res.Status != http.StatusBadRequest {
+			t.Errorf("template %q = %d, want 400", bad, res.Status)
+		}
+	}
+	if cards, _ := b.h.store.BoardCards(context.Background(), b.board.ID); len(cards) != 0 {
+		t.Fatalf("cards = %+v", cards)
+	}
+}
+
+func TestAFailedTemplateRunIsToldWithoutACardLink(t *testing.T) {
+	b := newBoardSetup(t)
+	member := b.h.user("member@example.com").ID
+	_, err := b.h.store.CreateNotification(context.Background(), store.NewNotification{
+		UserID: member, Kind: store.NotifyTemplateFailed,
+		Payload: store.NotificationPayload{CardTitle: "Weekly", BoardID: b.board.ID, BoardName: "Sprint"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := b.member.Get("/notifications").Body
+	mustContain(t, page, "Sprint board&#39;unda Weekly şablonu kart açamadı.")
+	if strings.Contains(page, `class="notification__text" href=`) {
+		t.Error("a notification without a card links to one")
+	}
+	b.h.speaks("member@example.com", "en")
+	mustContain(t, b.member.Get("/en/notifications").Body, "The template Weekly on Sprint could not make its card.")
+	mustContain(t, b.member.Get("/en/me/settings").Body, "When a scheduled template cannot make its card", `name="email_template_failed"`)
+}
