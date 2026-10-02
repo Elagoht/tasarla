@@ -81,7 +81,7 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
 
 /* ---- Page head and breadcrumbs ----------------------------------------- */
 .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s5); }
-.page-head h1 { font-size: var(--text-2xl); font-weight: 700; }
+.page-head h1 { font-size: var(--text-2xl); font-weight: 800; }
 .page-head__meta { color: var(--ink-muted); font-size: var(--text-sm); margin-top: var(--s1); }
 .crumb { display: inline-flex; align-items: center; gap: var(--s1); color: var(--ink-muted); font-size: var(--text-sm); text-decoration: none; margin-bottom: var(--s1); }
 .crumb:hover { color: var(--accent-strong); }
@@ -175,7 +175,7 @@ a.list-rows__title:hover { color: var(--accent-strong); }
   width: min(420px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg);
   background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-float);
 }
-.dialog::backdrop { background: rgb(42 38 32 / 0.35); backdrop-filter: blur(2px); }
+.dialog::backdrop { background: rgb(22 21 43 / 0.35); backdrop-filter: blur(2px); }
 .dialog__body { padding: var(--s5); display: grid; gap: var(--s2); }
 .dialog__foot { display: flex; justify-content: flex-end; gap: var(--s2); padding: var(--s3) var(--s5); border-top: 1px solid var(--line); background: var(--shelf); border-radius: 0 0 var(--r-lg) var(--r-lg); }
 .dialog--danger { border-color: var(--danger-line); }
