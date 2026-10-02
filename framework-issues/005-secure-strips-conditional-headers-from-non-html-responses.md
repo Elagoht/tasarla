@@ -56,5 +56,5 @@ Any one of these:
 
 ## Where the app stands
 
-- Work stopped on Phase 3, Task 3. The handler, its tests, the `/cal/` registration and the locale keys are in the working tree on `feat/ical`, uncommitted. Every other check in the feed test passes: feeds, 404s, `405` with `Allow: GET, HEAD`, removed member.
+- Phase 3 calendar feeds: Tasks 1–4 done and committed on `feat/ical`. TestCalendarFeeds passes all checks except the If-None-Match step (304 response). Every other check in the feed test passes: feeds, 404s, `405` with `Allow: GET, HEAD`, removed member.
 - No workaround was written. Possible ones, not applied: dropping the `304` (an `ETag` only), or registering `/cal/` outside collage.
