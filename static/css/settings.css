@@ -63,8 +63,9 @@
 .rule-builder > summary:hover { background: var(--shelf); }
 .rule-builder[open] { background: var(--sheet); border-color: var(--line-strong); }
 .sentence { display: grid; gap: var(--s3); padding: 0 var(--s4) var(--s4); }
+.sentence__line .input { height: var(--control-sm); }
 .sentence__line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); font-size: var(--text-md); line-height: 2.2; }
-.select--inline { width: auto; min-height: 34px; padding-top: 2px; padding-bottom: 2px; font-weight: 700; color: var(--accent-strong); border-color: var(--accent-line); background-color: var(--accent-soft); }
+.select--inline { width: auto; height: var(--control-sm); font-weight: 700; color: var(--accent-strong); border-color: var(--accent-line); background-color: var(--accent-soft); }
 .sentence__blank { padding: 0 10px; border-bottom: 2px dashed var(--accent-line); color: var(--accent-strong); font-weight: 700; line-height: 1.6; }
 .sentence__choices { border: 0; margin: 0; padding: 0; display: grid; gap: var(--s2); }
 .sentence__choices[hidden] { display: none; }

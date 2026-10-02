@@ -42,7 +42,7 @@
 .chip--accent { background: var(--accent-soft); color: var(--accent-strong); }
 .chip--danger { background: var(--danger-soft); color: var(--danger); }
 .chip[data-role="lead"] { background: var(--accent-soft); color: var(--accent-strong); }
-.select--compact { width: auto; min-height: 30px; padding-top: 2px; padding-bottom: 2px; font-size: var(--text-sm); }
+.select--compact { width: auto; height: var(--control-sm); font-size: var(--text-sm); }
 .field--narrow { flex: 0 1 200px !important; }
 
 /* Notifications */
@@ -80,6 +80,8 @@ a.notification__text:hover { color: var(--accent-strong); }
 .filter-bar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; margin: 0 0 var(--s4); padding-right: var(--s5); }
 .filter-bar__text { width: min(260px, 100%); }
 .filter-bar__select { width: auto; max-width: 100%; }
+/* The pickers stand beside the full-size search field and selects. */
+.filter-pick > .btn--sm { min-height: var(--control); font-size: var(--text-sm); }
 .filter-pick { position: relative; }
 .filter-pick.is-on > summary { background: var(--accent-soft); color: var(--accent-ink, var(--ink)); }
 .filter-pick__list {

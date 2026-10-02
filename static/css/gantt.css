@@ -1,8 +1,8 @@
 /* Gantt chart: a list of cards on the left, their bars on a time scale. */
 
 .gantt-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
-.segmented { display: inline-flex; padding: 2px; border-radius: var(--r-sm); background: var(--shelf); border: 1px solid var(--line); }
-.segmented__item { padding: 4px 12px; border-radius: 6px; color: var(--ink-muted); font-size: var(--text-sm); font-weight: 700; text-decoration: none; }
+.segmented { display: inline-flex; height: var(--control-sm); padding: 2px; border-radius: var(--r-sm); background: var(--shelf); border: 1px solid var(--line); }
+.segmented__item { display: inline-flex; align-items: center; padding: 0 12px; border-radius: 6px; color: var(--ink-muted); font-size: var(--text-sm); font-weight: 700; text-decoration: none; }
 .segmented__item:hover { color: var(--ink); }
 .segmented__item.is-active { background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-paper); }
 .gantt-tools .is-on { background: var(--ok-soft); color: var(--ok); }

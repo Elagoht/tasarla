@@ -99,6 +99,9 @@
   --r-lg: 0.75rem;
   --r-pill: 100rem;
 
+  /* The height of every control, so a field and the button beside it line up. */
+  --control: 2.375rem;
+  --control-sm: 1.875rem;
   --sidebar: 15.5rem;
   --drawer: min(35rem, 100vw);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);

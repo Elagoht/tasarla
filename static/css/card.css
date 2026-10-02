@@ -36,7 +36,7 @@ textarea.cardp__title:focus { outline: none; border-color: var(--accent); box-sh
 .prop__label .icon { width: 14px; height: 14px; }
 .prop__value { margin: 0; min-width: 0; }
 .prop__value form { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s2); }
-.prop__control { flex: 1 1 140px; min-height: 34px; padding-top: 4px; padding-bottom: 4px; }
+.prop__control { flex: 1 1 140px; }
 
 .label-pick {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px 3px 8px;
@@ -132,7 +132,7 @@ textarea.cardp__title:focus { outline: none; border-color: var(--accent); box-sh
 .inline-add { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
 .inline-add .input, .inline-add .select { flex: 1 1 200px; width: auto; min-height: 34px; }
 .inline-add .field__error { flex-basis: 100%; }
-.input--file { padding: 4px; }
+.input--file { height: auto; min-height: var(--control); padding: 4px; }
 .input--file::file-selector-button { margin-right: var(--s2); padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--shelf); font: inherit; font-weight: 700; font-size: var(--text-xs); color: var(--ink); cursor: pointer; }
 
 /* A completed card: when, and the way back onto the board. */
