@@ -199,13 +199,21 @@ type RunOutcome struct {
 	Ran        bool // false: this moment was already run
 	Card       *Card
 	Violations []rules.Violation
-	OwnerGone  bool // updated_by is no longer in the team
-	NoColumn   bool // the template has no target column
+	OwnerGone  bool  // updated_by is no longer in the team
+	NoColumn   bool  // the template has no target column
+	Owner      int64 // the template's last editor, as the run read it
 }
+
+// The reasons a run failed that no board rule gives, recorded as violations.
+const (
+	ViolationOwnerGone = "templates.owner_gone"
+	ViolationNoColumn  = "templates.no_column"
+)
 
 // RunTemplate runs a template's moment at once: it records the run (a second
 // call for the same moment does nothing) and makes the card, or records why
-// not, in one transaction. The card is made by the template's last editor in
+// not, in one transaction. A template whose schedule was turned off since the
+// caller read it records nothing (Ran is false). The card is made by the template's last editor in
 // the template's own column, due DueInDays after at's day in loc. A board
 // archived meanwhile is ErrNotFound, and nothing is recorded.
 func (s *Store) RunTemplate(ctx context.Context, st ScheduledTemplate, at time.Time, loc *time.Location) (RunOutcome, error) {
@@ -229,12 +237,15 @@ func (s *Store) RunTemplate(ctx context.Context, st ScheduledTemplate, at time.T
 	if tag.RowsAffected() == 0 {
 		return RunOutcome{}, nil
 	}
-	out := RunOutcome{Ran: true}
 	// The template as it is now, not as the caller read it.
 	tpl, err := templateOf(ctx, tx, boardID, st.Template.ID)
 	if err != nil {
 		return RunOutcome{}, err
 	}
+	if tpl.Schedule.Kind == "" || tpl.ScheduleSince == nil {
+		return RunOutcome{}, nil // turned off meanwhile: the rollback drops the run row
+	}
+	out := RunOutcome{Ran: true, Owner: tpl.UpdatedBy}
 	var inTeam bool
 	if err := tx.QueryRow(ctx, `
 		SELECT EXISTS (SELECT 1 FROM team_members m JOIN boards b ON b.team_id = m.team_id
@@ -244,9 +255,11 @@ func (s *Store) RunTemplate(ctx context.Context, st ScheduledTemplate, at time.T
 	switch {
 	case !inTeam:
 		out.OwnerGone = true
+		out.Violations = []rules.Violation{{Code: ViolationOwnerGone}}
 	case tpl.ColumnID == nil:
 		// A scheduled card needs its column: 0 would open it in the board's first.
 		out.NoColumn = true
+		out.Violations = []rules.Violation{{Code: ViolationNoColumn}}
 	default:
 		made, err := createFromTemplate(ctx, tx, boardID, tpl.ID, *tpl.ColumnID, tpl.UpdatedBy, loc, at)
 		var re *RuleError

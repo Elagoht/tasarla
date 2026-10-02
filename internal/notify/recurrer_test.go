@@ -183,7 +183,8 @@ func TestRecurrerTellsTheLeadsWhenTheOwnerLeft(t *testing.T) {
 		t.Fatalf("%d cards, %d runs; want 0, 1", cards, runs)
 	}
 	got, _ := f.s.Template(ctx, f.board.ID, tpl.ID)
-	if got.LastRun == nil || got.LastRun.Status != "failed" {
+	if run := got.LastRun; run == nil || run.Status != "failed" ||
+		len(run.Violations) != 1 || run.Violations[0].Code != store.ViolationOwnerGone {
 		t.Fatalf("last run = %+v", got.LastRun)
 	}
 	ns, _ := f.s.Notifications(ctx, f.ada.ID, 10)
@@ -228,5 +229,65 @@ func TestRecurrerWaitsForANewSchedulesFirstMoment(t *testing.T) {
 	}
 	if cards, runs := f.counts(t, tpl.ID); cards != 1 || runs != 1 {
 		t.Fatalf("%d cards, %d runs at the first moment; want 1, 1", cards, runs)
+	}
+}
+
+// A template whose column was deleted records why and tells its editor.
+func TestRecurrerRecordsAMissingColumn(t *testing.T) {
+	f := newFixture(t)
+	ctx := context.Background()
+	days := 1
+	tpl := f.scheduled(t, f.ada.ID, &days, at("2026-09-01 00:00"))
+	if err := f.s.DeleteColumn(ctx, f.board.ID, f.cols[0].ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.recurrer(at("2026-10-05 10:00")).Tick(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if cards, runs := f.counts(t, tpl.ID); cards != 0 || runs != 1 {
+		t.Fatalf("%d cards, %d runs; want 0, 1 (no card in another column)", cards, runs)
+	}
+	got, _ := f.s.Template(ctx, f.board.ID, tpl.ID)
+	if run := got.LastRun; run == nil || run.Status != "failed" ||
+		len(run.Violations) != 1 || run.Violations[0].Code != store.ViolationNoColumn {
+		t.Fatalf("last run = %+v", got.LastRun)
+	}
+	ns, _ := f.s.Notifications(ctx, f.ada.ID, 10)
+	if len(ns) != 1 || ns[0].Kind != store.NotifyTemplateFailed {
+		t.Fatalf("editor's notifications = %+v", ns)
+	}
+}
+
+// RunTemplate acts on the template as it is in its transaction, not as the
+// caller read it: the editor it reports is the current one, and a schedule
+// turned off meanwhile records nothing.
+func TestRunTemplateReadsTheTemplateAgain(t *testing.T) {
+	f := newFixture(t)
+	ctx := context.Background()
+	tpl := f.scheduled(t, f.ada.ID, nil, at("2026-09-01 00:00"))
+	if err := f.s.AddCondition(ctx, f.board.ID, store.ColumnCondition{ColumnID: f.cols[0].ID, Phase: rules.PhaseEnter, Kind: rules.HasDueDate}); err != nil {
+		t.Fatal(err)
+	}
+	stale, err := f.s.ScheduledTemplates(ctx)
+	if err != nil || len(stale) != 1 || stale[0].Template.UpdatedBy != f.ada.ID {
+		t.Fatalf("scheduled = %+v, %v", stale, err)
+	}
+	if _, err := f.pool.Exec(ctx, `UPDATE card_templates SET updated_by = $2 WHERE id = $1`, tpl.ID, f.bob.ID); err != nil {
+		t.Fatal(err)
+	}
+	out, err := f.s.RunTemplate(ctx, stale[0], at("2026-10-05 09:00"), istanbul)
+	if err != nil || !out.Ran || out.Card != nil || out.Owner != f.bob.ID {
+		t.Fatalf("run = %+v, %v; want a refusal owned by bob", out, err)
+	}
+
+	if _, err := f.pool.Exec(ctx, `UPDATE card_templates SET schedule_kind = '', schedule_since = NULL WHERE id = $1`, tpl.ID); err != nil {
+		t.Fatal(err)
+	}
+	out, err = f.s.RunTemplate(ctx, stale[0], at("2026-10-12 09:00"), istanbul)
+	if err != nil || out.Ran {
+		t.Fatalf("run after the schedule was turned off = %+v, %v", out, err)
+	}
+	if _, runs := f.counts(t, tpl.ID); runs != 1 {
+		t.Errorf("runs = %d, want 1 (nothing recorded once off)", runs)
 	}
 }

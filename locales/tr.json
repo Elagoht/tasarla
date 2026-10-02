@@ -583,5 +583,9 @@
       "11": "Kas",
       "12": "Ara"
     }
+  },
+  "templates": {
+    "owner_gone": "Şablonu son kaydeden kişi artık takımda değil.",
+    "no_column": "Şablonun hedef kolonu yok."
   }
 }

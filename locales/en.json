@@ -583,5 +583,9 @@
       "11": "Nov",
       "12": "Dec"
     }
+  },
+  "templates": {
+    "owner_gone": "The person who last saved the template is no longer in the team.",
+    "no_column": "The template has no target column."
   }
 }

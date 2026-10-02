@@ -53,7 +53,7 @@ func (r Recurrer) Tick(ctx context.Context) error {
 		if !out.Ran || out.Card != nil {
 			continue
 		}
-		recipients := []int64{tpl.UpdatedBy}
+		recipients := []int64{out.Owner}
 		if out.OwnerGone {
 			if recipients, err = r.Store.TeamLeads(ctx, st.TeamID); err != nil {
 				r.Notifier.Log.Error("notify: recurrer leads", "team", st.TeamID, "err", err)
