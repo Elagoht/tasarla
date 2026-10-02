@@ -78,24 +78,31 @@ func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, title s
 	if err := ruleError(rules.EvaluateCreate(columnID, snap)); err != nil {
 		return Card{}, err
 	}
+	return insertCard(ctx, tx, boardID, snap.Columns[columnID], Card{Title: title}, createdBy)
+}
+
+// insertCard writes next's fields as a new card at the bottom of col, which
+// the rules have already let it enter. A card made in a done column is done
+// from the start.
+func insertCard(ctx context.Context, tx pgx.Tx, boardID int64, col rules.Column, next Card, createdBy int64) (Card, error) {
 	card, err := scanCard(tx.QueryRow(ctx, `
-		INSERT INTO cards (board_id, column_id, position, title, created_by)
+		INSERT INTO cards (board_id, column_id, position, title, description, assignee_id, estimate, due_date, priority, start_date, created_by)
 		SELECT $1, c.id,
 		       (SELECT count(*) FROM cards WHERE column_id = c.id AND archived_at IS NULL AND completed_at IS NULL),
-		       $3, $4
+		       $3, $4, $5, $6, $7, $8, $9, $10
 		FROM columns c WHERE c.id = $2 AND c.board_id = $1
-		RETURNING `+cardColumns, boardID, columnID, title, createdBy))
+		RETURNING `+cardColumns, boardID, col.ID, next.Title, next.Description, next.AssigneeID, next.Estimate,
+		next.DueDate, next.Priority, next.StartDate, createdBy))
 	if err != nil {
 		return Card{}, err
 	}
-	// A card made in a done column is done from the start.
-	if snap.Columns[columnID].IsDone {
+	if col.IsDone {
 		if card, err = scanCard(tx.QueryRow(ctx,
 			`UPDATE cards SET completed_at = now() WHERE id = $1 RETURNING `+cardColumns, card.ID)); err != nil {
 			return Card{}, err
 		}
 	}
-	return card, logActivity(ctx, tx, boardID, &card.ID, createdBy, ActivityCardCreated, ActivityPayload{Title: title})
+	return card, logActivity(ctx, tx, boardID, &card.ID, createdBy, ActivityCardCreated, ActivityPayload{Title: next.Title})
 }
 
 // lockBoard serialises the moves and creations of one board (spec §5.3).

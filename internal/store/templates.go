@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -78,12 +79,27 @@ func IsUniqueViolation(err error) bool {
 
 // Templates lists the board's templates by name, each with its latest run.
 func (s *Store) Templates(ctx context.Context, boardID int64) ([]Template, error) {
-	return s.loadTemplates(ctx, boardID, 0)
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	return loadTemplates(ctx, tx, boardID, 0)
 }
 
 // Template returns one template of the board, or ErrNotFound.
 func (s *Store) Template(ctx context.Context, boardID, id int64) (Template, error) {
-	ts, err := s.loadTemplates(ctx, boardID, id)
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return Template{}, err
+	}
+	defer tx.Rollback(ctx)
+	return templateOf(ctx, tx, boardID, id)
+}
+
+// templateOf reads one template of the board inside tx, or ErrNotFound.
+func templateOf(ctx context.Context, tx pgx.Tx, boardID, id int64) (Template, error) {
+	ts, err := loadTemplates(ctx, tx, boardID, id)
 	if err != nil {
 		return Template{}, err
 	}
@@ -94,9 +110,9 @@ func (s *Store) Template(ctx context.Context, boardID, id int64) (Template, erro
 }
 
 // loadTemplates reads the board's templates (only id, when it is not 0) with
-// their labels, checklist and latest run.
-func (s *Store) loadTemplates(ctx context.Context, boardID, id int64) ([]Template, error) {
-	rows, err := s.pool.Query(ctx, `
+// their labels, checklist and latest run, inside tx.
+func loadTemplates(ctx context.Context, tx pgx.Tx, boardID, id int64) ([]Template, error) {
+	rows, err := tx.Query(ctx, `
 		SELECT `+templateColumns+` FROM card_templates
 		WHERE board_id = $1 AND ($2 = 0 OR id = $2)
 		ORDER BY lower(name), id`, boardID, id)
@@ -129,7 +145,7 @@ func (s *Store) loadTemplates(ctx context.Context, boardID, id int64) ([]Templat
 		return out, nil
 	}
 
-	lrows, err := s.pool.Query(ctx, `SELECT template_id, label_id FROM card_template_labels WHERE template_id = ANY($1) ORDER BY label_id`, ids)
+	lrows, err := tx.Query(ctx, `SELECT template_id, label_id FROM card_template_labels WHERE template_id = ANY($1) ORDER BY label_id`, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +161,7 @@ func (s *Store) loadTemplates(ctx context.Context, boardID, id int64) ([]Templat
 		return nil, err
 	}
 
-	crows, err := s.pool.Query(ctx, `SELECT template_id, text FROM card_template_checklist WHERE template_id = ANY($1) ORDER BY template_id, position`, ids)
+	crows, err := tx.Query(ctx, `SELECT template_id, text FROM card_template_checklist WHERE template_id = ANY($1) ORDER BY template_id, position`, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +178,7 @@ func (s *Store) loadTemplates(ctx context.Context, boardID, id int64) ([]Templat
 		return nil, err
 	}
 
-	rrows, err := s.pool.Query(ctx, `
+	rrows, err := tx.Query(ctx, `
 		SELECT DISTINCT ON (template_id) template_id, scheduled_for, status, card_id, violations
 		FROM template_runs WHERE template_id = ANY($1)
 		ORDER BY template_id, scheduled_for DESC`, ids)
