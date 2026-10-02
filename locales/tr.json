@@ -519,6 +519,8 @@
     "role_delete": "Rol silinsin mi?",
     "rule_delete": "Kural silinsin mi?",
     "archive_board": "Board arşivlensin mi?",
+    "calendar_reset": "Takvim adresi sıfırlansın mı? Eski adres hemen çalışmayı bırakır.",
+    "calendar_clear": "Takvim kapatılsın mı?",
     "remove_member": "Üye takımdan çıkarılsın mı?",
     "set_disabled": "Kullanıcı devre dışı bırakılsın mı?",
     "archive_hint": "Arşivden geri yükleyebilirsiniz.",
@@ -624,6 +626,15 @@
     }
   },
   "calendar": {
+    "title": "Takvim",
+    "hint": "Bana atanan kartları ya da bir board'un kartlarını son tarihleriyle takvim uygulamanıza ekleyin. Adres kişiye özeldir; paylaşmayın.",
+    "create": "Takvim adresi oluştur",
+    "reset": "Adresi sıfırla",
+    "clear": "Takvimi kapat",
+    "shown_once": "Bu adresler yalnız şimdi gösteriliyor. Takvim uygulamanıza ekleyin; kaybederseniz sıfırlayın.",
+    "me": "Bana atananlar",
+    "cleared": "Takvim kapatıldı; eski adresler artık çalışmıyor.",
+    "subscribe": "Takvime abone ol",
     "feed_me": "Kanban — bana atananlar",
     "feed_board": "Kanban — {board}"
   },

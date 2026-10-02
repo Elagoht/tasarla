@@ -4,11 +4,13 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 
 	"kanban/internal/store"
+	"kanban/internal/webtest"
 )
 
 // feed GETs a calendar path with no session at all, as a calendar app would.
@@ -89,4 +91,44 @@ func TestCalendarFeeds(t *testing.T) {
 	if got := feed(t, b, "/cal/"+token+"/me.ics", nil); strings.Contains(got.Body.String(), "BEGIN:VEVENT") {
 		t.Error("removed member's own feed keeps the board's card")
 	}
+}
+
+func TestCalendarSettings(t *testing.T) {
+	b := newBoardSetup(t)
+	page := b.member.Get("/me/settings")
+	mustContain(t, page.Body, `id="calendar"`, `value="calendar_create"`)
+	res := b.member.Submit("/me/settings", "/me/settings", url.Values{"op": {"calendar_create"}})
+	if res.Status != http.StatusOK {
+		t.Fatalf("create = %d", res.Status)
+	}
+	mustContain(t, res.Body, webtest.Origin+"/cal/", "/me.ics", "/boards/"+id(b.board.ID)+".ics", "Sprint")
+	token := between(res.Body, webtest.Origin+"/cal/", "/me.ics")
+	if feed(t, b, "/cal/"+token+"/me.ics", nil).Code != http.StatusOK {
+		t.Fatal("the shown address does not work")
+	}
+	again := b.member.Get("/me/settings")
+	if strings.Contains(again.Body, "/cal/"+token) {
+		t.Error("the address is shown again")
+	}
+	mustContain(t, again.Body, `value="calendar_reset"`, `value="calendar_clear"`)
+	reset := b.member.Submit("/me/settings", "/me/settings", url.Values{"op": {"calendar_reset"}})
+	if newToken := between(reset.Body, webtest.Origin+"/cal/", "/me.ics"); newToken == "" || newToken == token {
+		t.Fatalf("reset gave %q", newToken)
+	}
+	if feed(t, b, "/cal/"+token+"/me.ics", nil).Code != http.StatusNotFound {
+		t.Error("the old address works after a reset")
+	}
+	if r := b.member.Submit("/me/settings", "/me/settings", url.Values{"op": {"calendar_clear"}}); r.Status != http.StatusSeeOther {
+		t.Errorf("clear = %d, want a redirect", r.Status)
+	}
+	mustContain(t, b.member.Get(b.path).Body, `href="/me/settings#calendar"`)
+}
+
+func between(s, from, to string) string {
+	_, rest, ok := strings.Cut(s, from)
+	if !ok {
+		return ""
+	}
+	v, _, _ := strings.Cut(rest, to)
+	return v
 }

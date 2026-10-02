@@ -8,6 +8,7 @@
     <a class="btn btn--quiet" href="{{pageURL "board-done" "id" .Board.ID}}">{{template "icon" "check"}} {{t "done.title"}}</a>
     <a class="btn btn--quiet" href="{{pageURL "board-archive" "id" .Board.ID}}">{{template "icon" "archive"}} {{t "archive.title"}}</a>
     <a class="btn btn--quiet" href="{{pageURL "board-activity" "id" .Board.ID}}">{{template "icon" "activity"}} {{t "activity.title"}}</a>
+    <a class="btn btn--quiet" href="{{pageURL "me-settings"}}#calendar">{{template "icon" "calendar"}} {{t "calendar.subscribe"}}</a>
     {{if .Access.CanManage}}<a class="btn btn--secondary" href="{{pageURL "board-settings" "id" .Board.ID}}">{{template "icon" "settings"}} {{t "board.settings"}}</a>{{end}}
   </div>
 </header>

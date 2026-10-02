@@ -24,4 +24,28 @@
   </fieldset>
   <div class="actions"><button type="submit" class="btn btn--primary">{{t "me.save"}}</button></div>
 </form>
+<section class="panel stack" id="calendar" aria-labelledby="calendar-title">
+  <h2 class="h3" id="calendar-title">{{t "calendar.title"}}</h2>
+  <p class="muted">{{t "calendar.hint"}}</p>
+  {{with .Calendar}}
+  <div class="alert" role="status">
+    <p><strong>{{t "calendar.shown_once"}}</strong></p>
+    <label class="field"><span class="field__label">{{t "calendar.me"}}</span>
+      <input class="input" type="text" readonly value="{{.Me}}"></label>
+    {{range .Boards}}<label class="field"><span class="field__label">{{.Name}}</span>
+      <input class="input" type="text" readonly value="{{.URL}}"></label>{{end}}
+  </div>
+  {{end}}
+  <div class="actions">
+    {{if .HasCalendar}}
+    <form method="post" action="{{pageURL "me-settings"}}" data-confirm="{{t "confirm.calendar_reset"}}">{{csrfToken}}
+      <input type="hidden" name="op" value="calendar_reset"><button type="submit" class="btn btn--secondary">{{t "calendar.reset"}}</button></form>
+    <form method="post" action="{{pageURL "me-settings"}}" data-confirm="{{t "confirm.calendar_clear"}}">{{csrfToken}}
+      <input type="hidden" name="op" value="calendar_clear"><button type="submit" class="btn btn--danger">{{t "calendar.clear"}}</button></form>
+    {{else}}
+    <form method="post" action="{{pageURL "me-settings"}}">{{csrfToken}}
+      <input type="hidden" name="op" value="calendar_create"><button type="submit" class="btn btn--primary">{{t "calendar.create"}}</button></form>
+    {{end}}
+  </div>
+</section>
 </div>

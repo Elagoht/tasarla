@@ -519,6 +519,8 @@
     "role_delete": "Delete this role?",
     "rule_delete": "Delete this rule?",
     "archive_board": "Archive this board?",
+    "calendar_reset": "Reset the calendar address? The old one stops working at once.",
+    "calendar_clear": "Turn the calendar off?",
     "remove_member": "Remove this member from the team?",
     "set_disabled": "Disable this user?",
     "archive_hint": "You can restore it from the archive.",
@@ -624,6 +626,15 @@
     }
   },
   "calendar": {
+    "title": "Calendar",
+    "hint": "Add the cards assigned to you, or a board's cards, to your calendar app by their due dates. The address is personal; do not share it.",
+    "create": "Create a calendar address",
+    "reset": "Reset the address",
+    "clear": "Turn the calendar off",
+    "shown_once": "These addresses are shown only now. Add them to your calendar app; if you lose them, reset.",
+    "me": "Assigned to me",
+    "cleared": "Calendar turned off; the old addresses no longer work.",
+    "subscribe": "Subscribe in a calendar",
     "feed_me": "Kanban — assigned to me",
     "feed_board": "Kanban — {board}"
   },
