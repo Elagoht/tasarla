@@ -354,6 +354,8 @@
     "template_assignee": "Atanan kişi",
     "template_estimate": "Tahmin",
     "template_column": "Kolon",
+    "template_choose_column": "Kolon seçin",
+    "template_column_closed": "Bu kolonda kart açılmıyor; kart açılan bir kolon seçin.",
     "template_due_in_days": "Son tarih: açılıştan N gün sonra",
     "template_labels": "Etiketler",
     "template_checklist": "Kontrol listesi (her satır bir madde)",

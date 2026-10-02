@@ -388,8 +388,10 @@
       <label class="field">
         <span class="field__label">{{t "settings.template_column"}}</span>
         <select class="select" name="template_column" required>
+          {{if not $.TemplateColumnOpen}}<option value="" selected disabled>{{t "settings.template_choose_column"}}</option>{{end}}
           {{range $.CreatableCols}}<option value="{{.ID}}" {{if eq (printf "%d" .ID) $f.Column}}selected{{end}}>{{.Name}}</option>{{end}}
         </select>
+        {{with .Error "template_column"}}<span class="field__error">{{.}}</span>{{end}}
       </label>
       <label class="field">
         <span class="field__label">{{t "settings.template_estimate"}}</span>

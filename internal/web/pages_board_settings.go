@@ -25,6 +25,18 @@ var labelPalette = []string{"#e03131", "#f08c00", "#2f9e44", "#1971c2", "#7048e8
 
 var settingsTabs = []string{"general", "columns", "labels", "roles", "rules", "templates"}
 
+// TemplateColumnOpen reports whether the template form's column is one cards
+// are made in; when not, the select starts on an empty choice, so a save
+// cannot move the template to another column unseen.
+func (v settingsView) TemplateColumnOpen() bool {
+	if v.EditTemplate == nil {
+		return false
+	}
+	return slices.ContainsFunc(v.CreatableCols, func(c store.Column) bool {
+		return strconv.FormatInt(c.ID, 10) == v.EditTemplate.Column
+	})
+}
+
 type settingsView struct {
 	Tab     string
 	Tabs    []string

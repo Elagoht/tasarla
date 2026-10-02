@@ -354,6 +354,8 @@
     "template_assignee": "Assignee",
     "template_estimate": "Estimate",
     "template_column": "Column",
+    "template_choose_column": "Choose a column",
+    "template_column_closed": "Cards are not made in this column; choose one where they are.",
     "template_due_in_days": "Due: N days after it is opened",
     "template_labels": "Labels",
     "template_checklist": "Checklist (one item per line)",

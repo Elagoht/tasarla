@@ -13,7 +13,7 @@ import (
 )
 
 // templateForm is a complete template form as the settings page posts it:
-// a weekly schedule on Monday and Wednesday at 09:30, into Doing.
+// a weekly schedule on Monday and Wednesday at 09:30, into Todo.
 func (b boardSetup) templateForm(t *testing.T, name string) url.Values {
 	t.Helper()
 	labels, err := b.h.store.Labels(context.Background(), b.board.ID)
@@ -24,7 +24,7 @@ func (b boardSetup) templateForm(t *testing.T, name string) url.Values {
 		"op": {"template_save"}, "template_id": {""},
 		"template_name": {name}, "template_title": {"Weekly report"}, "template_description": {"Write it up."},
 		"template_priority": {"3"}, "template_assignee": {id(b.h.user("member@example.com").ID)},
-		"template_column": {id(b.cols[1].ID)}, "template_estimate": {"2,5"}, "due_in_days": {"2"},
+		"template_column": {id(b.cols[0].ID)}, "template_estimate": {"2,5"}, "due_in_days": {"2"},
 		"checklist":     {"Gather numbers\r\n\r\n  Send mail  \n"},
 		"schedule_kind": {"weekly"}, "weekday": {"0", "2"}, "monthday": {"1"}, "schedule_time": {"09:30"},
 	}
@@ -63,7 +63,7 @@ func TestLeadSavesATemplate(t *testing.T) {
 	tpl := ts[0]
 	if tpl.Name != "Weekly" || tpl.Title != "Weekly report" || tpl.Description != "Write it up." ||
 		tpl.Priority == nil || *tpl.Priority != 3 || tpl.AssigneeID == nil || *tpl.AssigneeID != b.h.user("member@example.com").ID ||
-		tpl.ColumnID == nil || *tpl.ColumnID != b.cols[1].ID || tpl.Estimate == nil || *tpl.Estimate != 2.5 || tpl.DueInDays == nil || *tpl.DueInDays != 2 ||
+		tpl.ColumnID == nil || *tpl.ColumnID != b.cols[0].ID || tpl.Estimate == nil || *tpl.Estimate != 2.5 || tpl.DueInDays == nil || *tpl.DueInDays != 2 ||
 		len(tpl.LabelIDs) != 1 || tpl.LabelIDs[0] != label.ID ||
 		strings.Join(tpl.Checklist, "|") != "Gather numbers|Send mail" {
 		t.Fatalf("template = %+v", tpl)
@@ -464,4 +464,43 @@ func TestAScheduledCardsHistorySaysSo(t *testing.T) {
 	mustContain(t, b.member.Get(b.path+"/activity").Body, lead+" kartı Weekly şablonundan zamanlanarak açtı")
 	b.h.speaks("member@example.com", "en")
 	mustContain(t, b.member.Get("/en"+b.cardPath(*out.Card)).Body, lead+" opened the card on schedule from the template Weekly")
+}
+
+// A template whose column cards are no longer made in opens on an empty
+// column choice, so saving it cannot move it unseen; posting such a column,
+// or none, is refused.
+func TestATemplateCannotBeSavedIntoAClosedColumn(t *testing.T) {
+	b := newBoardSetup(t)
+	todo, doing := b.cols[0].ID, b.cols[1].ID
+	tpl := b.templateOnBoard(t, store.TemplateInput{ColumnID: &doing})
+	placeholder := `<option value="" selected disabled>Kolon seçin</option>`
+
+	edit := b.templatesPath() + "&edit=" + id(tpl.ID)
+	mustContain(t, b.lead.Get(edit).Body, placeholder)
+	// A new template has no column yet: its form starts on the empty choice too.
+	mustContain(t, b.lead.Get(b.newTemplatePath()).Body, placeholder)
+	open := b.templateOnBoard(t, store.TemplateInput{Name: "Open", ColumnID: &todo})
+	if strings.Contains(b.lead.Get(b.templatesPath()+"&edit="+id(open.ID)).Body, placeholder) {
+		t.Error("the empty choice is shown though the column is open")
+	}
+
+	for _, col := range []string{id(doing), ""} {
+		form := b.templateForm(t, "Weekly")
+		form.Set("template_id", id(tpl.ID))
+		form.Set("template_column", col)
+		res := b.lead.Submit(edit, edit, form)
+		if res.Status != http.StatusUnprocessableEntity {
+			t.Fatalf("column %q = %d, want 422", col, res.Status)
+		}
+		mustContain(t, res.Body, "Bu kolonda kart açılmıyor; kart açılan bir kolon seçin.", placeholder)
+	}
+	b.h.speaks("lead@example.com", "en")
+	form := b.templateForm(t, "Weekly")
+	form.Set("template_id", id(tpl.ID))
+	form.Set("template_column", id(doing))
+	res := b.lead.Submit("/en"+edit, "/en"+edit, form)
+	mustContain(t, res.Body, "Cards are not made in this column; choose one where they are.", "Choose a column")
+	if got, _ := b.h.store.Template(context.Background(), b.board.ID, tpl.ID); got.ColumnID == nil || *got.ColumnID != doing {
+		t.Fatalf("column = %v, want it unchanged", got.ColumnID)
+	}
 }

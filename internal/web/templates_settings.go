@@ -227,9 +227,24 @@ func (h *handlers) saveTemplate(ctx context.Context, rc *collage.RenderContext, 
 		}
 		form.Weekdays |= 1 << n
 	}
-	column, ok := formInt64(v, "template_column")
-	if !ok || !slices.Contains(scheduleKinds, form.Kind) {
+	if !slices.Contains(scheduleKinds, form.Kind) {
 		return collage.NoContent(http.StatusBadRequest), nil // a select sends one of its options
+	}
+	// The column is one cards are made in, as on the board; the select's
+	// placeholder, sent empty, is none.
+	var column int64
+	if form.Column != "" {
+		var ok bool
+		if column, ok = formInt64(v, "template_column"); !ok {
+			return collage.NoContent(http.StatusBadRequest), nil
+		}
+	}
+	cols, err := h.store.Columns(ctx, bc.Board.ID)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 || !slices.ContainsFunc(creatableColumns(cols), func(c store.Column) bool { return c.ID == column }) {
+		v.Fail("template_column", i18n.T(rc, "settings.template_column_closed"))
 	}
 
 	in := store.TemplateInput{Name: form.Name, Title: form.Title, Description: form.Description, ColumnID: &column, LabelIDs: labels}
@@ -306,7 +321,6 @@ func (h *handlers) saveTemplate(ctx context.Context, rc *collage.RenderContext, 
 	if !v.Valid() {
 		return refuse()
 	}
-	var err error
 	if id == 0 {
 		_, err = h.store.CreateTemplate(ctx, bc.Board.ID, in, bc.User.ID)
 	} else {
