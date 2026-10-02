@@ -33,7 +33,7 @@
 .column[data-state="full"] .column__count { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
 .column[data-state="full"] .column__limit { color: inherit; }
 .column[data-state="over"] { border-color: var(--danger-line); }
-.column[data-state="over"] .column__count { background: var(--danger); border-color: var(--danger); color: var(--sheet); }
+.column[data-state="over"] .column__count { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
 .column[data-state="over"] .column__limit { color: inherit; }
 .column__over { font-size: var(--text-xs); font-weight: 700; color: var(--danger); padding: 0 var(--s1); }
 

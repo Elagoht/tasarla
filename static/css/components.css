@@ -19,7 +19,7 @@
 .btn--quiet { background: transparent; border-color: transparent; box-shadow: none; color: var(--ink-soft); }
 .btn--quiet:hover { background: var(--shelf); border-color: transparent; }
 .btn--danger { background: var(--danger-soft); border-color: var(--danger-line); color: var(--danger); box-shadow: none; }
-.btn--danger:hover { background: var(--danger); border-color: var(--danger); color: var(--sheet); }
+.btn--danger:hover { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
 .btn--danger-text { color: var(--danger); }
 .btn--danger-text:hover { background: var(--danger-soft); color: var(--danger); }
 .btn--sm { min-height: 30px; padding: 0 var(--s3); font-size: var(--text-xs); }
@@ -164,7 +164,7 @@ a.list-rows__title:hover { color: var(--accent-strong); }
   font-size: var(--text-sm); font-weight: 700;
   animation: toast-in 220ms var(--ease);
 }
-.toast--error { background: var(--danger); color: #fff; }
+.toast--error { background: var(--danger); color: var(--on-danger); }
 .toast.is-leaving { opacity: 0; transform: translateY(6px); transition: opacity 200ms, transform 200ms; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 

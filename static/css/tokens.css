@@ -36,7 +36,7 @@
   /* Ink */
   --ink: #16152b;
   --ink-soft: #5d5c78;
-  --ink-muted: #7d7c98;
+  --ink-muted: #6b6a86;
   --ink-faint: #a9a8c2;
 
   /* Accent and states */
@@ -45,13 +45,14 @@
   --accent-soft: #ecebff;
   --accent-line: #c9c4ff;
   --on-accent: #ffffff;
+  --on-danger: #ffffff;
   --danger: #c0262d;
   --danger-strong: #9b1c22;
   --danger-soft: #fde8e8;
   --danger-line: #f6c4c6;
-  --ok: #1f8a4c;
+  --ok: #16743d;
   --ok-soft: #dcf3e6;
-  --warn: #a65d00;
+  --warn: #945200;
   --warn-soft: #fff0d9;
   --focus: rgb(91 76 255 / 0.4);
 
@@ -61,11 +62,11 @@
   --side-edge: transparent;
   --side-ink: #ffffff;
   --side-ink-soft: #c3c2e3;
-  --side-ink-muted: #9a99c2;
+  --side-ink-muted: #a3a2c9;
   --side-ink-faint: #6f6e98;
   --side-line: #2c2a5c;
   --side-raised: #25234a;
-  --side-hover: #2c2a5c;
+  --side-hover: #24224c;
   --side-active: #2c2a5c;
   --side-link: #c4beff;
   --side-danger-bg: #4a1d2e;
@@ -123,6 +124,7 @@
     --accent-soft: #27245a;
     --accent-line: #433e8f;
     --on-accent: #0b0a16; /* dark text on the light accent fill: white would be 3.7:1 */
+    --on-danger: #0b0a16;
     --danger: #ff8a8f;
     --danger-strong: #ffb0b3;
     --danger-soft: #3a1c27;
@@ -136,7 +138,7 @@
     --side-edge: #34315e;
     --side-line: #34315e;
     --side-raised: #2a2850;
-    --side-hover: #322f6a;
+    --side-hover: #292656;
     --side-active: #322f6a;
   }
 }
