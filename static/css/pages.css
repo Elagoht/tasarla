@@ -104,3 +104,23 @@ a.notification__text:hover { color: var(--accent-strong); }
 .search-hit__excerpt { margin: 0; font-size: var(--text-sm); color: var(--ink-soft); }
 mark { background: var(--accent-soft); color: inherit; border-radius: 0.125rem; padding: 0 0.0625rem; }
 .pager { display: flex; gap: var(--s2); justify-content: flex-end; }
+
+/* The create form's ready-made boards: a radio card each. */
+.blueprints { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.blueprint {
+  position: relative; display: grid; gap: var(--s1); align-content: start;
+  padding: var(--s3) var(--s4); border-radius: var(--r-md); cursor: pointer;
+  background: var(--sheet); border: 0.0625rem solid var(--line); box-shadow: var(--shadow-paper);
+  transition: border-color 120ms var(--ease), background-color 120ms var(--ease);
+}
+.blueprint:hover { border-color: var(--line-strong); }
+.blueprint:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.blueprint:has(input:focus-visible) { box-shadow: 0 0 0 0.1875rem var(--focus); }
+.blueprint input { position: absolute; opacity: 0; pointer-events: none; }
+.blueprint__name { font-weight: 800; color: var(--ink); }
+.blueprint__summary { font-size: var(--text-sm); color: var(--ink-soft); }
+.blueprint__columns { font-size: var(--text-xs); color: var(--ink-muted); overflow-wrap: anywhere; }
+.blueprint__counts { font-size: var(--text-xs); font-weight: 700; color: var(--accent-strong); }
+.includes { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.includes .check-pill:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
+@media (max-width: 40rem) { .blueprints { grid-template-columns: minmax(0, 1fr); } }
