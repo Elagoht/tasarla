@@ -7,6 +7,7 @@ Birkaç takımın günlük iş takibi için kullandığı, kuralları board baş
 - **Giriş:** OIDC (authorization code + PKCE). Kullanıcı `(issuer, sub)` ile tanınır. `ADMIN_EMAILS` ilk admini belirler; adminlik `/admin/users` üzerinden yönetilir.
 - **Takımlar ve board'lar:** takım lead'leri board açar. Board'a erişim takım üyeliğiyle verilir, takım dışındakiler 404 görür.
 - **Kartlar:** başlık, açıklama, atanan kişi, tahmin, son tarih, öncelik, etiketler, kontrol listesi, bağımlılıklar (döngü engellenir), arşiv.
+  - **Şablonlar:** board ayarlarında kart şablonları; şablondan kart açma; günlük, haftalık ya da aylık zamanlamayla kartı kendiliğinden açma. Kurallar reddederse şablon sahibine bildirim gider.
 - **Taşıma:**
   - SortableJS ile sürükle-bırak; değişiklik açık board'lara collage-live ile anında itilir.
   - Bayat bir kartı taşımak 409 döner.

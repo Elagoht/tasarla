@@ -506,7 +506,7 @@ discovery isteği de açılışta yapılır; IdP'ye ulaşılamazsa uygulama baş
 Multi-tenancy, board düzeyinde özel üyelik, serbest kural dili, çoklu seçim ve toplu taşıma,
 istemci tarafında anlık filtre, klavyeyle sürükle-bırak, zaman takibi,
 raporlar ve grafikler, dışa/içe aktarma, API token'ları, mobil uygulama.
-Sunucu tarafında soluklaştıran filtre, genel arama ve swimlane'ler kapsama alındı: bkz. `docs/superpowers/specs/2026-10-01-filtre-swimlane-ical-sablon-markdown-design.md`.
+Sunucu tarafında soluklaştıran filtre, genel arama, swimlane'ler, şablonlar ve tekrarlayan kartlar kapsama alındı: bkz. `docs/superpowers/specs/2026-10-01-filtre-swimlane-ical-sablon-markdown-design.md`.
 
 ---
 
