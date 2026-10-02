@@ -213,7 +213,7 @@
       <h2 class="block__title">{{t "card.description"}}<button type="button" class="btn btn--quiet btn--sm btn--icon desc__edit" data-desc-open aria-label="{{t "card.edit_description"}}" title="{{t "card.edit_description"}}">{{template "icon" "pencil"}}</button></h2>
       {{$f := .Field "description"}}
       <div class="desc__view rich" data-desc-open>
-        {{with .Card.Description}}{{richText .}}{{else}}<p class="muted">{{t "card.add_description"}}</p>{{end}}
+        {{with .Card.Description}}{{markdown .}}{{else}}<p class="muted">{{t "card.add_description"}}</p>{{end}}
       </div>
       <form class="desc__form autosave" method="post" action="{{$self}}" data-collage-target="#card-panel" data-autosave>
         {{csrfToken}}
@@ -221,12 +221,13 @@
         <input type="hidden" name="field" value="description">
         <input type="hidden" name="expected_version" value="{{.Card.Version}}">
         <textarea class="input" id="card-description" name="value" rows="6" maxlength="10000" aria-label="{{t "card.description"}}"{{if $f.Notices}} aria-invalid="true"{{end}}>{{.Card.Description}}</textarea>
+        {{template "markdown-help"}}
         <button type="submit" class="btn btn--secondary btn--sm autosave__submit">{{t "card.save"}}</button>
       </form>
       {{template "field-state" $f}}
       {{else}}
       <h2 class="block__title">{{t "card.description"}}</h2>
-      {{with .Card.Description}}<div class="rich">{{richText .}}</div>{{else}}<p class="muted">{{t "card.no_description"}}</p>{{end}}
+      {{with .Card.Description}}<div class="rich">{{markdown .}}</div>{{else}}<p class="muted">{{t "card.no_description"}}</p>{{end}}
       {{end}}
     </div>
 
@@ -360,7 +361,7 @@
           {{if .Comment.DeletedAt}}
           <p class="muted">{{t "comments.deleted"}}</p>
           {{else}}
-          <div class="comment__body rich">{{richText .Comment.Body}}</div>
+          <div class="comment__body rich">{{markdown .Comment.Body}}</div>
           {{if $edit}}
           <div class="comment__actions">
             {{if .Mine}}
@@ -371,6 +372,7 @@
                 <input type="hidden" name="op" value="comment_edit">
                 <input type="hidden" name="comment_id" value="{{.Comment.ID}}">
                 <textarea class="input" name="comment_body" rows="3" maxlength="10000" aria-label="{{t "comments.edit"}}">{{.Comment.Body}}</textarea>
+                {{template "markdown-help"}}
                 <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{t "comments.save"}}</button></div>
               </form>
             </details>
@@ -398,6 +400,7 @@
       {{csrfToken}}
       <input type="hidden" name="op" value="comment_add">
       <textarea class="input" name="comment" rows="3" maxlength="10000" placeholder="{{t "comments.placeholder"}}" aria-label="{{t "comments.title"}}" list="mention-handles">{{fieldValue "comment"}}</textarea>
+      {{template "markdown-help"}}
       <datalist id="mention-handles">{{range .Handles}}<option value="{{.}}">{{end}}</datalist>
       {{with fieldError "comment"}}<p class="field__error">{{.}}</p>{{end}}
       <div class="actions"><button type="submit" class="btn btn--primary btn--sm">{{template "icon" "comment"}} {{t "comments.add"}}</button></div>

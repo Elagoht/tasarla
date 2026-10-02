@@ -23,6 +23,7 @@ import (
 	"kanban/internal/auth"
 	"kanban/internal/config"
 	"kanban/internal/files"
+	"kanban/internal/markup"
 	"kanban/internal/notify"
 	"kanban/internal/store"
 )
@@ -81,7 +82,7 @@ func New(d Deps) (*App, error) {
 		Template: collage.TemplateConfig{
 			FS: d.Files, Root: "templates", Extension: ".html",
 			Funcs: template.FuncMap{
-				"richText": richText,
+				"markdown": markup.Markdown,
 				"inc":      func(n int) int { return n + 1 },
 				"dec":      func(n int) int { return n - 1 },
 				// The colour a board is shown with, the same in the sidebar and on

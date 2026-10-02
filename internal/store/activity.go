@@ -10,6 +10,7 @@ import (
 // Activity kinds.
 const (
 	ActivityCardCreated       = "card_created"
+	ActivityCardScheduled     = "card_created_by_schedule" // Title: the card's, Text: the template's name
 	ActivityCardMoved         = "card_moved"
 	ActivityCardUpdated       = "card_updated"
 	ActivityCardArchived      = "card_archived"

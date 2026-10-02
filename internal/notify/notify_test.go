@@ -13,6 +13,7 @@ import (
 
 	i18n "github.com/Elagoht/collage-i18n"
 	"github.com/Elagoht/collage/pkg/collage"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"kanban/internal/db/dbtest"
 	"kanban/internal/notify"
@@ -20,6 +21,7 @@ import (
 )
 
 type fixture struct {
+	pool    *pgxpool.Pool
 	s       *store.Store
 	n       *notify.Notifier
 	tags    []string
@@ -32,7 +34,8 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	f := &fixture{s: store.New(dbtest.New(t))}
+	pool := dbtest.New(t)
+	f := &fixture{pool: pool, s: store.New(pool)}
 	ctx := context.Background()
 	tr := i18n.New(i18n.Options{FS: os.DirFS("../.."), Dir: "locales"})
 	app, err := collage.New(&collage.Config{

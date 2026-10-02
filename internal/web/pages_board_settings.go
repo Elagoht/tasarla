@@ -14,7 +14,6 @@ import (
 	i18n "github.com/Elagoht/collage-i18n"
 	validate "github.com/Elagoht/collage-validate"
 	"github.com/Elagoht/collage/pkg/collage"
-	"github.com/jackc/pgx/v5/pgconn"
 
 	"kanban/internal/rules"
 	"kanban/internal/store"
@@ -24,7 +23,19 @@ import (
 // stylesheet colour labels, so no inline style is needed under the CSP.
 var labelPalette = []string{"#e03131", "#f08c00", "#2f9e44", "#1971c2", "#7048e8", "#c2255c", "#0c8599", "#495057"}
 
-var settingsTabs = []string{"general", "columns", "labels", "roles", "rules"}
+var settingsTabs = []string{"general", "columns", "labels", "roles", "rules", "templates"}
+
+// TemplateColumnOpen reports whether the template form's column is one cards
+// are made in; when not, the select starts on an empty choice, so a save
+// cannot move the template to another column unseen.
+func (v settingsView) TemplateColumnOpen() bool {
+	if v.EditTemplate == nil {
+		return false
+	}
+	return slices.ContainsFunc(v.CreatableCols, func(c store.Column) bool {
+		return strconv.FormatInt(c.ID, 10) == v.EditTemplate.Column
+	})
+}
 
 type settingsView struct {
 	Tab     string
@@ -43,9 +54,15 @@ type settingsView struct {
 	Subjects  []string
 	Kinds     []string
 	AllCols   []store.Column
+	// CreatableCols are the columns cards are made in: a template's choices.
+	CreatableCols []store.Column
 	// Builders are the sentences a new rule is written in, by kind, with
 	// blanks where its fields go.
 	Builders map[string][]sentencePart
+
+	Templates []templateView
+	// EditTemplate is the template form, when ?edit= opens it.
+	EditTemplate *templateForm
 }
 
 // sentencePart is a piece of a rule sentence: text, or the blank named Slot.
@@ -167,6 +184,9 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 	if view.AllCols, err = h.store.Columns(ctx, bc.Board.ID); err != nil {
 		return view, err
 	}
+	if len(view.AllCols) > 0 {
+		view.CreatableCols = creatableColumns(view.AllCols)
+	}
 	if draft, ok := collage.Get[columnsDraft](rc, draftKey); ok {
 		view.Columns, view.ColumnsProblem, view.Tab = draft.Rows, draft.Problem, "columns"
 	} else {
@@ -210,6 +230,11 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 		return view, err
 	}
 	view.Sentences = sentenceViews(rc, sentences, view.AllCols, r.Roles, view.Labels)
+	if view.Tab == "templates" {
+		if err := h.loadTemplatesTab(ctx, rc, &view); err != nil {
+			return view, err
+		}
+	}
 	return view, nil
 }
 
@@ -335,7 +360,7 @@ func (h *handlers) boardSettingsPost(ctx context.Context, rc *collage.RenderCont
 			return validate.Refuse(rc, v, rc.Page), nil
 		}
 		_, err = h.store.CreateLabel(ctx, boardID, strings.TrimSpace(v.Value("label_name")), v.Value("label_color"))
-		if isUniqueViolation(err) {
+		if store.IsUniqueViolation(err) {
 			v.Fail("label_name", i18n.T(rc, "settings.label_exists"))
 			return validate.Refuse(rc, v, rc.Page), nil
 		}
@@ -353,6 +378,8 @@ func (h *handlers) boardSettingsPost(ctx context.Context, rc *collage.RenderCont
 	case "rule_delete":
 		err = h.store.DeleteSentence(ctx, boardID, v.Value("key"))
 		tab = "rules"
+	case "template_save", "template_delete":
+		return h.templateSettings(ctx, rc, v, bc)
 	default:
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
@@ -495,7 +522,7 @@ func (h *handlers) roleSettings(ctx context.Context, rc *collage.RenderContext, 
 			}
 			err = h.store.RenameBoardRole(ctx, boardID, role, name)
 		}
-		if isUniqueViolation(err) {
+		if store.IsUniqueViolation(err) {
 			return h.settingsDone(rc, bc, "roles", flash.Error, i18n.T(rc, "settings.role_exists"))
 		}
 	case "role_members":
@@ -631,10 +658,4 @@ func (h *handlers) addRule(ctx context.Context, rc *collage.RenderContext, v *va
 		return nil, err
 	}
 	return h.settingsDone(rc, bc, "rules", flash.Success, i18n.T(rc, "settings.saved"))
-}
-
-// isUniqueViolation reports a PostgreSQL unique constraint failure.
-func isUniqueViolation(err error) bool {
-	var pg *pgconn.PgError
-	return errors.As(err, &pg) && pg.Code == "23505"
 }

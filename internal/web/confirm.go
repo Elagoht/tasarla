@@ -17,7 +17,7 @@ import (
 // set_disabled asks only when it disables.
 var destructive = []string{
 	"archive", "comment_delete", "attachment_delete", "label_delete", "role_delete",
-	"rule_delete", "archive_board", "remove_member", "set_disabled",
+	"rule_delete", "archive_board", "remove_member", "set_disabled", "template_delete",
 }
 
 type confirmView struct {

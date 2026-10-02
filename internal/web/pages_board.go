@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -96,6 +97,8 @@ type columnsView struct {
 	// lanes, made only then.
 	Lane  string
 	Lanes []laneView
+	// Templates are offered in every add-card form.
+	Templates []store.Template
 }
 
 type filterView struct {
@@ -211,6 +214,12 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 		return columnsView{}, tags, err
 	}
 	view := columnsView{CanEdit: bc.Access.CanEdit, Filter: fv, MoveURL: withQuery(fv.Action, fv.Query)}
+	if bc.Access.CanEdit {
+		// Every render asks again (a push too); the list is small.
+		if view.Templates, err = h.store.Templates(ctx, bc.Board.ID); err != nil {
+			return columnsView{}, tags, err
+		}
+	}
 	view.Notices, _ = collage.Get[[]string](rc, noticeKey)
 	byColumn := map[int64]int{}
 	creatable := map[int64]bool{}
@@ -309,7 +318,16 @@ func (h *handlers) boardPost(ctx context.Context, rc *collage.RenderContext) (*c
 }
 
 func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, bc boardContext) (*collage.ActionResult, error) {
-	v.Field("title").Required().MaxLen(200)
+	// A template gives the card its title, so a form that chose one may leave
+	// the title empty; a title typed all the same is the card's.
+	templateID, err := templateChoice(v)
+	if err != nil {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	if templateID == 0 {
+		v.Field("title").Required()
+	}
+	v.Field("title").MaxLen(200)
 	if !v.Valid() {
 		res := validate.Refuse(rc, v, rc.Page)
 		if isFetch(rc) {
@@ -340,7 +358,20 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 			return collage.NoContent(http.StatusBadRequest), nil
 		}
 	}
-	_, err = h.store.CreateCard(ctx, bc.Board.ID, target.ID, strings.TrimSpace(v.Value("title")), bc.User.ID)
+	title := strings.TrimSpace(v.Value("title"))
+	var made store.FromTemplate
+	if templateID != 0 {
+		templates, terr := h.store.Templates(ctx, bc.Board.ID)
+		if terr != nil {
+			return nil, terr
+		}
+		if !slices.ContainsFunc(templates, func(t store.Template) bool { return t.ID == templateID }) {
+			return collage.NoContent(http.StatusBadRequest), nil
+		}
+		made, err = h.store.CreateCardFromTemplate(ctx, bc.Board.ID, templateID, target.ID, title, bc.User.ID, h.loc, time.Now())
+	} else {
+		_, err = h.store.CreateCard(ctx, bc.Board.ID, target.ID, title, bc.User.ID)
+	}
 	if msgs := violationMessages(rc, err); msgs != nil {
 		rc.Set(noticeKey, msgs)
 		res := collage.RenderPage(rc.Page)
@@ -350,19 +381,44 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 		res.Status = http.StatusUnprocessableEntity
 		return res, nil
 	}
+	if errors.Is(err, store.ErrNotFound) {
+		return collage.NoContent(http.StatusBadRequest), nil // the template or the column was deleted meanwhile
+	}
 	if err != nil {
 		return nil, err
 	}
+	h.notifyAssigned(ctx, bc, store.Card{}, made.Card)
+	dropped := made.AssigneeDropped
 	if isFetch(rc) {
+		if dropped {
+			rc.Set(noticeKey, []string{i18n.T(rc, "board.template_assignee_dropped")})
+		}
 		res := collage.RenderFragment(h.columns)
 		res.InvalidateTags = []string{boardTag(bc.Board.ID)}
 		return res, nil
+	}
+	if dropped {
+		flash.Add(rc, flash.Warning, i18n.T(rc, "board.template_assignee_dropped"))
 	}
 	res, err := h.redirectTo(rc, "board", "id", strconv.FormatInt(bc.Board.ID, 10))
 	if res != nil {
 		res.InvalidateTags = []string{boardTag(bc.Board.ID)}
 	}
 	return res, err
+}
+
+// templateChoice is the template a form chose: 0 for none, an error for a
+// value that is not an id.
+func templateChoice(v *validate.Validator) (int64, error) {
+	raw := strings.TrimSpace(v.Value("template"))
+	if raw == "" {
+		return 0, nil
+	}
+	n, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || n <= 0 {
+		return 0, errors.New("template: not an id")
+	}
+	return n, nil
 }
 
 // creatableColumns are the columns a card is made in: those marked so, or the

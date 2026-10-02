@@ -121,9 +121,9 @@ document.addEventListener("click", (e) => {
     }
     return;
   }
-  // The description shows as text; a click on it, not on a link in it, edits it.
+  // The description shows as text; a click on it, not on a link or a task-list checkbox in it, edits it.
   const desc = e.target.closest("[data-desc-open]");
-  if (desc && !e.target.closest("a")) {
+  if (desc && !e.target.closest("a, input")) {
     panel.dataset.editing = "description";
     const area = panel.querySelector(".desc__form textarea");
     area?.focus();

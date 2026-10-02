@@ -100,6 +100,9 @@
     "create": "Create board",
     "new_card": "New card title",
     "add_card": "Add card",
+    "from_template": "From a template",
+    "no_template": "No template",
+    "template_assignee_dropped": "The template's assignee could not take the card; it was made unassigned.",
     "settings": "Settings",
     "conflict": "This card was changed by someone else.",
     "moved": "Card moved.",
@@ -271,7 +274,8 @@
       "columns": "Columns",
       "labels": "Labels",
       "roles": "Roles",
-      "rules": "Rules"
+      "rules": "Rules",
+      "templates": "Templates"
     },
     "order": "Order",
     "drag": "Drag to reorder",
@@ -341,7 +345,40 @@
     "danger_zone": "Danger zone",
     "archive_hint": "An archived board leaves the team page and the sidebar.",
     "and": "and",
-    "cards_count": "{count} cards"
+    "cards_count": "{count} cards",
+    "template_new": "New template",
+    "template_name": "Template name",
+    "template_title": "Card title",
+    "template_description": "Description",
+    "template_priority": "Priority",
+    "template_assignee": "Assignee",
+    "template_estimate": "Estimate",
+    "template_column": "Column",
+    "template_choose_column": "Choose a column",
+    "template_column_closed": "Cards are not made in this column; choose one where they are.",
+    "template_due_in_days": "Due: N days after it is opened",
+    "template_labels": "Labels",
+    "template_checklist": "Checklist (one item per line)",
+    "template_schedule": "Repeat",
+    "template_schedule_none": "Do not repeat",
+    "template_schedule_daily": "Every day",
+    "template_schedule_weekly": "Every week",
+    "template_schedule_monthly": "Every month",
+    "template_weekdays": "Days of the week",
+    "template_monthday": "Day of the month",
+    "template_time": "Time",
+    "template_save": "Save template",
+    "template_delete": "Delete template",
+    "template_no_column": "The target column was deleted; the schedule cannot open cards.",
+    "template_failed": "The last run failed:",
+    "template_created": "Last run: a card was opened",
+    "template_name_exists": "A template with this name already exists.",
+    "template_invalid_due": "The number of days must be from 0 to 365.",
+    "template_invalid_time": "Enter the time as HH:MM.",
+    "template_invalid_monthday": "The day of the month must be from 1 to 31.",
+    "template_no_weekday": "Choose at least one day.",
+    "template_checklist_invalid": "A checklist has at most 50 items of at most 200 characters each.",
+    "template_empty": "No templates yet."
   },
   "rules": {
     "assignee_not_member": "A card cannot be given to someone outside the team.",
@@ -401,6 +438,7 @@
     "empty": "Nothing recorded yet.",
     "someone": "Someone",
     "card_created": "{actor} created the card",
+    "card_created_by_schedule": "{actor} opened the card on schedule from the template {text}",
     "card_moved": "{actor} moved the card from {from} to {to}",
     "card_updated": "{actor} edited the card: {fields}",
     "card_archived": "{actor} archived the card",
@@ -434,6 +472,7 @@
     "due_soon": "{card} is due soon ({due}).",
     "overdue": "{card} is overdue ({due}).",
     "unblocked": "Every card blocking {card} is done.",
+    "template_failed": "The template {card} on {board} could not make its card.",
     "someone": "Someone",
     "title": "Notifications",
     "empty": "You have no notifications.",
@@ -446,7 +485,8 @@
       "commented": "When someone comments on my card",
       "due_soon": "When a due date is near",
       "overdue": "When a due date has passed",
-      "unblocked": "When my card is no longer blocked"
+      "unblocked": "When my card is no longer blocked",
+      "template_failed": "When a scheduled template cannot make its card"
     }
   },
   "mail": {
@@ -481,7 +521,8 @@
     "archive_board": "Archive this board?",
     "remove_member": "Remove this member from the team?",
     "set_disabled": "Disable this user?",
-    "archive_hint": "You can restore it from the archive."
+    "archive_hint": "You can restore it from the archive.",
+    "template_delete": "Delete this template?"
   },
   "search": {
     "title": "Search",
@@ -585,5 +626,31 @@
   "calendar": {
     "feed_me": "Kanban — assigned to me",
     "feed_board": "Kanban — {board}"
+  },
+  "templates": {
+    "owner_gone": "The person who last saved the template is no longer in the team.",
+    "no_column": "The template has no target column.",
+    "column_closed": "Cards are not made in the template's target column."
+  },
+  "markdown": {
+    "hint": "Markdown is supported",
+    "code": "code",
+    "bold": "bold",
+    "italic": "italic",
+    "strike": "struck",
+    "heading": "heading",
+    "item": "item",
+    "task": "to do",
+    "quote": "quote",
+    "link": "link"
+  },
+  "weekdays": {
+    "0": "Mon",
+    "1": "Tue",
+    "2": "Wed",
+    "3": "Thu",
+    "4": "Fri",
+    "5": "Sat",
+    "6": "Sun"
   }
 }

@@ -20,8 +20,9 @@
           {{csrfToken}}
           <input type="hidden" name="op" value="create_card">
           <input type="hidden" name="column" value="{{.Column.ID}}">
-          <textarea class="input add-card__title" name="title" rows="2" required maxlength="200" placeholder="{{t "board.new_card"}}" aria-label="{{t "board.new_card"}}" data-submit-on-enter>{{if $here}}{{fieldValue "title"}}{{end}}</textarea>
+          <textarea class="input add-card__title" name="title" rows="2" maxlength="200" placeholder="{{t "board.new_card"}}" aria-label="{{t "board.new_card"}}" data-submit-on-enter>{{if $here}}{{fieldValue "title"}}{{end}}</textarea>
           {{if $here}}{{with fieldError "title"}}<p class="field__error">{{.}}</p>{{end}}{{end}}
+          {{if $.Templates}}<select class="select" name="template" aria-label="{{t "board.from_template"}}"><option value="">{{t "board.no_template"}}</option>{{range $.Templates}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>{{end}}
           <div class="actions">
             <button type="submit" class="btn btn--primary btn--sm">{{t "board.add_card"}}</button>
           </div>
@@ -71,8 +72,9 @@
         {{csrfToken}}
         <input type="hidden" name="op" value="create_card">
         <input type="hidden" name="column" value="{{.Column.ID}}">
-        <textarea class="input add-card__title" name="title" rows="2" required maxlength="200" placeholder="{{t "board.new_card"}}" aria-label="{{t "board.new_card"}}" data-submit-on-enter>{{if $here}}{{fieldValue "title"}}{{end}}</textarea>
+        <textarea class="input add-card__title" name="title" rows="2" maxlength="200" placeholder="{{t "board.new_card"}}" aria-label="{{t "board.new_card"}}" data-submit-on-enter>{{if $here}}{{fieldValue "title"}}{{end}}</textarea>
         {{if $here}}{{with fieldError "title"}}<p class="field__error">{{.}}</p>{{end}}{{end}}
+        {{if $.Templates}}<select class="select" name="template" aria-label="{{t "board.from_template"}}"><option value="">{{t "board.no_template"}}</option>{{range $.Templates}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select>{{end}}
         <div class="actions">
           <button type="submit" class="btn btn--primary btn--sm">{{t "board.add_card"}}</button>
         </div>

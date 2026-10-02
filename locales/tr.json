@@ -100,6 +100,9 @@
     "create": "Board oluştur",
     "new_card": "Yeni kart başlığı",
     "add_card": "Kart ekle",
+    "from_template": "Şablondan",
+    "no_template": "Şablonsuz",
+    "template_assignee_dropped": "Şablonun atanan kişisi kartı alamadı; kart atanmamış açıldı.",
     "settings": "Ayarlar",
     "conflict": "Bu kart başka biri tarafından değiştirildi.",
     "moved": "Kart taşındı.",
@@ -271,7 +274,8 @@
       "columns": "Kolonlar",
       "labels": "Etiketler",
       "roles": "Roller",
-      "rules": "Kurallar"
+      "rules": "Kurallar",
+      "templates": "Şablonlar"
     },
     "order": "Sıra",
     "drag": "Sürükleyerek sırala",
@@ -341,7 +345,40 @@
     "danger_zone": "Tehlikeli bölge",
     "archive_hint": "Arşivlenen board takım sayfasından ve sol menüden kalkar.",
     "and": "ve",
-    "cards_count": "{count} kart"
+    "cards_count": "{count} kart",
+    "template_new": "Yeni şablon",
+    "template_name": "Şablon adı",
+    "template_title": "Kart başlığı",
+    "template_description": "Açıklama",
+    "template_priority": "Öncelik",
+    "template_assignee": "Atanan kişi",
+    "template_estimate": "Tahmin",
+    "template_column": "Kolon",
+    "template_choose_column": "Kolon seçin",
+    "template_column_closed": "Bu kolonda kart açılmıyor; kart açılan bir kolon seçin.",
+    "template_due_in_days": "Son tarih: açılıştan N gün sonra",
+    "template_labels": "Etiketler",
+    "template_checklist": "Kontrol listesi (her satır bir madde)",
+    "template_schedule": "Tekrar",
+    "template_schedule_none": "Tekrarlama",
+    "template_schedule_daily": "Her gün",
+    "template_schedule_weekly": "Her hafta",
+    "template_schedule_monthly": "Her ay",
+    "template_weekdays": "Haftanın günleri",
+    "template_monthday": "Ayın günü",
+    "template_time": "Saat",
+    "template_save": "Şablonu kaydet",
+    "template_delete": "Şablonu sil",
+    "template_no_column": "Hedef kolon silinmiş; şablon zamanlamayla kart açamaz.",
+    "template_failed": "Son çalışma başarısız:",
+    "template_created": "Son çalışma: kart açıldı",
+    "template_name_exists": "Bu adla bir şablon zaten var.",
+    "template_invalid_due": "Gün sayısı 0 ile 365 arasında olmalı.",
+    "template_invalid_time": "Saati SS:DD biçiminde girin.",
+    "template_invalid_monthday": "Ayın günü 1 ile 31 arasında olmalı.",
+    "template_no_weekday": "En az bir gün seçin.",
+    "template_checklist_invalid": "Kontrol listesi en fazla 50 madde olabilir; her madde en fazla 200 karakter.",
+    "template_empty": "Henüz şablon yok."
   },
   "rules": {
     "assignee_not_member": "Kart, takımın üyesi olmayan birine atanamaz.",
@@ -401,6 +438,7 @@
     "empty": "Henüz kayıt yok.",
     "someone": "Biri",
     "card_created": "{actor} kartı oluşturdu",
+    "card_created_by_schedule": "{actor} kartı {text} şablonundan zamanlanarak açtı",
     "card_moved": "{actor} kartı {from} kolonundan {to} kolonuna taşıdı",
     "card_updated": "{actor} kartı düzenledi: {fields}",
     "card_archived": "{actor} kartı arşivledi",
@@ -434,6 +472,7 @@
     "due_soon": "{card} kartının son tarihi yaklaşıyor ({due}).",
     "overdue": "{card} kartının son tarihi geçti ({due}).",
     "unblocked": "{card} kartını bloklayan kartların hepsi bitti.",
+    "template_failed": "{board} board'unda {card} şablonu kart açamadı.",
     "someone": "Biri",
     "title": "Bildirimler",
     "empty": "Bildiriminiz yok.",
@@ -446,7 +485,8 @@
       "commented": "Atandığım karta yorum yapıldığında",
       "due_soon": "Son tarih yaklaştığında",
       "overdue": "Son tarih geçtiğinde",
-      "unblocked": "Kartımı bloklayanlar bittiğinde"
+      "unblocked": "Kartımı bloklayanlar bittiğinde",
+      "template_failed": "Zamanlanmış bir şablon kart açamadığında"
     }
   },
   "mail": {
@@ -481,7 +521,8 @@
     "archive_board": "Board arşivlensin mi?",
     "remove_member": "Üye takımdan çıkarılsın mı?",
     "set_disabled": "Kullanıcı devre dışı bırakılsın mı?",
-    "archive_hint": "Arşivden geri yükleyebilirsiniz."
+    "archive_hint": "Arşivden geri yükleyebilirsiniz.",
+    "template_delete": "Şablon silinsin mi?"
   },
   "search": {
     "title": "Arama",
@@ -585,5 +626,31 @@
   "calendar": {
     "feed_me": "Kanban — bana atananlar",
     "feed_board": "Kanban — {board}"
+  },
+  "templates": {
+    "owner_gone": "Şablonu son kaydeden kişi artık takımda değil.",
+    "no_column": "Şablonun hedef kolonu yok.",
+    "column_closed": "Şablonun hedef kolonunda kart açılmıyor."
+  },
+  "markdown": {
+    "hint": "Markdown desteklenir",
+    "code": "kod",
+    "bold": "kalın",
+    "italic": "eğik",
+    "strike": "üstü çizili",
+    "heading": "başlık",
+    "item": "madde",
+    "task": "yapılacak",
+    "quote": "alıntı",
+    "link": "bağlantı"
+  },
+  "weekdays": {
+    "0": "Pzt",
+    "1": "Sal",
+    "2": "Çar",
+    "3": "Per",
+    "4": "Cum",
+    "5": "Cmt",
+    "6": "Paz"
   }
 }

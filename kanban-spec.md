@@ -494,7 +494,7 @@ discovery isteği de açılışta yapılır; IdP'ye ulaşılamazsa uygulama baş
    `template.New(…).Funcs(t.Funcs())` ile üretilir. Katalog farklılıklarının deploy'u
    durdurması için `strict: true` kullanılır.
 3. **Kart açıklaması** ilk sürümde düz metin olacak: satır sonları korunur, bağlantılar
-   otomatik linklenir. Markdown istenirse sanitize edilmesi gerekir (kullanıcı girdisi).
+   otomatik linklenir. Markdown istenirse sanitize edilmesi gerekir (kullanıcı girdisi). Markdown, `docs/superpowers/specs/2026-10-01-filtre-swimlane-ical-sablon-markdown-design.md` §7 ile eklendi.
 4. **Zorla taşıma (admin override)** kapsam dışı. Gerekirse `activity` kaydı zorunlu bir
    ayrıcalık olarak eklenir.
 5. **Tek instance varsayımı.** `InvalidateTags` ve collage-live process içinde çalışır.
@@ -506,7 +506,7 @@ discovery isteği de açılışta yapılır; IdP'ye ulaşılamazsa uygulama baş
 Multi-tenancy, board düzeyinde özel üyelik, serbest kural dili, çoklu seçim ve toplu taşıma,
 istemci tarafında anlık filtre, klavyeyle sürükle-bırak, zaman takibi,
 raporlar ve grafikler, dışa/içe aktarma, API token'ları, mobil uygulama.
-Sunucu tarafında soluklaştıran filtre, genel arama ve swimlane'ler kapsama alındı: bkz. `docs/superpowers/specs/2026-10-01-filtre-swimlane-ical-sablon-markdown-design.md`.
+Sunucu tarafında soluklaştıran filtre, genel arama, swimlane'ler, şablonlar ve tekrarlayan kartlar kapsama alındı: bkz. `docs/superpowers/specs/2026-10-01-filtre-swimlane-ical-sablon-markdown-design.md`.
 
 ---
 
