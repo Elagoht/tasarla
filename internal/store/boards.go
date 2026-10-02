@@ -46,29 +46,10 @@ func collectBoards(rows pgx.Rows, err error) ([]Board, error) {
 	return boards, rows.Err()
 }
 
-// CreateBoard adds a board with one column per name. The first column is
-// where cards are created, the last is the done column.
+// CreateBoard adds a board with the named columns: the first takes new cards
+// and the last, when there are two or more, is done.
 func (s *Store) CreateBoard(ctx context.Context, teamID int64, name string, columns []string) (Board, error) {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return Board{}, err
-	}
-	defer tx.Rollback(ctx)
-	board, err := scanBoard(tx.QueryRow(ctx,
-		`INSERT INTO boards (team_id, name) VALUES ($1, $2) RETURNING `+boardColumns, teamID, name))
-	if err != nil {
-		return Board{}, err
-	}
-	for i, col := range columns {
-		_, err := tx.Exec(ctx, `
-			INSERT INTO columns (board_id, name, position, allow_create, is_done)
-			VALUES ($1, $2, $3, $4, $5)`,
-			board.ID, col, i, i == 0, i == len(columns)-1 && len(columns) > 1)
-		if err != nil {
-			return Board{}, err
-		}
-	}
-	return board, tx.Commit(ctx)
+	return s.CreateBoardFromPlan(ctx, teamID, name, ColumnsPlan(columns), 0)
 }
 
 // Board returns one board.

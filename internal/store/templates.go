@@ -230,14 +230,27 @@ func (s *Store) saveTemplate(ctx context.Context, boardID, id int64, in Template
 		return Template{}, err
 	}
 	defer tx.Rollback(ctx)
+	id, err = writeTemplate(ctx, tx, boardID, id, in, actorID)
+	if err != nil {
+		return Template{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return Template{}, err
+	}
+	return s.Template(ctx, boardID, id)
+}
 
+// writeTemplate is saveTemplate inside the caller's tx: it creates the
+// template when id is 0, otherwise updates it, and returns its id.
+func writeTemplate(ctx context.Context, tx pgx.Tx, boardID, id int64, in TemplateInput, actorID int64) (int64, error) {
+	var err error
 	if in.ColumnID != nil {
 		var owned bool
 		if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM columns WHERE id = $1 AND board_id = $2)`, *in.ColumnID, boardID).Scan(&owned); err != nil {
-			return Template{}, err
+			return 0, err
 		}
 		if !owned {
-			return Template{}, ErrNotFound
+			return 0, ErrNotFound
 		}
 	}
 	sc := in.Schedule
@@ -273,33 +286,30 @@ func (s *Store) saveTemplate(ctx context.Context, boardID, id int64, in Template
 	}
 	if err != nil {
 		if IsUniqueViolation(err) {
-			return Template{}, ErrTemplateName
+			return 0, ErrTemplateName
 		}
-		return Template{}, err
+		return 0, err
 	}
 
 	if _, err := tx.Exec(ctx, `DELETE FROM card_template_labels WHERE template_id = $1`, id); err != nil {
-		return Template{}, err
+		return 0, err
 	}
 	if len(in.LabelIDs) > 0 {
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO card_template_labels (template_id, label_id)
 			SELECT $1, id FROM labels WHERE board_id = $2 AND id = ANY($3)`, id, boardID, in.LabelIDs); err != nil {
-			return Template{}, err
+			return 0, err
 		}
 	}
 	if _, err := tx.Exec(ctx, `DELETE FROM card_template_checklist WHERE template_id = $1`, id); err != nil {
-		return Template{}, err
+		return 0, err
 	}
 	for i, text := range in.Checklist {
 		if _, err := tx.Exec(ctx, `INSERT INTO card_template_checklist (template_id, position, text) VALUES ($1, $2, $3)`, id, i, text); err != nil {
-			return Template{}, err
+			return 0, err
 		}
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return Template{}, err
-	}
-	return s.Template(ctx, boardID, id)
+	return id, nil
 }
 
 // DeleteTemplate removes a template, with its labels, checklist and runs.
