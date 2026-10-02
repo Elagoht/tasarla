@@ -150,11 +150,27 @@ function markSaved(panel) {
   savedTimer = setTimeout(() => delete panel.dataset.saved, 2600);
 }
 
+// A comment sent empties its box once the answer is in. The box keeps what was
+// typed through every other patch, so only the answer to its own form resets
+// it: to nothing when the comment was added, to the text when it was refused.
+let commentSent = false;
+document.addEventListener("submit", (e) => {
+  if (e.target instanceof HTMLFormElement && e.target.matches(".comment-new")) commentSent = true;
+});
+
+function syncComment(panel) {
+  if (!commentSent) return;
+  commentSent = false;
+  const area = panel.querySelector(".comment-new textarea");
+  if (area) area.value = area.defaultValue;
+}
+
 document.addEventListener("collage:swap", (e) => {
   const panel = e.target;
   if (panel instanceof HTMLElement && panel.id === "card-panel") {
     initPanel(panel);
     syncFields(panel);
+    syncComment(panel);
     markSaved(panel);
   }
 });
