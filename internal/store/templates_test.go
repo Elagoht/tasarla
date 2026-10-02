@@ -228,3 +228,33 @@ func TestCardFromTemplateRefused(t *testing.T) {
 		t.Errorf("dated template = %v", err)
 	}
 }
+
+// A board with no columns has nowhere to make the card; a nil location is UTC.
+func TestCardFromTemplateEdges(t *testing.T) {
+	f := newBoardFixture(t)
+	ctx := context.Background()
+	empty, err := f.s.CreateBoard(ctx, f.team.ID, "Boş", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tpl, err := f.s.CreateTemplate(ctx, empty.ID, store.TemplateInput{Name: "T", Title: "T"}, f.lead.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.s.CreateCardFromTemplate(ctx, empty.ID, tpl.ID, 0, f.lead.ID, time.UTC, time.Now()); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("no columns = %v, want ErrNotFound", err)
+	}
+
+	days := 1
+	in := templateInput(f, "UTC")
+	in.DueInDays, in.AssigneeID = &days, nil
+	dated, err := f.s.CreateTemplate(ctx, f.board.ID, in, f.lead.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 10, 2, 23, 30, 0, 0, time.UTC)
+	got, err := f.s.CreateCardFromTemplate(ctx, f.board.ID, dated.ID, 0, f.lead.ID, nil, now)
+	if err != nil || got.Card.DueDate == nil || got.Card.DueDate.Format(time.DateOnly) != "2026-10-03" {
+		t.Fatalf("nil location: %+v, %v", got.Card.DueDate, err)
+	}
+}

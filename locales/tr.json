@@ -434,6 +434,7 @@
     "due_soon": "{card} kartının son tarihi yaklaşıyor ({due}).",
     "overdue": "{card} kartının son tarihi geçti ({due}).",
     "unblocked": "{card} kartını bloklayan kartların hepsi bitti.",
+    "template_failed": "{board} board'unda {card} şablonu kart açamadı.",
     "someone": "Biri",
     "title": "Bildirimler",
     "empty": "Bildiriminiz yok.",
@@ -446,7 +447,8 @@
       "commented": "Atandığım karta yorum yapıldığında",
       "due_soon": "Son tarih yaklaştığında",
       "overdue": "Son tarih geçtiğinde",
-      "unblocked": "Kartımı bloklayanlar bittiğinde"
+      "unblocked": "Kartımı bloklayanlar bittiğinde",
+      "template_failed": "Zamanlanmış bir şablon kart açamadığında"
     }
   },
   "mail": {

@@ -5,7 +5,7 @@
   <p>{{.Sentence}}</p>
   {{with .Board}}<p>{{t "mail.board" "board" .}}</p>{{end}}
   {{with .Excerpt}}<blockquote>{{.}}</blockquote>{{end}}
-  <p><a href="{{.CardURL}}">{{t "mail.open"}}</a><br>{{.CardURL}}</p>
+  {{with .CardURL}}<p><a href="{{.}}">{{t "mail.open"}}</a><br>{{.}}</p>{{end}}
   <hr>
   <p style="color: #6b7280; font-size: 0.9em">{{t "mail.prefs" "url" .SettingsURL}}</p>
 </body>

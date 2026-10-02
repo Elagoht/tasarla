@@ -87,8 +87,8 @@ func run() error {
 		return err
 	}
 
-	// The outbox worker and the due-date scheduler run beside the server and
-	// stop with it; an e-mail being sent at that moment is finished.
+	// The outbox worker, the due-date scheduler and the template recurrer run
+	// beside the server and stop with it; an e-mail being sent at that moment is finished.
 	background, stop := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 	sender := mail.Sender{Host: cfg.SMTP.Host, Port: cfg.SMTP.Port, User: cfg.SMTP.User, Password: cfg.SMTP.Password, From: cfg.SMTP.From}
@@ -96,9 +96,11 @@ func run() error {
 		return sender.Send(ctx, m.To, m.Subject, m.Text, m.HTML)
 	}}
 	scheduler := notify.Scheduler{Store: st, Notifier: app.Notifier}
-	wg.Add(2)
+	recurrer := notify.Recurrer{Store: st, Notifier: app.Notifier, Location: cfg.Location}
+	wg.Add(3)
 	go func() { defer wg.Done(); worker.Run(background) }()
 	go func() { defer wg.Done(); scheduler.Run(background) }()
+	go func() { defer wg.Done(); recurrer.Run(background) }()
 
 	err = app.ListenAndServe()
 	stop()

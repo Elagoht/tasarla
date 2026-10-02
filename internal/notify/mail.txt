@@ -5,7 +5,7 @@
 {{end}}{{with .Excerpt}}
 > {{.}}
 {{end}}
-{{t "mail.open"}}: {{.CardURL}}
+{{with .CardURL}}{{t "mail.open"}}: {{.}}
 
---
+{{end}}--
 {{t "mail.prefs" "url" .SettingsURL}}

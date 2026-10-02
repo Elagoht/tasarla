@@ -109,6 +109,21 @@ func templateOf(ctx context.Context, tx pgx.Tx, boardID, id int64) (Template, er
 	return ts[0], nil
 }
 
+// scanTemplate reads one row of templateColumns; the schedule's time of day
+// lands in Schedule.Hour and Minute.
+func scanTemplate(row pgx.Row) (Template, error) {
+	var t Template
+	var at pgtype.Time
+	if err := row.Scan(&t.ID, &t.BoardID, &t.Name, &t.Title, &t.Description, &t.Priority, &t.Estimate, &t.AssigneeID,
+		&t.ColumnID, &t.DueInDays, &t.Schedule.Kind, &t.Schedule.Weekdays, &t.Schedule.MonthDay, &at, &t.ScheduleSince,
+		&t.UpdatedBy, &t.UpdatedAt); err != nil {
+		return Template{}, err
+	}
+	minutes := int(at.Microseconds / int64(time.Minute/time.Microsecond))
+	t.Schedule.Hour, t.Schedule.Minute = minutes/60, minutes%60
+	return t, nil
+}
+
 // loadTemplates reads the board's templates (only id, when it is not 0) with
 // their labels, checklist and latest run, inside tx.
 func loadTemplates(ctx context.Context, tx pgx.Tx, boardID, id int64) ([]Template, error) {
@@ -124,15 +139,10 @@ func loadTemplates(ctx context.Context, tx pgx.Tx, boardID, id int64) ([]Templat
 	index := map[int64]int{}
 	var ids []int64
 	for rows.Next() {
-		var t Template
-		var at pgtype.Time
-		if err := rows.Scan(&t.ID, &t.BoardID, &t.Name, &t.Title, &t.Description, &t.Priority, &t.Estimate, &t.AssigneeID,
-			&t.ColumnID, &t.DueInDays, &t.Schedule.Kind, &t.Schedule.Weekdays, &t.Schedule.MonthDay, &at, &t.ScheduleSince,
-			&t.UpdatedBy, &t.UpdatedAt); err != nil {
+		t, err := scanTemplate(rows)
+		if err != nil {
 			return nil, err
 		}
-		minutes := int(at.Microseconds / int64(time.Minute/time.Microsecond))
-		t.Schedule.Hour, t.Schedule.Minute = minutes/60, minutes%60
 		index[t.ID] = len(out)
 		ids = append(ids, t.ID)
 		out = append(out, t)

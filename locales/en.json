@@ -434,6 +434,7 @@
     "due_soon": "{card} is due soon ({due}).",
     "overdue": "{card} is overdue ({due}).",
     "unblocked": "Every card blocking {card} is done.",
+    "template_failed": "The template {card} on {board} could not make its card.",
     "someone": "Someone",
     "title": "Notifications",
     "empty": "You have no notifications.",
@@ -446,7 +447,8 @@
       "commented": "When someone comments on my card",
       "due_soon": "When a due date is near",
       "overdue": "When a due date has passed",
-      "unblocked": "When my card is no longer blocked"
+      "unblocked": "When my card is no longer blocked",
+      "template_failed": "When a scheduled template cannot make its card"
     }
   },
   "mail": {
