@@ -36,6 +36,12 @@
       <input class="input" type="text" readonly value="{{.URL}}"></label>{{end}}
   </div>
   {{end}}
+  {{if .CalendarBoards}}
+  <p class="muted">{{t "calendar.pattern"}}</p>
+  <ul class="stack">
+    {{range .CalendarBoards}}<li>{{.Name}}: <code>{{.URL}}</code></li>{{end}}
+  </ul>
+  {{end}}
   <div class="actions">
     {{if .HasCalendar}}
     <form method="post" action="{{pageURL "me-settings"}}" data-confirm="{{t "confirm.calendar_reset"}}">{{csrfToken}}

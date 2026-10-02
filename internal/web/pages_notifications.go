@@ -136,6 +136,9 @@ type meSettingsView struct {
 	// Calendar holds the addresses just made; it is set only in the answer
 	// to creating or resetting, since the token is not kept in the clear.
 	Calendar *calendarLinks
+	// CalendarBoards are the endings (boards/{id}.ics) of the user's boards,
+	// shown while a token exists so a later-joined board can be subscribed.
+	CalendarBoards []calendarBoardLink
 }
 
 const calendarKey = "calendar"
@@ -154,23 +157,35 @@ type calendarBoardLink struct {
 func (h *handlers) calendarLinks(ctx context.Context, userID int64, token string) (*calendarLinks, error) {
 	base := h.baseURL + "/cal/" + token
 	links := &calendarLinks{Me: base + "/me.ics"}
+	boards, err := h.userBoards(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	for _, b := range boards {
+		links.Boards = append(links.Boards, calendarBoardLink{Name: b.Name, URL: base + "/" + boardFeedEnding(b.ID)})
+	}
+	return links, nil
+}
+
+func boardFeedEnding(boardID int64) string {
+	return "boards/" + strconv.FormatInt(boardID, 10) + ".ics"
+}
+
+// userBoards are the boards, not archived, of every team the user is in.
+func (h *handlers) userBoards(ctx context.Context, userID int64) ([]store.Board, error) {
 	teams, err := h.store.TeamsOf(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+	var out []store.Board
 	for _, t := range teams {
 		boards, err := h.store.BoardsOfTeam(ctx, t.Team.ID)
 		if err != nil {
 			return nil, err
 		}
-		for _, b := range boards {
-			links.Boards = append(links.Boards, calendarBoardLink{
-				Name: b.Name,
-				URL:  base + "/boards/" + strconv.FormatInt(b.ID, 10) + ".ics",
-			})
-		}
+		out = append(out, boards...)
 	}
-	return links, nil
+	return out, nil
 }
 
 type prefView struct {
@@ -205,6 +220,15 @@ func (h *handlers) loadMeSettings(ctx context.Context, rc *collage.RenderContext
 	}
 	if view.HasCalendar, err = h.store.HasCalendarToken(ctx, user.ID); err != nil {
 		return meSettingsView{}, err
+	}
+	if view.HasCalendar {
+		boards, err := h.userBoards(ctx, user.ID)
+		if err != nil {
+			return meSettingsView{}, err
+		}
+		for _, b := range boards {
+			view.CalendarBoards = append(view.CalendarBoards, calendarBoardLink{Name: b.Name, URL: boardFeedEnding(b.ID)})
+		}
 	}
 	if l, ok := collage.Get[*calendarLinks](rc, calendarKey); ok {
 		view.Calendar = l

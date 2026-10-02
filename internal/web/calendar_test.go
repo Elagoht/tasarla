@@ -110,6 +110,7 @@ func TestCalendarSettings(t *testing.T) {
 	if strings.Contains(again.Body, "/cal/"+token) {
 		t.Error("the address is shown again")
 	}
+	mustContain(t, again.Body, "boards/"+id(b.board.ID)+".ics", "Sprint")
 	mustContain(t, again.Body, `value="calendar_reset"`, `value="calendar_clear"`)
 	reset := b.member.Submit("/me/settings", "/me/settings", url.Values{"op": {"calendar_reset"}})
 	if newToken := between(reset.Body, webtest.Origin+"/cal/", "/me.ics"); newToken == "" || newToken == token {
@@ -122,6 +123,47 @@ func TestCalendarSettings(t *testing.T) {
 		t.Errorf("clear = %d, want a redirect", r.Status)
 	}
 	mustContain(t, b.member.Get(b.path).Body, `href="/me/settings#calendar"`)
+}
+
+func TestCalendarFeedsStopWhenTheyShould(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	member := b.h.user("member@example.com").ID
+	token, err := b.h.store.NewCalendarToken(ctx, member)
+	if err != nil {
+		t.Fatal(err)
+	}
+	me, board := "/cal/"+token+"/me.ics", "/cal/"+token+"/boards/"+id(b.board.ID)+".ics"
+	if feed(t, b, me, nil).Code != http.StatusOK || feed(t, b, board, nil).Code != http.StatusOK {
+		t.Fatal("the feeds do not work to begin with")
+	}
+
+	// A disabled user's token stops working, and works again when enabled.
+	if err := b.h.store.SetDisabled(ctx, member, true); err != nil {
+		t.Fatal(err)
+	}
+	if got := feed(t, b, me, nil); got.Code != http.StatusNotFound {
+		t.Errorf("disabled user's me.ics = %d, want 404", got.Code)
+	}
+	if err := b.h.store.SetDisabled(ctx, member, false); err != nil {
+		t.Fatal(err)
+	}
+
+	// An archived board's feed is gone.
+	if err := b.h.store.ArchiveBoard(ctx, b.board.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := feed(t, b, board, nil); got.Code != http.StatusNotFound {
+		t.Errorf("archived board's feed = %d, want 404", got.Code)
+	}
+
+	// Turning the calendar off in My settings kills the old token.
+	if r := b.member.Submit("/me/settings", "/me/settings", url.Values{"op": {"calendar_clear"}}); r.Status != http.StatusSeeOther {
+		t.Fatalf("clear = %d", r.Status)
+	}
+	if got := feed(t, b, me, nil); got.Code != http.StatusNotFound {
+		t.Errorf("cleared token's me.ics = %d, want 404", got.Code)
+	}
 }
 
 func between(s, from, to string) string {

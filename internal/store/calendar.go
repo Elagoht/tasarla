@@ -30,10 +30,13 @@ func (s *Store) NewCalendarToken(ctx context.Context, userID int64) (string, err
 	return token, nil
 }
 
+// ClearCalendarToken turns userID's calendar off: the old token stops working.
 func (s *Store) ClearCalendarToken(ctx context.Context, userID int64) error {
 	return exactlyOne(s.pool.Exec(ctx, `UPDATE users SET calendar_token_hash = NULL WHERE id = $1`, userID))
 }
 
+// HasCalendarToken reports whether userID has a calendar token; ErrNotFound
+// if there is no such user.
 func (s *Store) HasCalendarToken(ctx context.Context, userID int64) (bool, error) {
 	var has bool
 	err := s.pool.QueryRow(ctx, `SELECT calendar_token_hash IS NOT NULL FROM users WHERE id = $1`, userID).Scan(&has)

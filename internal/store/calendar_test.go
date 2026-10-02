@@ -12,8 +12,8 @@ import (
 func TestCalendarTokenLifecycle(t *testing.T) {
 	f := newBoardFixture(t)
 	ctx := context.Background()
-	if has, _ := f.s.HasCalendarToken(ctx, f.member.ID); has {
-		t.Fatal("a new user has a token")
+	if has, err := f.s.HasCalendarToken(ctx, f.member.ID); err != nil || has {
+		t.Fatalf("a new user has a token: %v, %v", has, err)
 	}
 	first, err := f.s.NewCalendarToken(ctx, f.member.ID)
 	if err != nil || len(first) != 43 {
@@ -22,7 +22,13 @@ func TestCalendarTokenLifecycle(t *testing.T) {
 	if u, err := f.s.UserByCalendarToken(ctx, first); err != nil || u.ID != f.member.ID {
 		t.Fatalf("lookup = %+v, %v", u, err)
 	}
-	second, _ := f.s.NewCalendarToken(ctx, f.member.ID)
+	second, err := f.s.NewCalendarToken(ctx, f.member.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if has, err := f.s.HasCalendarToken(ctx, f.member.ID); err != nil || !has {
+		t.Fatalf("has = %v, %v after a token", has, err)
+	}
 	if _, err := f.s.UserByCalendarToken(ctx, first); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("a reset left the old token working: %v", err)
 	}

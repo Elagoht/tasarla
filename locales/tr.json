@@ -632,6 +632,7 @@
     "reset": "Adresi sıfırla",
     "clear": "Takvimi kapat",
     "shown_once": "Bu adresler yalnız şimdi gösteriliyor. Takvim uygulamanıza ekleyin; kaybederseniz sıfırlayın.",
+    "pattern": "Bir board'un adresi, kişisel adresinizde `me.ics` yerine aşağıdaki eki yazınca elde edilir:",
     "me": "Bana atananlar",
     "cleared": "Takvim kapatıldı; eski adresler artık çalışmıyor.",
     "subscribe": "Takvime abone ol",

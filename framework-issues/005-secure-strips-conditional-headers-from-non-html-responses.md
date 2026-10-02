@@ -44,7 +44,7 @@ app.Handler().ServeHTTP(rec, req)
 // Expected 304; observed 200 with the body. The handler sees no If-None-Match.
 ```
 
-In the app: `internal/web/calendar_test.go`, `TestCalendarFeeds`, the `If-None-Match` step (uncommitted work on branch `feat/ical`).
+In the app: `internal/web/calendar_test.go`, `TestCalendarFeeds`, the `If-None-Match` step (on branch `feat/ical`).
 
 ## What would help
 

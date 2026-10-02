@@ -632,6 +632,7 @@
     "reset": "Reset the address",
     "clear": "Turn the calendar off",
     "shown_once": "These addresses are shown only now. Add them to your calendar app; if you lose them, reset.",
+    "pattern": "A board's address is your personal address with `me.ics` replaced by the ending below:",
     "me": "Assigned to me",
     "cleared": "Calendar turned off; the old addresses no longer work.",
     "subscribe": "Subscribe in a calendar",
