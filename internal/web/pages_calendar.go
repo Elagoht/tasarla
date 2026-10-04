@@ -2,12 +2,16 @@ package web
 
 import (
 	"context"
+	"errors"
 	"html/template"
+	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	i18n "github.com/Elagoht/collage-i18n"
+	validate "github.com/Elagoht/collage-validate"
 	"github.com/Elagoht/collage/pkg/collage"
 
 	"kanban/internal/config"
@@ -40,7 +44,7 @@ func (h *handlers) boardCalendarPage() *collage.Page {
 	for _, l := range config.Locales {
 		b = b.WithFragmentPath(l, "/boards/{id}/calendar/grid", h.calendarGrid)
 	}
-	return b.Dynamic().Build()
+	return b.WithAction(http.MethodPost, h.calendarPost).Dynamic().Build()
 }
 
 // calendarSettings reads the month shown and whether done cards show.
@@ -133,4 +137,75 @@ func monthLink(self string, f boardFilter, month string, done bool) template.URL
 		v.Set("done", "1")
 	}
 	return template.URL(self + "?" + v.Encode())
+}
+
+func (h *handlers) calendarPost(ctx context.Context, rc *collage.RenderContext) (*collage.ActionResult, error) {
+	bc, err := h.boardFor(ctx, rc)
+	if errors.Is(err, collage.ErrNotFound) {
+		return collage.NoContent(http.StatusNotFound), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !bc.Access.CanEdit {
+		return collage.NoContent(http.StatusForbidden), nil
+	}
+	v := validate.Form(rc)
+	if badText(rc) || v.Value("op") != "create_card" {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	return h.createCalendarCard(ctx, rc, v, bc)
+}
+
+// createCalendarCard makes a card due on the day it was asked for, in the
+// column the board's own "add card" uses.
+func (h *handlers) createCalendarCard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, bc boardContext) (*collage.ActionResult, error) {
+	due, err := time.Parse(time.DateOnly, v.Value("due"))
+	if err != nil {
+		return collage.NoContent(http.StatusBadRequest), nil
+	}
+	v.Field("title").Required().MaxLen(200)
+	if !v.Valid() {
+		res := validate.Refuse(rc, v, rc.Page)
+		if isFetch(rc) {
+			res.Page, res.Fragment = nil, h.calendarGrid
+		}
+		return res, nil
+	}
+	cols, err := h.store.Columns(ctx, bc.Board.ID)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 {
+		return collage.NoContent(http.StatusConflict), nil
+	}
+	card, err := h.store.CreateCardDue(ctx, bc.Board.ID, creatableColumns(cols)[0].ID, strings.TrimSpace(v.Value("title")), due, bc.User.ID)
+	if msgs := violationMessages(rc, err); msgs != nil {
+		rc.Set(noticeKey, msgs)
+		res := collage.RenderPage(rc.Page)
+		if isFetch(rc) {
+			res = collage.RenderFragment(h.calendarGrid)
+		}
+		res.Status = http.StatusUnprocessableEntity
+		return res, nil
+	}
+	if errors.Is(err, store.ErrNotFound) {
+		return collage.NoContent(http.StatusBadRequest), nil // the column was deleted meanwhile
+	}
+	if err != nil {
+		return nil, err
+	}
+	h.notifyAssigned(ctx, bc, store.Card{}, card)
+	if isFetch(rc) {
+		res := collage.RenderFragment(h.calendarGrid)
+		res.InvalidateTags = []string{boardTag(bc.Board.ID)}
+		return res, nil
+	}
+	target, err := h.urlIn("board-calendar", rc.Locale, map[string]string{"id": strconv.FormatInt(bc.Board.ID, 10)})
+	if err != nil {
+		return nil, err
+	}
+	res := collage.SeeOther(withQuery(target, rc.Request.URL.RawQuery))
+	res.InvalidateTags = []string{boardTag(bc.Board.ID)}
+	return res, nil
 }

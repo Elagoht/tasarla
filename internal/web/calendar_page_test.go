@@ -1,10 +1,15 @@
 package web_test
 
 import (
+	"context"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	"kanban/internal/rules"
+	"kanban/internal/store"
 )
 
 func TestTheCalendarView(t *testing.T) {
@@ -72,4 +77,68 @@ func TestCalendarKeepsTheFilterAcrossMonths(t *testing.T) {
 	b := newBoardSetup(t)
 	page := b.member.Get(b.path + "/calendar?month=2026-10&q=design").Body
 	mustContain(t, page, `/calendar?month=2026-11&amp;q=design"`, `name="month" value="2026-10"`)
+}
+func calendarCreate(title, due string) url.Values {
+	return url.Values{"op": {"create_card"}, "title": {title}, "due": {due}}
+}
+
+func TestCreatingACardFromTheCalendar(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	page := b.path + "/calendar?month=2026-10"
+	res := b.member.SubmitFetch(page, page, calendarCreate("Kickoff", "2026-10-14"))
+	if res.Status != http.StatusOK {
+		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
+	}
+	mustContain(t, res.Body, "Kickoff", `data-due="2026-10-14"`)
+	cards, err := b.h.store.GanttCards(ctx, b.board.ID, false)
+	if err != nil || len(cards) != 1 {
+		t.Fatalf("cards = %v, %v", cards, err)
+	}
+	if c := cards[0].Card; c.ColumnID != b.cols[0].ID || c.DueDate == nil || c.DueDate.Format(time.DateOnly) != "2026-10-14" {
+		t.Fatalf("card = %+v", c)
+	}
+	// Without a script: back to the same month.
+	res = b.member.Submit(page, page, calendarCreate("Plain", "2026-10-15"))
+	if res.Status != http.StatusSeeOther || !strings.Contains(res.Location(), "month=2026-10") {
+		t.Fatalf("form create = %d %q", res.Status, res.Location())
+	}
+}
+
+func TestCalendarCreateRefusals(t *testing.T) {
+	b := newBoardSetup(t)
+	page := b.path + "/calendar?month=2026-10"
+	if res := b.member.SubmitFetch(page, page, calendarCreate("  ", "2026-10-14")); res.Status != http.StatusUnprocessableEntity {
+		t.Errorf("empty title = %d, want 422", res.Status)
+	}
+	if res := b.member.SubmitFetch(page, page, calendarCreate("X", "14.10.2026")); res.Status != http.StatusBadRequest {
+		t.Errorf("bad date = %d, want 400", res.Status)
+	}
+	if res := b.member.SubmitFetch(page, page, url.Values{"op": {"nope"}}); res.Status != http.StatusBadRequest {
+		t.Errorf("unknown op = %d, want 400", res.Status)
+	}
+}
+
+// The first column wants a due date: the calendar's card has one, so it enters.
+func TestCalendarCreatePassesTheDueDateRule(t *testing.T) {
+	b := newBoardSetup(t)
+	ctx := context.Background()
+	if err := b.h.store.AddCondition(ctx, b.board.ID, store.ColumnCondition{ColumnID: b.cols[0].ID, Phase: rules.PhaseEnter, Kind: rules.HasDueDate}); err != nil {
+		t.Fatal(err)
+	}
+	page := b.path + "/calendar?month=2026-10"
+	if res := b.member.SubmitFetch(page, page, calendarCreate("Dated", "2026-10-14")); res.Status != http.StatusOK {
+		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
+	}
+	// The column is now full: the next card is refused, with the reason on the grid.
+	one := 1
+	todo := b.cols[0]
+	if err := b.h.store.UpdateColumn(ctx, b.board.ID, todo.ID, store.ColumnUpdate{Name: todo.Name, WIPLimit: &one, IsDone: todo.IsDone, AllowCreate: todo.AllowCreate, CountsPersonWIP: todo.CountsPersonWIP}); err != nil {
+		t.Fatal(err)
+	}
+	res := b.member.SubmitFetch(page, page, calendarCreate("Over", "2026-10-15"))
+	if res.Status != http.StatusUnprocessableEntity {
+		t.Fatalf("over the limit = %d", res.Status)
+	}
+	mustContain(t, res.Body, "data-cal-alert")
 }
