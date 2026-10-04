@@ -52,23 +52,34 @@ func scanCard(row pgx.Row) (Card, error) {
 
 // CreateCard adds a card at the bottom of a column of boardID.
 func (s *Store) CreateCard(ctx context.Context, boardID, columnID int64, title string, createdBy int64) (Card, error) {
+	return s.createCardTx(ctx, boardID, columnID, Card{Title: title}, createdBy)
+}
+
+// CreateCardDue adds a card due on due at the bottom of a column of boardID;
+// the column's entry rules see the date.
+func (s *Store) CreateCardDue(ctx context.Context, boardID, columnID int64, title string, due time.Time, createdBy int64) (Card, error) {
+	return s.createCardTx(ctx, boardID, columnID, Card{Title: title, DueDate: &due}, createdBy)
+}
+
+func (s *Store) createCardTx(ctx context.Context, boardID, columnID int64, next Card, createdBy int64) (Card, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return Card{}, err
 	}
 	defer tx.Rollback(ctx)
-	card, err := createCard(ctx, tx, boardID, columnID, title, createdBy)
+	card, err := createCard(ctx, tx, boardID, columnID, next, createdBy)
 	if err != nil {
 		return Card{}, err
 	}
 	return card, tx.Commit(ctx)
 }
 
-func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, title string, createdBy int64) (Card, error) {
+// createCard checks next against the column's rules and inserts it.
+func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, next Card, createdBy int64) (Card, error) {
 	if err := lockBoard(ctx, tx, boardID); err != nil {
 		return Card{}, err
 	}
-	snap, err := loadSnapshot(ctx, tx, boardID, Card{})
+	snap, err := loadSnapshot(ctx, tx, boardID, next)
 	if err != nil {
 		return Card{}, err
 	}
@@ -78,8 +89,8 @@ func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, title s
 	if err := ruleError(rules.EvaluateCreate(columnID, snap)); err != nil {
 		return Card{}, err
 	}
-	return insertCard(ctx, tx, boardID, snap.Columns[columnID], Card{Title: title}, createdBy,
-		ActivityCardCreated, ActivityPayload{Title: title})
+	return insertCard(ctx, tx, boardID, snap.Columns[columnID], next, createdBy,
+		ActivityCardCreated, ActivityPayload{Title: next.Title})
 }
 
 // insertCard writes next's fields as a new card at the bottom of col, which
