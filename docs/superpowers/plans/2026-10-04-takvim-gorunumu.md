@@ -20,6 +20,8 @@
 - Çeviri anahtarları `calendar_view.*` altında (spec "calendar.*" der, ama `calendar.*` iCal aboneliğine ait — çakışmasın diye). Gün adları mevcut `weekdays.0`…`weekdays.6` (0 = Pazartesi).
 - Görünen şerit sayısı: `calendarLanes = 3`.
 - Kodun yorum dili, adlandırma ve deyimi çevredeki kodla aynı (İngilizce yorumlar, kısa ve "ne/neden").
+- `href="{{$self}}?{{…}}"` KULLANMA: html/template `?`'ten sonraki metindeki `=` ve `&`'yi `%3d`/`%26` yapar ve bağlantı bozulur (Gantt'ın ölçek bağlantıları bugün bu yüzden bozuk). Bağlantının tamamı Go'da kurulur ve `template.URL` olarak döner (`monthLink`).
+- Ad çakışması: `calendarLink` adı `internal/web/pages_notifications.go`'da zaten var; yeni bağlantı fonksiyonunun adı `monthLink`. Planda geçen diğer adlar (`calendarView`, `calendarMonth`, `calendarGrid`, `boardMatching` …) kontrol edildi, çakışmıyor.
 
 ## Spec'ten sapmalar (bilerek)
 
@@ -44,10 +46,10 @@
 | `internal/store/cards_due_test.go` (yeni) | `CreateCardDue` testleri |
 | `internal/web/calendar_layout.go` (yeni) | `calendarView` tipleri, `calendarMonth`, `layoutCalendar` — saf, HTTP yok |
 | `internal/web/calendar_layout_test.go` (yeni, `package web`) | düzen birim testleri |
-| `internal/web/pages_calendar.go` (yeni) | sayfa + parça kurulumu, yükleyiciler, `calendarLink`, `calendarPost` |
+| `internal/web/pages_calendar.go` (yeni) | sayfa + parça kurulumu, yükleyiciler, `monthLink`, `calendarPost` |
 | `internal/web/calendar_page_test.go` (yeni, `package web_test`) | sayfa ve eylem testleri |
 | `internal/web/pages_gantt.go` (değişir) | filtre eşleşmesi `boardMatching` yardımcısına çıkar |
-| `internal/web/app.go` (değişir) | `calendarGrid` alanı, sayfa kaydı, `calendarLink` şablon fonksiyonu |
+| `internal/web/app.go` (değişir) | `calendarGrid` alanı, sayfa kaydı, `monthLink` şablon fonksiyonu |
 | `templates/pages/board_calendar.html` (yeni) | başlık, ay gezinmesi, sekmeler, filtre, parça kabı |
 | `templates/fragments/calendar.html` (yeni) | ızgara |
 | `templates/partials/board_tabs.html`, `templates/partials/icons.html` (değişir) | Takvim sekmesi, `gantt` ikonu |
@@ -111,15 +113,21 @@ func TestCreateCardDueMeetsTheEntryRule(t *testing.T) {
 
 func TestCreateCardDueInAnotherBoardsColumn(t *testing.T) {
 	f := newBoardFixture(t)
-	other := newBoardFixture(t)
-	_, err := f.s.CreateCardDue(context.Background(), f.board.ID, other.cols[0].ID, "X", time.Now(), f.lead.ID)
+	ctx := context.Background()
+	other, err := f.s.CreateBoard(ctx, f.team.ID, "Other", []string{"A"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cols, err := f.s.Columns(ctx, other.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = f.s.CreateCardDue(ctx, f.board.ID, cols[0].ID, "X", time.Now(), f.lead.ID)
 	if !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("foreign column = %v, want ErrNotFound", err)
 	}
 }
 ```
-
-Not: `newBoardFixture` her çağrıda yeni bir store açar; iki fikstür aynı veritabanını paylaşıyorsa ikinci testte `other` için `f` içinde ikinci bir board oluştur: `f.s.CreateBoard(ctx, f.team.ID, "Other", []string{"A"})` ve `f.s.Columns`. Fikstürün alanlarını `internal/store/boards_test.go:21` içinde kontrol et ve uygun olanı kullan.
 
 - [ ] **Step 2: Çalıştır, başarısız olduğunu gör.** `go test ./internal/store -run CreateCardDue -race -count=1`. Beklenen: `f.s.CreateCardDue undefined`.
 
@@ -170,7 +178,7 @@ func createCard(ctx context.Context, tx pgx.Tx, boardID, columnID int64, next Ca
 }
 ```
 
-`loadSnapshot` yalnız `card.ID != 0` iken etiket/kontrol listesi sorgular (`internal/store/snapshot.go:62`), `next.ID` sıfır olduğu için yeni kart güvenle geçer; `HasDueDate` `next.DueDate`'ten gelir. `createCard`'ı başka çağıran yok (`grep -rn "createCard(ctx, tx" internal/store` ile doğrula; varsa `Card{Title: title}` geçir).
+`loadSnapshot` yalnız `card.ID != 0` iken etiket/kontrol listesi sorgular (`internal/store/snapshot.go:62`), `next.ID` sıfır olduğu için yeni kart güvenle geçer; `HasDueDate` `next.DueDate`'ten gelir. `createCard`'ı `CreateCard`'tan başka çağıran yok (kontrol edildi).
 
 - [ ] **Step 4: Çalıştır, geçtiğini gör.** `go test ./internal/store -race -count=1`. Beklenen: PASS (mevcut testler de).
 
@@ -528,7 +536,7 @@ git commit -m "feat(calendar): lay a month out in weeks, cards in lanes"
 
 **Interfaces:**
 - Consumes: `layoutCalendar`, `calendarMonth`, `calendarView` (Görev 2); `h.boardFor`, `h.boardFilterFor`, `h.urlIn`, `boardColor`, `boardTag`, `boardTabs`.
-- Produces: sayfa adı `board-calendar` (yol `/boards/{id}/calendar`), parça adı `board-calendar-grid` (yol `/boards/{id}/calendar/grid`), `h.calendarGrid *collage.Fragment`, `func (h *handlers) boardMatching(ctx context.Context, rc *collage.RenderContext, bc boardContext) (map[int64]bool, error)`, şablon fonksiyonu `calendarLink(f boardFilter, month string, done bool) string`. Görev 4, `boardCalendarPage`'deki `WithAction` satırını ekler; bu görevde eylem yok.
+- Produces: sayfa adı `board-calendar` (yol `/boards/{id}/calendar`), parça adı `board-calendar-grid` (yol `/boards/{id}/calendar/grid`), `h.calendarGrid *collage.Fragment`, `func (h *handlers) boardMatching(ctx context.Context, rc *collage.RenderContext, bc boardContext) (map[int64]bool, error)`, şablon fonksiyonu `monthLink(self string, f boardFilter, month string, done bool) template.URL`. Görev 4, `boardCalendarPage`'deki `WithAction` satırını ekler; bu görevde eylem yok.
 
 - [ ] **Step 1: Başarısız testleri yaz** — `internal/web/calendar_page_test.go`:
 
@@ -610,7 +618,7 @@ func TestCalendarKeepsTheFilterAcrossMonths(t *testing.T) {
 }
 ```
 
-Notlar: `CreateBoard`'un üçüncü kolonu ("Done") bitti kolonu mu, `internal/store/boards.go` içinde doğrula; değilse `TestCalendarShowsDoneCardsOnRequest`'te kartı `move` ile bitti kolonuna taşı (`internal/web/done_test.go`'daki deseni kullan). Filtre sorgu anahtarı `q` mu, `internal/web/filter.go`'daki `boardFilter.Values()` ile doğrula ve testteki anahtarı ona göre yaz. Ay bağlantısının parametre sırası `url.Values.Encode()` alfabetik sırasındandır (`month` < `q`).
+Bilinenler: `CreateBoard`'un son kolonu (`Done`) bitti kolonudur (`internal/store/board_plan.go:59`), oraya açılan kart baştan tamamlanmıştır. Filtrenin metin anahtarı `q`'dur (`internal/web/filter.go:100`). `url.Values.Encode()` anahtarları alfabetik sıralar (`month` < `q`).
 
 - [ ] **Step 2: Çalıştır, başarısız olduğunu gör.** `go test ./internal/web -run 'Calendar(View|FallsBack|ShowsDone|KeepsTheFilter)' -race -count=1`. Beklenen: `/calendar` 404 → FAIL.
 
@@ -648,6 +656,7 @@ package web
 
 import (
 	"context"
+	"html/template"
 	"net/url"
 	"strconv"
 	"time"
@@ -772,23 +781,24 @@ func (h *handlers) loadCalendar(ctx context.Context, rc *collage.RenderContext) 
 	return v, tags, nil
 }
 
-// calendarLink is the calendar's query with the filter kept and the month or
-// done setting changed.
-func calendarLink(f boardFilter, month string, done bool) string {
+// monthLink is the calendar at self for month, with the filter kept. It is
+// the whole URL: a query written after "?" in a template gets its "=" and "&"
+// escaped.
+func monthLink(self string, f boardFilter, month string, done bool) template.URL {
 	v := f.Values()
 	v.Set("month", month)
 	if done {
 		v.Set("done", "1")
 	}
-	return v.Encode()
+	return template.URL(self + "?" + v.Encode())
 }
 ```
 
-`Gantt`'ta Gantt rengi kolona göre nasıl seçiliyorsa (`layoutGantt` içinde `colIndex`/`boardColor`) aynısı kullanılmalı; `pages_gantt.go:300` civarını oku, farklıysa ona uy. `withQuery(path, rawQuery string) string` imzasını `grep -n "func withQuery" internal/web/*.go` ile doğrula.
+Renk Gantt'la aynıdır: kolonun sırasına göre `boardColor(i)` (`pages_gantt.go:304`). `withQuery(path, query string) string` `internal/web/filter.go:162`'de; sorgu boşsa yolu olduğu gibi döndürür.
 
 - [ ] **Step 5: Kayıt** — `internal/web/app.go`:
   - satır 61 yanına: `calendarGrid *collage.Fragment`
-  - satır 94 yanına: `"calendarLink":    calendarLink,`
+  - satır 94 yanına: `"monthLink":       monthLink,`
   - satır 186 listesinde `h.boardGanttPage(),` ardından `h.boardCalendarPage(),`
 
 `templates/layouts/base.html:19` ardından:
@@ -848,7 +858,7 @@ func calendarLink(f boardFilter, month string, done bool) string {
 }
 ```
 
-Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_board' internal templates` ile bul (`{board}` örneği) ve `more` / `day_cards` için aynısını kullan. JSON'u `python3 -m json.tool locales/tr.json >/dev/null` ile doğrula.
+Yer tutucular `{ad}` biçimindedir ve şablonda `{{t "anahtar" "ad" "değer"}}` ile, değer **dizgi** olarak geçirilir (bkz. `templates/fragments/columns.html:2`). JSON'u `python3 -m json.tool locales/tr.json >/dev/null` ile doğrula.
 
 - [ ] **Step 8: Sayfa şablonu** — `templates/pages/board_calendar.html`:
 
@@ -861,11 +871,11 @@ Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_
   </div>
   <nav class="gantt-tools" aria-label="{{t "calendar_view.nav"}}">
     <div class="segmented" role="group" aria-label="{{t "calendar_view.nav"}}">
-      <a class="segmented__item" href="{{$self}}?{{calendarLink .Filter.Filter .Prev .Done}}" aria-label="{{t "calendar_view.prev"}}">{{template "icon" "arrow-left"}}</a>
-      <a class="segmented__item{{if eq .Month .This}} is-active{{end}}" href="{{$self}}?{{calendarLink .Filter.Filter .This .Done}}">{{t "calendar_view.today"}}</a>
-      <a class="segmented__item" href="{{$self}}?{{calendarLink .Filter.Filter .Next .Done}}" aria-label="{{t "calendar_view.next"}}">{{template "icon" "arrow-right"}}</a>
+      <a class="segmented__item" href="{{monthLink $self .Filter.Filter .Prev .Done}}" aria-label="{{t "calendar_view.prev"}}">{{template "icon" "arrow-left"}}</a>
+      <a class="segmented__item{{if eq .Month .This}} is-active{{end}}" href="{{monthLink $self .Filter.Filter .This .Done}}">{{t "calendar_view.today"}}</a>
+      <a class="segmented__item" href="{{monthLink $self .Filter.Filter .Next .Done}}" aria-label="{{t "calendar_view.next"}}">{{template "icon" "arrow-right"}}</a>
     </div>
-    <a class="btn btn--quiet btn--sm{{if .Done}} is-on{{end}}" href="{{$self}}?{{calendarLink .Filter.Filter .Month (not .Done)}}" aria-pressed="{{if .Done}}true{{else}}false{{end}}">{{template "icon" "check"}} {{t "gantt.show_done"}}</a>
+    <a class="btn btn--quiet btn--sm{{if .Done}} is-on{{end}}" href="{{monthLink $self .Filter.Filter .Month (not .Done)}}" aria-pressed="{{if .Done}}true{{else}}false{{end}}">{{template "icon" "check"}} {{t "gantt.show_done"}}</a>
   </nav>
 </header>
 {{template "board-tabs" (boardTabs .Board.ID "calendar")}}
@@ -873,11 +883,10 @@ Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_
 <div class="cal" id="calendar" data-collage-fragment="{{fragmentURL "board-calendar" "board-calendar-grid" "id" .Board.ID}}?{{.Query}}" data-collage-push>
   {{slot "grid"}}
 </div>
-<script type="module" src="{{asset "/static/js/calendar.js"}}"></script>
 <script type="module" src="{{asset "/static/js/filter.js"}}"></script>
 ```
 
-`arrow-right` ikonu `icons.html`'de yoksa ekle: `{{- else if eq . "arrow-right"}}<path d="M5 12h14M13 6l6 6-6 6"/>`. "Bitenleri göster" ve ay bağlantıları tam sayfa gezinmesidir (Gantt'taki gibi); başlık ayla değiştiği için parça değil sayfa yenilenir.
+`icons.html`'de `arrow-right` yok; `arrow-left`'in yanına ekle: `{{- else if eq . "arrow-right"}}<path d="M5 12h14M13 6l6 6-6 6"/>`. `calendar.js`'in `<script>` satırı Görev 5'te eklenir (dosya o zaman var olur). "Bitenleri göster" ve ay bağlantıları tam sayfa gezinmesidir (Gantt'taki gibi); başlık ayla değiştiği için parça değil sayfa yenilenir.
 
 - [ ] **Step 9: Izgara şablonu** — `templates/fragments/calendar.html`:
 
@@ -895,7 +904,7 @@ Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_
       <div class="cal__foot">
         {{if .More}}
         <details class="cal__more">
-          <summary>{{t "calendar_view.more" "n" .More}}</summary>
+          <summary>{{t "calendar_view.more" "n" (printf "%d" .More)}}</summary>
           <ul class="cal__list" aria-label="{{t "calendar_view.day_cards" "date" .Date}}">
             {{range .Cards}}<li><a class="{{if .Done}}is-done{{end}}{{if .Late}} is-late{{end}}" href="{{pageURL "card" "id" $board "card" .CardID}}">{{.Title}}</a></li>{{end}}
           </ul>
@@ -925,7 +934,7 @@ Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_
 </div>
 ```
 
-`t` fonksiyonunun parametre geçme biçimini Step 7'de bulduğun desene göre düzelt. `input--sm` sınıfı yoksa (`grep -n "input--sm" static/css/*.css`) yalnız `input` kullan.
+(`input--sm` `static/css/components.css`'te tanımlı.)
 
 - [ ] **Step 10: Stil** — `static/css/calendar.css`:
 
@@ -946,7 +955,7 @@ Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_
 .cal__day.c7 { border-right: 0; }
 .cal__day.is-outside { background: var(--shelf); }
 .cal__day.is-outside .cal__num { color: var(--ink-faint); }
-.cal__day.is-drop { background: var(--accent-soft, var(--shelf)); outline: 0.125rem dashed var(--accent); outline-offset: -0.125rem; }
+.cal__day.is-drop { background: var(--accent-soft); outline: 0.125rem dashed var(--accent); outline-offset: -0.125rem; }
 .cal__num { font-size: var(--text-sm); font-weight: 700; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .cal__day.is-today .cal__num { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--accent); color: var(--sheet); }
 .cal__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s1); }
@@ -982,7 +991,7 @@ Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_
 .cal__more summary { list-style: none; cursor: pointer; color: var(--ink-muted); font-weight: 700; }
 .cal__more summary::-webkit-details-marker { display: none; }
 .cal__list, .cal__form {
-  position: absolute; z-index: 3; left: 0; bottom: 100%; min-width: 12rem; margin: 0 0 var(--s1); padding: var(--s2);
+  position: absolute; z-index: 3; left: 0; top: 100%; min-width: 12rem; margin: var(--s1) 0 0; padding: var(--s2);
   list-style: none; background: var(--sheet); border: 0.0625rem solid var(--line); border-radius: var(--r-sm); box-shadow: var(--shadow-paper);
 }
 .cal__list li + li { margin-top: var(--s1); }
@@ -996,9 +1005,12 @@ Yer tutuculu çevirinin şablondaki çağrı biçimini `grep -rn 'calendar.feed_
 .cal__add summary:hover { background: var(--shelf); color: var(--ink); }
 .cal__form { left: auto; right: 0; }
 .cal__day.c1 .cal__form, .cal__day.c2 .cal__form { left: 0; right: auto; }
+/* The frame scrolls sideways, which clips what leaves it: near the bottom the
+   lists open upward instead. */
+.cal__week:nth-last-child(-n+2) .cal__list, .cal__week:nth-last-child(-n+2) .cal__form { top: auto; bottom: 100%; margin: 0 0 var(--s1); }
 ```
 
-Tema değişkenlerinin adlarını `static/css/tokens.css`'te doğrula (`--accent-soft`, `--r-sm`, `--s1` var mı); olmayanları mevcut en yakın değişkenle değiştir. Çubuk renkleri `tokens.css:151`'deki `[data-color]` seçicilerinden (`--chip-bg/--chip-ink/--chip-dot`) gelir.
+Kullanılan bütün tema değişkenleri `static/css/tokens.css`'te tanımlı (kontrol edildi). Çubuk renkleri `tokens.css:151`'deki `[data-color]` seçicilerinden (`--chip-bg/--chip-ink/--chip-dot`) gelir.
 
 - [ ] **Step 11: Çalıştır, geçtiğini gör.** `go test ./internal/web -race -count=1`. Beklenen: PASS, Gantt testleri dahil.
 
@@ -1011,7 +1023,7 @@ git add internal/web/pages_calendar.go internal/web/calendar_page_test.go intern
 git commit -m "feat(calendar): a month view of the board beside the Gantt chart"
 ```
 
-(`calendar.js` henüz yok; şablon onu yükler ama 404 yalnız konsolda görünür. Görev 5 ekler. Bu commit'i kendi başına yayınlamayacağız.)
+(Bu görevden sonra takvim yalnız okunur ve tam sayfa formla kart açar; sürükleme Görev 5'te gelir.)
 
 ---
 
@@ -1023,7 +1035,7 @@ git commit -m "feat(calendar): a month view of the board beside the Gantt chart"
 
 **Interfaces:**
 - Consumes: `store.CreateCardDue` (Görev 1); `creatableColumns`, `violationMessages`, `isFetch`, `badText`, `noticeKey`, `h.notifyAssigned`, `validate.Form`, `validate.Refuse` (`internal/web/pages_board.go`).
-- Produces: `POST /boards/{id}/calendar` `op=create_card`, `title`, `due=YYYY-MM-DD`. Fetch'te başarı: 200 + ızgara parçası; kural ihlali: 422 + uyarılı ızgara parçası; boş başlık: 422; bozuk tarih: 400; yetki yok: 403; board yok/dışarıdan: 404. Fetch değilse başarıda aynı ay ve filtreyle sayfaya 303.
+- Produces: `POST /boards/{id}/calendar` `op=create_card`, `title`, `due=YYYY-MM-DD`. Fetch'te başarı: 200 + ızgara parçası; kural ihlali: 422 + uyarılı ızgara parçası; boş başlık: 422; bozuk tarih: 400; yetki yok: 403; board yok/dışarıdan: 404 (`webtest.Submit*` önce sayfayı GET eder ve 200 değilse testi durdurur; dışarıdakinin 404'ü Görev 3'te GET ile sınanır). Fetch değilse başarıda aynı ay ve filtreyle sayfaya 303.
 
 - [ ] **Step 1: Başarısız testleri yaz** — `internal/web/calendar_page_test.go`'ya ekle (gerekirse `context`, `net/url`, `kanban/internal/rules`, `kanban/internal/store` importları):
 
@@ -1067,10 +1079,6 @@ func TestCalendarCreateRefusals(t *testing.T) {
 	if res := b.member.SubmitFetch(page, page, url.Values{"op": {"nope"}}); res.Status != http.StatusBadRequest {
 		t.Errorf("unknown op = %d, want 400", res.Status)
 	}
-	out := b.h.signedIn("out", "out@example.com")
-	if res := out.SubmitFetch(page, page, calendarCreate("X", "2026-10-14")); res.Status != http.StatusNotFound {
-		t.Errorf("outsider = %d, want 404", res.Status)
-	}
 }
 
 // The first column wants a due date: the calendar's card has one, so it enters.
@@ -1084,8 +1092,10 @@ func TestCalendarCreatePassesTheDueDateRule(t *testing.T) {
 	if res := b.member.SubmitFetch(page, page, calendarCreate("Dated", "2026-10-14")); res.Status != http.StatusOK {
 		t.Fatalf("create = %d:\n%s", res.Status, res.Body)
 	}
-	// A WIP limit of zero cards left refuses it, with the reason on the grid.
-	if err := b.h.store.UpdateColumnWIP(ctx, b.board.ID, b.cols[0].ID, 1); err != nil {
+	// The column is now full: the next card is refused, with the reason on the grid.
+	one := 1
+	todo := b.cols[0]
+	if err := b.h.store.UpdateColumn(ctx, b.board.ID, todo.ID, store.ColumnUpdate{Name: todo.Name, WIPLimit: &one, IsDone: todo.IsDone, AllowCreate: todo.AllowCreate, CountsPersonWIP: todo.CountsPersonWIP}); err != nil {
 		t.Fatal(err)
 	}
 	res := b.member.SubmitFetch(page, page, calendarCreate("Over", "2026-10-15"))
@@ -1096,7 +1106,7 @@ func TestCalendarCreatePassesTheDueDateRule(t *testing.T) {
 }
 ```
 
-`UpdateColumnWIP` gerçek adını `grep -n "func (s \*Store) .*WIP\|wip_limit" internal/store/*.go` ile bul ve testi ona göre yaz (örnek: kolon ayarlarını güncelleyen fonksiyon `wip_limit`'i 1 yapar).
+`store.Column`'un alanları `ColumnUpdate`'inkilerle aynı adlardadır (`internal/store/columns.go:17-36`); güncelleme diğer ayarları korumak için hepsini geri yazar.
 
 - [ ] **Step 2: Çalıştır, başarısız olduğunu gör.** `go test ./internal/web -run 'CalendarCreate|CreatingACardFromTheCalendar' -race -count=1`. Beklenen: POST 405 ya da 404 → FAIL.
 
@@ -1181,7 +1191,7 @@ func (h *handlers) createCalendarCard(ctx context.Context, rc *collage.RenderCon
 }
 ```
 
-Boş başlığın `validate.Refuse` ile 422 döndüğünü doğrula (`createCard` aynı yolu kullanıyor; dönmüyorsa Step 1 testini gerçek koda göre değil, bu davranışa göre düzelt: `res.Status = http.StatusUnprocessableEntity`). Eylem yanıtında parçanın yeni kartı görmesi için önbelleğin geçersiz kılınması gerekebilir; test `Kickoff`'u göremezse `RenderFragment`'tan önce `rc`'ye etiket geçersizliğinin nasıl uygulandığını `createCard` → `h.columns` yolunda incele ve aynısını yap.
+Boş başlık fetch ile 422 döner (board'un aynı yolu için `internal/web/battle_test.go:123`). Eylem yanıtında parçanın yeni kartı görmesi için önbelleğin geçersiz kılınması gerekebilir; test `Kickoff`'u göremezse `RenderFragment`'tan önce `rc`'ye etiket geçersizliğinin nasıl uygulandığını `createCard` → `h.columns` yolunda incele ve aynısını yap.
 
 - [ ] **Step 4: Çalıştır, geçtiğini gör.** `go test ./internal/web -race -count=1`. Beklenen: PASS.
 
@@ -1198,6 +1208,7 @@ git commit -m "feat(calendar): add a card on a day"
 
 **Files:**
 - Create: `static/js/calendar.js`
+- Modify: `templates/pages/board_calendar.html` (filter.js satırının üstüne `<script type="module" src="{{asset "/static/js/calendar.js"}}"></script>`)
 
 **Interfaces:**
 - Consumes: ızgara işaretlemesi (Görev 3): `#calendar`, `[data-cal]` (`data-editable`, `data-error-*`), `.cal__day[data-date]`, `.cal__bar[data-card][data-version][data-start][data-due][data-url]`, `details[data-cal-add]` içindeki `form`, `[data-cal-alert] li`; kartın `set_dates` işlemi (409 çakışma, 422 tarih sırası); `window.collageLive` (`pause`, `resume`, `refresh`), `[data-toasts]`.
@@ -1434,6 +1445,7 @@ container?.addEventListener("submit", async (e) => {
   7. Dar pencere (≈ 375px) → ızgara yatay kayıyor, sayfa kaymıyor.
   8. Açık ve gece moru temada okunurluk.
   9. Tarayıcı konsolunda CSP hatası yok.
+  10. İlk ve son haftada "+k daha" listesi ve yeni kart alanı çerçeveye kırpılmadan açılıyor (ilk haftalarda aşağı, son iki haftada yukarı).
 
 Bir madde tutmazsa düzelt ve aynı listeyi yeniden çalıştır.
 
@@ -1442,6 +1454,6 @@ Bir madde tutmazsa düzelt ve aynı listeyi yeniden çalıştır.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add static/js/calendar.js
+git add static/js/calendar.js templates/pages/board_calendar.html
 git commit -m "feat(calendar): drag and keys to move a card, a click to add one"
 ```

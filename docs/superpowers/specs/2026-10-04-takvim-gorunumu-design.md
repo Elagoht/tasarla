@@ -40,12 +40,12 @@ func layoutCalendar(month time.Time, cards []store.Card, now time.Time, lanes in
 - **Sürükleme:** kart başka bir güne bırakılınca başlangıç ve bitiş aynı gün sayısı kadar kayar ve kartın `set_dates` işlemiyle, ızgaranın çizildiği sürümle (`expected_version`) kaydedilir. Yalnız tek tarihi olan kartta o tarih kayar. Yanıtlar Gantt'la aynı ele alınır: 409 → çakışma bildirimi, 422 → sıra hatası bildirimi, diğerleri → genel hata; her durumda ızgara yenilenir ve kart yeniden odaklanır.
 - **Klavye:** odaklanmış kartta ← / → bir gün, ↑ / ↓ bir hafta kaydırır; kayıt sürüklemeyle aynıdır.
 - **Kart açma:** düzenleme yetkisi olan kullanıcı bir günün boş yerine tıklayınca (ya da hücredeki "+" düğmesine basınca) hücrede tek satırlık başlık alanı açılır. Enter gönderir, Esc vazgeçer. Form JS olmadan da çalışır: her hücrede gizli bir `<form>` vardır, JS yalnız gösterir ve gönderimi fetch ile yapar.
-- Okuma yetkili üyeler ızgarayı görür; sürükleme, klavye ile kaydırma ve kart açma yoktur. Kart açılabilen kolon yoksa kart açma gösterilmez.
+- `CanEdit` olmayan kullanıcı ızgarayı görür; sürükleme, klavye ile kaydırma ve kart açma yoktur. (Bugün takım üyesi her zaman düzenleyebilir ve arşivli board 404 döner, dolayısıyla bu kapı ileriye dönüktür.)
 
 ## 5. Kart açma işlemi
 
 - Takvim sayfasının eylemi: `op=create_card`, alanlar `title` (zorunlu, en çok 200) ve `due` (`YYYY-MM-DD`).
-- Hedef kolon `creatableColumns(cols)[0]`. Yoksa 409.
+- Hedef kolon `creatableColumns(cols)[0]`: kart açılabilen ilk kolon, hiçbiri işaretli değilse board'un ilk kolonu (board'daki "kart ekle" ile aynı). 409 yalnız board'da hiç kolon yoksa.
 - Yeni store fonksiyonu `CreateCardDue(ctx, boardID, columnID, title, due, createdBy)`: `CreateCard` ile aynı işlem içinde kartı bitiş tarihiyle oluşturur, böylece `rules.EvaluateCreate`'e giden anlık görüntüde tarih bulunur ve kolonun giriş kuralları (ör. "bitiş tarihi zorunlu") onu görür. Ortak kod `CreateCard` ile paylaşılır.
 - Kural ihlali `violationMessages` ile 422 ve bildirim olarak döner; boş başlık alan hatasıyla reddedilir. Başarıda ızgara parçası döner ve `boardTag` geçersiz kılınır; atanma bildirimi `createCard`'daki gibi gönderilir.
 
@@ -57,14 +57,14 @@ func layoutCalendar(month time.Time, cards []store.Card, now time.Time, lanes in
 
 ## 7. Çeviri ve stil
 
-- `calendar.*` anahtarları `tr` ve `en` için: başlık, sekme, önceki / sonraki / bugün, "+%d daha", yeni kart alanı ve hata bildirimleri.
+- `calendar_view.*` anahtarları `tr` ve `en` için (`calendar.*` iCal aboneliğine ait): başlık, sekme, önceki / sonraki / bugün, "+%d daha", yeni kart alanı ve hata bildirimleri.
 - Hafta günü ve ay adları yerelleştirilir (sabit tablo, `time.Format` İngilizce verdiği için).
 - `static/css/calendar.css`: ızgara CSS grid ile; ölçüler rem; renkler mevcut tema değişkenleriyle (açık ve gece moru). Dar ekranda ızgara yatay kaydırılır, hücre en az genişliği korunur.
 
 ## 8. Test
 
 - `layoutCalendar` birim testleri: başka ayda başlayan hafta, hafta sınırını aşan kart, şerit yerleşimi, taşma ("+k daha"), yalnız bitiş / yalnız başlangıç tarihli kart, gecikmiş kart, 6 satırlık ay.
-- `calendar_page_test.go` (`gantt_test.go` deseniyle): sayfa çizilir, `month` parametresi çalışır, filtre uygulanır, `done` düğmesi çalışır, `create_card` bitiş tarihiyle kart açar, okuma yetkili kullanıcı kart açamaz, kart açılabilen kolon yokken 409, giriş kuralı ihlali 422.
+- `calendar_page_test.go` (`gantt_test.go` deseniyle): sayfa çizilir, `month` parametresi çalışır, filtre uygulanır, `done` düğmesi çalışır, `create_card` bitiş tarihiyle kart açar, giriş kuralı ihlali 422, dışarıdaki kullanıcı 404.
 - `CreateCardDue` store testi: tarih kaydedilir, kural tarihi görür.
 
 ## Kapsam dışı
