@@ -31,6 +31,7 @@ func TestTheCalendarView(t *testing.T) {
 	mustContain(t, page.Body,
 		"Ekim 2026", "Pzt", `data-date="2026-10-05"`,
 		`data-card="`+id(long.ID)+`"`, `data-start="2026-10-05" data-due="2026-10-09"`,
+		`draggable="false"`, // a link's own drag would cancel the pointer drag
 		`data-card="`+id(pin.ID)+`"`,
 		`href="`+b.path+`/calendar?month=2026-09"`, `href="`+b.path+`/calendar?month=2026-11"`,
 		`data-collage-fragment="`+b.path+`/calendar/grid?month=2026-10"`)

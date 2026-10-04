@@ -33,7 +33,7 @@
     {{end}}
     {{range .Bars}}
     <a class="cal__bar c{{.Col}} s{{.Span}} l{{.Lane}}{{if .Before}} is-before{{end}}{{if .After}} is-after{{end}}{{if .Done}} is-done{{end}}{{if .Late}} is-late{{end}}{{if .Dimmed}} is-dimmed{{end}}"
-      href="{{pageURL "card" "id" $board "card" .CardID}}" data-color="{{.Color}}" title="{{.Title}}"
+      href="{{pageURL "card" "id" $board "card" .CardID}}" draggable="false" data-color="{{.Color}}" title="{{.Title}}"
       data-card="{{.CardID}}" data-version="{{.Version}}" data-start="{{.Start}}" data-due="{{.Due}}" data-url="{{pageURL "card" "id" $board "card" .CardID}}">{{.Title}}</a>
     {{end}}
   </div>
