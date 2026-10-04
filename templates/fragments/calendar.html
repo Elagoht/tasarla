@@ -23,7 +23,7 @@
           <form class="cal__form" method="post" action="{{$v.Action}}">
             {{csrfToken}}
             <input type="hidden" name="op" value="create_card">
-            <input type="hidden" name="due" value="{{.Date}}">
+            <input type="hidden" name="day" value="{{.Date}}">
             <input class="input input--sm" name="title" maxlength="200" required placeholder="{{t "calendar_view.new_card"}}" aria-label="{{t "calendar_view.new_card"}}">
           </form>
         </details>

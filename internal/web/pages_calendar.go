@@ -160,7 +160,9 @@ func (h *handlers) calendarPost(ctx context.Context, rc *collage.RenderContext) 
 // createCalendarCard makes a card due on the day it was asked for, in the
 // column the board's own "add card" uses.
 func (h *handlers) createCalendarCard(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, bc boardContext) (*collage.ActionResult, error) {
-	due, err := time.Parse(time.DateOnly, v.Value("due"))
+	// "day", not "due": the page's query rides on the form's action, and the
+	// Due filter's "due" would come first.
+	due, err := time.Parse(time.DateOnly, v.Value("day"))
 	if err != nil {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}

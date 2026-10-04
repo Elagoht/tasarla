@@ -80,7 +80,7 @@ func TestCalendarKeepsTheFilterAcrossMonths(t *testing.T) {
 	mustContain(t, page, `/calendar?month=2026-11&amp;q=design"`, `name="month" value="2026-10"`)
 }
 func calendarCreate(title, due string) url.Values {
-	return url.Values{"op": {"create_card"}, "title": {title}, "due": {due}}
+	return url.Values{"op": {"create_card"}, "title": {title}, "day": {due}}
 }
 
 func TestCreatingACardFromTheCalendar(t *testing.T) {
@@ -142,4 +142,20 @@ func TestCalendarCreatePassesTheDueDateRule(t *testing.T) {
 		t.Fatalf("over the limit = %d", res.Status)
 	}
 	mustContain(t, res.Body, "data-cal-alert")
+}
+
+// The page's own query rides on the form's action, and a script sends the form
+// as multipart, whose URL values come first: the Due filter's "due" must not
+// be read as the new card's day.
+func TestCalendarCreateUnderADueFilter(t *testing.T) {
+	b := newBoardSetup(t)
+	page := b.path + "/calendar?month=2026-10&due=overdue"
+	res := b.member.Upload(page, page, calendarCreate("Filtered", "2026-10-14"), "unused", "x.txt", []byte("x"))
+	if res.Status != http.StatusSeeOther {
+		t.Fatalf("create under a due filter = %d", res.Status)
+	}
+	cards, err := b.h.store.GanttCards(context.Background(), b.board.ID, false)
+	if err != nil || len(cards) != 1 || cards[0].Card.DueDate == nil || cards[0].Card.DueDate.Format(time.DateOnly) != "2026-10-14" {
+		t.Fatalf("cards = %+v, %v", cards, err)
+	}
 }

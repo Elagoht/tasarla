@@ -9,11 +9,12 @@
 // which no element shows any more.
 
 const bar = document.querySelector("[data-filter-bar]");
-const target = document.getElementById("board") || document.getElementById("gantt");
-// The Gantt page's scale and grouping links carry the filter in their own
-// URLs, made on the server: a filter changed there loads the page, so the
-// links are made again; its text box is sent with Enter only.
-const navigates = target?.id === "gantt";
+const target = document.getElementById("board") || document.getElementById("gantt") || document.getElementById("calendar");
+// The Gantt page's scale and grouping links, and the calendar's month links,
+// carry the filter in their own URLs, made on the server: a filter changed
+// there loads the page, so the links are made again; its text box is sent
+// with Enter only.
+const navigates = target?.id === "gantt" || target?.id === "calendar";
 
 function query() {
   const params = new URLSearchParams();

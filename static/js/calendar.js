@@ -44,7 +44,7 @@ async function save(bar, days) {
   body.set("expected_version", bar.dataset.version);
   body.set("_csrf", csrf());
   bar.classList.add("is-saving");
-  focusAfter = bar.dataset.card;
+  focusAfter = document.activeElement?.closest?.(".cal__bar")?.dataset.card ?? bar.dataset.card;
   try {
     const res = await fetch(bar.dataset.url, {
       method: "POST",
@@ -138,8 +138,15 @@ container?.addEventListener("keydown", (e) => {
   if (!bar || !editable() || !(e.key in steps)) return;
   e.preventDefault();
   if (!pending || pending.bar !== bar) {
-    if (pending) clearTimeout(pending.timer);
-    else live()?.pause(container);
+    // A move still pending on another card is saved now, not dropped; each
+    // pending move holds its own pause.
+    if (pending) {
+      clearTimeout(pending.timer);
+      clearDrop();
+      if (pending.days !== 0) save(pending.bar, pending.days);
+      else live()?.resume(container);
+    }
+    live()?.pause(container);
     pending = { bar, days: 0 };
   }
   pending.days += steps[e.key];
@@ -160,6 +167,18 @@ container?.addEventListener("keydown", (e) => {
   }, 600);
 });
 
+// While a day's new-card field is open the grid holds still, so a push from
+// someone else's change does not wipe what is being typed. One pause for all
+// the fields: the DOM says whether one is open.
+let adding = false;
+function holdWhileAdding() {
+  const open = container?.querySelector("[data-cal-add][open]") != null;
+  if (open === adding) return;
+  adding = open;
+  if (open) live()?.pause(container);
+  else live()?.resume(container);
+}
+
 // New cards: a click on a day's empty space opens its field; Escape closes it.
 // The form is sent as it is, and the grid comes back with the card or the reason
 // it was refused.
@@ -176,10 +195,13 @@ container?.addEventListener("click", (e) => {
 
 container?.addEventListener("toggle", (e) => {
   const add = e.target;
-  if (add instanceof HTMLDetailsElement && add.matches("[data-cal-add]") && add.open) {
-    add.querySelector('input[name="title"]')?.focus();
-  }
+  if (!(add instanceof HTMLDetailsElement) || !add.matches("[data-cal-add]")) return;
+  if (add.open) add.querySelector('input[name="title"]')?.focus();
+  holdWhileAdding();
 }, true);
+
+// A redraw may take an open field away with it.
+container?.addEventListener("collage:swap", holdWhileAdding);
 
 container?.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
@@ -187,11 +209,13 @@ container?.addEventListener("keydown", (e) => {
   if (!add) return;
   add.removeAttribute("open");
   add.querySelector("summary")?.focus();
+  holdWhileAdding();
 });
 
 container?.addEventListener("submit", async (e) => {
   const form = e.target;
-  if (!(form instanceof HTMLFormElement) || !form.closest("[data-cal-add]")) return;
+  const add = form instanceof HTMLFormElement && form.closest("[data-cal-add]");
+  if (!add) return;
   e.preventDefault();
   const frame = form.closest("[data-cal]");
   try {
@@ -212,5 +236,8 @@ container?.addEventListener("submit", async (e) => {
     toast(frame.dataset.error, true);
     return;
   }
+  // Saved: the field closes, the grid moves again and shows the card.
+  add.removeAttribute("open");
+  holdWhileAdding();
   live()?.refresh(container);
 });

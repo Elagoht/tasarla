@@ -44,14 +44,14 @@ func layoutCalendar(month time.Time, cards []store.Card, now time.Time, lanes in
 
 ## 5. Kart açma işlemi
 
-- Takvim sayfasının eylemi: `op=create_card`, alanlar `title` (zorunlu, en çok 200) ve `due` (`YYYY-MM-DD`).
+- Takvim sayfasının eylemi: `op=create_card`, alanlar `title` (zorunlu, en çok 200) ve `day` (`YYYY-MM-DD`; `due` değil, çünkü formun adresi sayfanın sorgusunu taşır ve Son tarih filtresinin `due`'su önce okunur).
 - Hedef kolon `creatableColumns(cols)[0]`: kart açılabilen ilk kolon, hiçbiri işaretli değilse board'un ilk kolonu (board'daki "kart ekle" ile aynı). 409 yalnız board'da hiç kolon yoksa.
 - Yeni store fonksiyonu `CreateCardDue(ctx, boardID, columnID, title, due, createdBy)`: `CreateCard` ile aynı işlem içinde kartı bitiş tarihiyle oluşturur, böylece `rules.EvaluateCreate`'e giden anlık görüntüde tarih bulunur ve kolonun giriş kuralları (ör. "bitiş tarihi zorunlu") onu görür. Ortak kod `CreateCard` ile paylaşılır.
 - Kural ihlali `violationMessages` ile 422 ve bildirim olarak döner; boş başlık alan hatasıyla reddedilir. Başarıda ızgara parçası döner ve `boardTag` geçersiz kılınır; atanma bildirimi `createCard`'daki gibi gönderilir.
 
 ## 6. Hatalar ve uç durumlar
 
-- Geçersiz `month` → bu ay. Geçersiz `due` → 400.
+- Geçersiz `month` → bu ay. Geçersiz `day` → 400.
 - Silinmiş kolon ya da board → 400 / 404, mevcut desenle.
 - Izgaranın dışında kalan kartlar yüklenir ama çizilmez; `GanttCards` zaten board'un bütün tarihli kartlarını tek sorguda getirir.
 
