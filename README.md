@@ -1,4 +1,4 @@
-# Kanban
+# Pusula
 
 Birkaç takımın günlük iş takibi için kullandığı, kuralları board başına yapılandırılabilen bir kanban uygulaması. [collage](https://collage.furkanbaytekin.dev/) ile sunucu tarafında render edilir. İstemcide yalnızca sürükle-bırak ve kart diyaloğu için küçük bir JS katmanı vardır. Tasarım: [`kanban-spec.md`](kanban-spec.md). Aşama planları: [`docs/superpowers/plans/`](docs/superpowers/plans/).
 

@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Kanban"
+    "name": "Pusula"
   },
   "locale": {
     "switcher": "Language"
@@ -690,8 +690,8 @@
     "me": "Assigned to me",
     "cleared": "Calendar turned off; the old addresses no longer work.",
     "subscribe": "Subscribe in a calendar",
-    "feed_me": "Kanban — assigned to me",
-    "feed_board": "Kanban — {board}"
+    "feed_me": "Pusula — assigned to me",
+    "feed_board": "Pusula — {board}"
   },
   "templates": {
     "owner_gone": "The person who last saved the template is no longer in the team.",

@@ -56,12 +56,12 @@ func TestCalendarFeeds(t *testing.T) {
 	}
 	body := me.Body.String()
 	for _, want := range []string{"BEGIN:VCALENDAR", "SUMMARY:[Sprint] Rapor\\, taslak", "DTSTART;VALUE=DATE:20261009",
-		"UID:card-" + id(c.ID) + "@", "/boards/" + id(b.board.ID) + "/cards/" + id(c.ID), "X-WR-CALNAME:Kanban — bana atananlar"} {
+		"UID:card-" + id(c.ID) + "@", "/boards/" + id(b.board.ID) + "/cards/" + id(c.ID), "X-WR-CALNAME:Pusula — bana atananlar"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("me.ics lacks %q:\n%s", want, body)
 		}
 	}
-	if got := feed(t, b, "/cal/"+token+"/boards/"+id(b.board.ID)+".ics", nil); got.Code != http.StatusOK || !strings.Contains(got.Body.String(), "X-WR-CALNAME:Kanban — Sprint") {
+	if got := feed(t, b, "/cal/"+token+"/boards/"+id(b.board.ID)+".ics", nil); got.Code != http.StatusOK || !strings.Contains(got.Body.String(), "X-WR-CALNAME:Pusula — Sprint") {
 		t.Errorf("board feed = %d:\n%s", got.Code, got.Body.String())
 	}
 

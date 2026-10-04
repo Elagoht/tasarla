@@ -169,5 +169,5 @@ func (n *Notifier) render(tr i18n.Translator, user store.User, e Event, p store.
 	if err := htmlTmpl.Execute(&html, view); err != nil {
 		return store.OutboxMessage{}, err
 	}
-	return store.OutboxMessage{To: user.Email, Subject: "[Kanban] " + view.Sentence, Text: text.String(), HTML: html.String()}, nil
+	return store.OutboxMessage{To: user.Email, Subject: "[Pusula] " + view.Sentence, Text: text.String(), HTML: html.String()}, nil
 }

@@ -159,3 +159,18 @@ func TestCalendarCreateUnderADueFilter(t *testing.T) {
 		t.Fatalf("cards = %+v, %v", cards, err)
 	}
 }
+
+// The product is Pusula, with a compass for its mark, in both languages.
+func TestTheBrandIsPusula(t *testing.T) {
+	b := newBoardSetup(t)
+	page := b.member.Get(b.path).Body
+	mustContain(t, page, `<span class="brand__name">Pusula</span>`, compassNeedle)
+	if strings.Contains(page, "Kanban") {
+		t.Error("the old name is still on the page")
+	}
+	missing := b.member.Get("/nope").Body
+	mustContain(t, missing, "Pusula", compassNeedle)
+}
+
+// compassNeedle is the north half of the compass icon's needle.
+const compassNeedle = `<path d="M12 5.5 14.5 12h-5z" fill="currentColor"/>`

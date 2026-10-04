@@ -10,7 +10,7 @@ import (
 func day(s string) time.Time { d, _ := time.Parse(time.DateOnly, s); return d }
 
 func TestEncodeGolden(t *testing.T) {
-	got := string(Encode(Calendar{Name: "Kanban — bana atananlar", Events: []Event{{
+	got := string(Encode(Calendar{Name: "Pusula — bana atananlar", Events: []Event{{
 		UID: "card-7@kanban.test", Start: day("2026-10-05"), End: day("2026-10-09"),
 		Summary: "[Sprint] Rapor, taslak; son", Description: "https://kanban.test/boards/1/cards/7\n\nsatır\\iki",
 		URL: "https://kanban.test/boards/1/cards/7", Modified: time.Date(2026, 10, 2, 8, 30, 0, 0, time.UTC), Priority: 1,
@@ -18,10 +18,10 @@ func TestEncodeGolden(t *testing.T) {
 	want := strings.Join([]string{
 		"BEGIN:VCALENDAR",
 		"VERSION:2.0",
-		"PRODID:-//Kanban//Kanban//TR",
+		"PRODID:-//Pusula//Pusula//TR",
 		"CALSCALE:GREGORIAN",
 		"METHOD:PUBLISH",
-		"X-WR-CALNAME:Kanban — bana atananlar",
+		"X-WR-CALNAME:Pusula — bana atananlar",
 		"BEGIN:VEVENT",
 		"UID:card-7@kanban.test",
 		"DTSTAMP:20261002T083000Z",

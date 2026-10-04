@@ -43,7 +43,7 @@ type baseView struct {
 // depends only on the URL's locale, so it does not make a page dynamic.
 func baseLayout() *collage.Fragment {
 	return collage.NewFragment("base", "layouts/base.html").
-		WithTitle("Kanban").
+		WithTitle("Pusula").
 		WithDataHandler(collage.Load(func(_ context.Context, rc *collage.RenderContext) (baseView, error) {
 			return baseView{Locale: rc.Locale}, nil
 		})).

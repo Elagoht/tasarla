@@ -100,7 +100,7 @@ func TestEmitWritesInTheRecipientsLanguage(t *testing.T) {
 		t.Fatalf("mails = %d, want 1 (no mail for your own action)", len(mails))
 	}
 	m := mails[0]
-	if m.To != "bob@example.com" || !strings.Contains(m.Subject, "Ada assigned you to a card: Payments") {
+	if m.To != "bob@example.com" || !strings.HasPrefix(m.Subject, "[Pusula] ") || !strings.Contains(m.Subject, "Ada assigned you to a card: Payments") {
 		t.Fatalf("mail = %+v", m)
 	}
 	link := "https://pano.example.com/en/boards/" + itoa(f.board.ID) + "/cards/" + itoa(card.ID)

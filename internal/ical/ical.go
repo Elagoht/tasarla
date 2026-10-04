@@ -34,7 +34,7 @@ func Encode(c Calendar) []byte {
 	line := func(s string) { writeFolded(&b, s) }
 	line("BEGIN:VCALENDAR")
 	line("VERSION:2.0")
-	line("PRODID:-//Kanban//Kanban//TR")
+	line("PRODID:-//Pusula//Pusula//TR")
 	line("CALSCALE:GREGORIAN")
 	line("METHOD:PUBLISH")
 	if c.Name != "" {

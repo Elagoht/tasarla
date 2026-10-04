@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Kanban"
+    "name": "Pusula"
   },
   "locale": {
     "switcher": "Dil"
@@ -690,8 +690,8 @@
     "me": "Bana atananlar",
     "cleared": "Takvim kapatıldı; eski adresler artık çalışmıyor.",
     "subscribe": "Takvime abone ol",
-    "feed_me": "Kanban — bana atananlar",
-    "feed_board": "Kanban — {board}"
+    "feed_me": "Pusula — bana atananlar",
+    "feed_board": "Pusula — {board}"
   },
   "templates": {
     "owner_gone": "Şablonu son kaydeden kişi artık takımda değil.",
