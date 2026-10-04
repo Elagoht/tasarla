@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/url"
 	"slices"
 	"strconv"
@@ -419,13 +420,15 @@ func layoutGantt(rc *collage.RenderContext, bc boardContext, scale, group string
 	return v
 }
 
-// ganttLink is the chart's query with the filter kept and one setting changed.
-func ganttLink(f boardFilter, scale, group string, done bool) string {
+// ganttLink is the chart at self with the filter kept and one setting
+// changed. It is the whole URL: a query written after "?" in a template gets
+// its "=" and "&" escaped.
+func ganttLink(self string, f boardFilter, scale, group string, done bool) template.URL {
 	v := f.Values()
 	v.Set("scale", scale)
 	v.Set("group", group)
 	if done {
 		v.Set("done", "1")
 	}
-	return v.Encode()
+	return template.URL(self + "?" + v.Encode())
 }

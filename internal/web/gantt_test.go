@@ -114,3 +114,19 @@ func TestGanttFilterDimsBars(t *testing.T) {
 		t.Error("the matching bar is dimmed")
 	}
 }
+
+// The scale, grouping and done links keep the filter and change one setting;
+// a query written after "?" in a template would have its "=" and "&" escaped
+// into one meaningless key.
+func TestGanttSettingLinks(t *testing.T) {
+	b := newBoardSetup(t)
+	gantt := b.path + "/gantt"
+	page := b.member.Get(gantt + "?scale=day&q=alpha").Body
+	mustContain(t, page,
+		`href="`+gantt+`?group=column&amp;q=alpha&amp;scale=week"`,
+		`href="`+gantt+`?group=assignee&amp;q=alpha&amp;scale=day"`,
+		`href="`+gantt+`?done=1&amp;group=column&amp;q=alpha&amp;scale=day"`)
+	// Following one: the week scale is on.
+	week := b.member.Get(gantt + "?group=column&q=alpha&scale=week").Body
+	mustContain(t, week, `is-active" href="`+gantt+`?group=column&amp;q=alpha&amp;scale=week" aria-current="true"`)
+}
