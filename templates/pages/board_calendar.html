@@ -1,0 +1,21 @@
+{{$self := pageURL "board-calendar" "id" .Board.ID}}
+<header class="page-head">
+  <div>
+    <a class="crumb" href="{{pageURL "board" "id" .Board.ID}}">{{template "icon" "arrow-left"}} {{.Board.Name}}</a>
+    <h1>{{.Title}}</h1>
+  </div>
+  <nav class="gantt-tools" aria-label="{{t "calendar_view.nav"}}">
+    <div class="segmented" role="group" aria-label="{{t "calendar_view.nav"}}">
+      <a class="segmented__item" href="{{monthLink $self .Filter.Filter .Prev .Done}}" aria-label="{{t "calendar_view.prev"}}">{{template "icon" "arrow-left"}}</a>
+      <a class="segmented__item{{if eq .Month .This}} is-active{{end}}" href="{{monthLink $self .Filter.Filter .This .Done}}">{{t "calendar_view.today"}}</a>
+      <a class="segmented__item" href="{{monthLink $self .Filter.Filter .Next .Done}}" aria-label="{{t "calendar_view.next"}}">{{template "icon" "arrow-right"}}</a>
+    </div>
+    <a class="btn btn--quiet btn--sm{{if .Done}} is-on{{end}}" href="{{monthLink $self .Filter.Filter .Month (not .Done)}}" aria-pressed="{{if .Done}}true{{else}}false{{end}}">{{template "icon" "check"}} {{t "gantt.show_done"}}</a>
+  </nav>
+</header>
+{{template "board-tabs" (boardTabs .Board.ID "calendar")}}
+{{template "filter-bar" .Filter}}
+<div class="cal" id="calendar" data-collage-fragment="{{fragmentURL "board-calendar" "board-calendar-grid" "id" .Board.ID}}?{{.Query}}" data-collage-push>
+  {{slot "grid"}}
+</div>
+<script type="module" src="{{asset "/static/js/filter.js"}}"></script>

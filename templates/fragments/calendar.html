@@ -1,0 +1,41 @@
+{{$board := .BoardID}}{{$v := .}}
+{{if .Notices}}<div class="alert board-alert" role="alert" data-cal-alert>{{template "icon" "flag"}}<ul>{{range .Notices}}<li>{{.}}</li>{{end}}</ul></div>{{end}}
+<div class="cal__frame" data-cal {{if .CanEdit}}data-editable{{end}}
+  data-error-conflict="{{t "board.conflict"}}" data-error-order="{{t "card.date_order"}}" data-error="{{t "calendar_view.save_failed"}}">
+  <ol class="cal__weekdays" aria-hidden="true">{{range .Weekdays}}<li>{{.}}</li>{{end}}</ol>
+  {{range .Weeks}}
+  <div class="cal__week">
+    {{range .Days}}
+    <div class="cal__day c{{.Col}}{{if .Outside}} is-outside{{end}}{{if .Today}} is-today{{end}}" data-date="{{.Date}}">
+      <span class="cal__num">{{.Num}}</span>
+      <div class="cal__foot">
+        {{if .More}}
+        <details class="cal__more">
+          <summary>{{t "calendar_view.more" "n" (printf "%d" .More)}}</summary>
+          <ul class="cal__list" aria-label="{{t "calendar_view.day_cards" "date" .Date}}">
+            {{range .Cards}}<li><a class="{{if .Done}}is-done{{end}}{{if .Late}} is-late{{end}}" href="{{pageURL "card" "id" $board "card" .CardID}}">{{.Title}}</a></li>{{end}}
+          </ul>
+        </details>
+        {{end}}
+        {{if $v.CanEdit}}
+        <details class="cal__add" data-cal-add>
+          <summary aria-label="{{t "calendar_view.add"}}">{{template "icon" "plus"}}</summary>
+          <form class="cal__form" method="post" action="{{$v.Action}}">
+            {{csrfToken}}
+            <input type="hidden" name="op" value="create_card">
+            <input type="hidden" name="due" value="{{.Date}}">
+            <input class="input input--sm" name="title" maxlength="200" required placeholder="{{t "calendar_view.new_card"}}" aria-label="{{t "calendar_view.new_card"}}">
+          </form>
+        </details>
+        {{end}}
+      </div>
+    </div>
+    {{end}}
+    {{range .Bars}}
+    <a class="cal__bar c{{.Col}} s{{.Span}} l{{.Lane}}{{if .Before}} is-before{{end}}{{if .After}} is-after{{end}}{{if .Done}} is-done{{end}}{{if .Late}} is-late{{end}}{{if .Dimmed}} is-dimmed{{end}}"
+      href="{{pageURL "card" "id" $board "card" .CardID}}" data-color="{{.Color}}" title="{{.Title}}"
+      data-card="{{.CardID}}" data-version="{{.Version}}" data-start="{{.Start}}" data-due="{{.Due}}" data-url="{{pageURL "card" "id" $board "card" .CardID}}">{{.Title}}</a>
+    {{end}}
+  </div>
+  {{end}}
+</div>

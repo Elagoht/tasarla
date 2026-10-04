@@ -652,6 +652,33 @@
       "12": "Ara"
     }
   },
+  "calendar_view": {
+    "title": "Takvim",
+    "tab": "Takvim",
+    "nav": "Ay",
+    "prev": "Önceki ay",
+    "next": "Sonraki ay",
+    "today": "Bugün",
+    "more": "+{n} daha",
+    "day_cards": "{date} günündeki kartlar",
+    "add": "Bu güne kart ekle",
+    "new_card": "Kart başlığı",
+    "save_failed": "Kaydedilemedi.",
+    "months": {
+      "1": "Ocak",
+      "2": "Şubat",
+      "3": "Mart",
+      "4": "Nisan",
+      "5": "Mayıs",
+      "6": "Haziran",
+      "7": "Temmuz",
+      "8": "Ağustos",
+      "9": "Eylül",
+      "10": "Ekim",
+      "11": "Kasım",
+      "12": "Aralık"
+    }
+  },
   "calendar": {
     "title": "Takvim",
     "hint": "Bana atanan kartları ya da bir board'un kartlarını son tarihleriyle takvim uygulamanıza ekleyin. Adres kişiye özeldir; paylaşmayın.",

@@ -184,16 +184,22 @@ func (h *handlers) loadGantt(ctx context.Context, rc *collage.RenderContext) (ga
 	if err != nil {
 		return ganttView{}, tags, err
 	}
-	fv, err := h.boardFilterFor(ctx, rc, bc)
+	matching, err := h.boardMatching(ctx, rc, bc)
 	if err != nil {
 		return ganttView{}, tags, err
 	}
 	now := time.Now().In(h.loc)
-	matching, err := h.store.MatchingCardIDs(ctx, bc.Board.ID, fv.Filter.Store(bc.User.ID, now))
-	if err != nil {
-		return ganttView{}, tags, err
-	}
 	return layoutGantt(rc, bc, scale, group, cols, cards, deps, now, matching), tags, nil
+}
+
+// boardMatching is the cards the board filter lets through, nil when the
+// filter is empty.
+func (h *handlers) boardMatching(ctx context.Context, rc *collage.RenderContext, bc boardContext) (map[int64]bool, error) {
+	fv, err := h.boardFilterFor(ctx, rc, bc)
+	if err != nil {
+		return nil, err
+	}
+	return h.store.MatchingCardIDs(ctx, bc.Board.ID, fv.Filter.Store(bc.User.ID, time.Now().In(h.loc)))
 }
 
 // span is a card's dates on the chart: start and end, inclusive.

@@ -56,11 +56,12 @@ type handlers struct {
 	baseURL string
 
 	// Fragments that actions answer with; set when their pages are built.
-	columns *collage.Fragment
-	panel   *collage.Fragment
-	gantt   *collage.Fragment
-	badge   *collage.Fragment
-	confirm *collage.Page
+	columns      *collage.Fragment
+	panel        *collage.Fragment
+	gantt        *collage.Fragment
+	calendarGrid *collage.Fragment
+	badge        *collage.Fragment
+	confirm      *collage.Page
 
 	notifier *notify.Notifier
 }
@@ -92,6 +93,7 @@ func New(d Deps) (*App, error) {
 				"initial":         initial,
 				"withQuery":       withQuery,
 				"ganttLink":       ganttLink,
+				"monthLink":       monthLink,
 				"boardTabs":       boardTabs,
 				"clearQuery":      clearQuery,
 				"priorityChoices": func() []int16 { return []int16{4, 3, 2, 1} },
@@ -183,7 +185,7 @@ func (h *handlers) pages() []*collage.Page {
 	h.confirm = h.confirmPage()
 	return []*collage.Page{
 		h.confirm, h.homePage(), h.teamsPage(), h.teamPage(), h.newBoardPage(), h.adminUsersPage(),
-		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(), h.boardArchivePage(), h.boardDonePage(), h.boardGanttPage(),
+		h.boardPage(), h.cardPage(), h.tasksPage(), h.boardSettingsPage(), h.boardActivityPage(), h.boardArchivePage(), h.boardDonePage(), h.boardGanttPage(), h.boardCalendarPage(),
 		h.notificationsPage(), h.meSettingsPage(), h.searchPage(),
 	}
 }

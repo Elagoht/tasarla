@@ -652,6 +652,33 @@
       "12": "Dec"
     }
   },
+  "calendar_view": {
+    "title": "Calendar",
+    "tab": "Calendar",
+    "nav": "Month",
+    "prev": "Previous month",
+    "next": "Next month",
+    "today": "Today",
+    "more": "+{n} more",
+    "day_cards": "Cards on {date}",
+    "add": "Add a card on this day",
+    "new_card": "Card title",
+    "save_failed": "Could not save.",
+    "months": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    }
+  },
   "calendar": {
     "title": "Calendar",
     "hint": "Add the cards assigned to you, or a board's cards, to your calendar app by their due dates. The address is personal; do not share it.",
