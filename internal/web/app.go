@@ -132,7 +132,7 @@ func New(d Deps) (*App, error) {
 		URL: app.URL, Invalidate: app.InvalidateTags, Log: d.Logger,
 	}
 	h.badge = collage.NewFragment("notifications-badge", "fragments/badge.html").
-		WithDataHandler(collage.DataHandler(h.loadBadge)).
+		WithData(collage.DataHandler(h.loadBadge)).
 		Build()
 	pages := append([]*collage.Page{notFound, serverError, authFailed}, h.pages()...)
 	for _, p := range pages {

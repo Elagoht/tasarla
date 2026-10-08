@@ -107,11 +107,11 @@ type ganttArrow struct {
 
 func (h *handlers) boardGanttPage() *collage.Page {
 	h.gantt = collage.NewFragment("board-gantt-chart", "fragments/gantt.html").
-		WithDataHandler(collage.DataHandler(h.loadGantt)).
+		WithData(collage.DataHandler(h.loadGantt)).
 		Required().
 		Build()
 	content := collage.NewFragment("board-gantt-content", "pages/board_gantt.html").
-		WithDataHandler(collage.Load(h.loadGanttPage)).
+		WithData(collage.Load(h.loadGanttPage)).
 		WithSlotFragment("chart", h.gantt).
 		Required().
 		Build()

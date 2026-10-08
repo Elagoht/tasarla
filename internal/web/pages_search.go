@@ -36,7 +36,7 @@ type searchHitView struct {
 
 func (h *handlers) searchPage() *collage.Page {
 	content := collage.NewFragment("search-content", "pages/search.html").
-		WithDataHandler(collage.Load(h.loadSearch)).
+		WithData(collage.Load(h.loadSearch)).
 		Required().
 		Build()
 	return paths(h.privatePage("search", content), "/search").Dynamic().Build()

@@ -44,7 +44,7 @@ type baseView struct {
 func baseLayout() *collage.Fragment {
 	return collage.NewFragment("base", "layouts/base.html").
 		WithTitle("Pusula").
-		WithDataHandler(collage.Load(func(_ context.Context, rc *collage.RenderContext) (baseView, error) {
+		WithData(collage.Load(func(_ context.Context, rc *collage.RenderContext) (baseView, error) {
 			return baseView{Locale: rc.Locale}, nil
 		})).
 		Static().
@@ -98,7 +98,7 @@ func (h *handlers) appLayout() *collage.Fragment {
 	return collage.NewFragment("app", "layouts/app.html").
 		WithSlotFragment("badge", h.badge).
 		WithGuard(h.signedInInOwnLocale(session.RequireUser("/login"))).
-		WithDataHandler(collage.Load(h.loadApp)).
+		WithData(collage.Load(h.loadApp)).
 		Required().
 		Build()
 }

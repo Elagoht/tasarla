@@ -32,7 +32,7 @@ const (
 var timeOfDay = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
 
 // templateDraftKey holds a refused template form for the page to show again.
-const templateDraftKey = "template_draft"
+var templateDraftKey = collage.NewKey[templateForm]("template_draft")
 
 // templateView is one template of the list.
 type templateView struct {
@@ -140,7 +140,7 @@ func (h *handlers) loadTemplatesTab(ctx context.Context, rc *collage.RenderConte
 		}
 		view.Templates = append(view.Templates, tv)
 	}
-	if draft, ok := collage.Get[templateForm](rc, templateDraftKey); ok {
+	if draft, ok := templateDraftKey.Get(rc); ok {
 		view.EditTemplate = &draft
 		return nil
 	}
@@ -315,7 +315,7 @@ func (h *handlers) saveTemplate(ctx context.Context, rc *collage.RenderContext, 
 
 	refuse := func() (*collage.ActionResult, error) {
 		form.Errors = v.Errors()
-		rc.Set(templateDraftKey, form)
+		templateDraftKey.Set(rc, form)
 		return validate.Refuse(rc, v, rc.Page), nil
 	}
 	if !v.Valid() {

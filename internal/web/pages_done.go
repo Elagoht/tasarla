@@ -37,7 +37,7 @@ type doneCardView struct {
 // boardDonePage lists a board's completed cards, which are not on the board.
 func (h *handlers) boardDonePage() *collage.Page {
 	content := collage.NewFragment("board-done-content", "pages/board_done.html").
-		WithDataHandler(collage.Load(h.loadBoardDone)).
+		WithData(collage.Load(h.loadBoardDone)).
 		Required().
 		Build()
 	return paths(h.privatePage("board-done", content), "/boards/{id}/done").

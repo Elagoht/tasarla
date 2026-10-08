@@ -34,7 +34,7 @@ type archivedCardView struct {
 // boardArchivePage lists a board's archived cards, to find and restore them.
 func (h *handlers) boardArchivePage() *collage.Page {
 	content := collage.NewFragment("board-archive-content", "pages/board_archive.html").
-		WithDataHandler(collage.Load(h.loadBoardArchive)).
+		WithData(collage.Load(h.loadBoardArchive)).
 		Required().
 		Build()
 	return paths(h.privatePage("board-archive", content), "/boards/{id}/archive").

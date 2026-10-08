@@ -29,7 +29,7 @@ type taskView struct {
 
 func (h *handlers) tasksPage() *collage.Page {
 	content := collage.NewFragment("tasks-content", "pages/tasks.html").
-		WithDataHandler(collage.Load(h.loadTasks)).
+		WithData(collage.Load(h.loadTasks)).
 		Required().
 		Build()
 	return paths(h.privatePage("tasks", content), "/me/tasks").Dynamic().Build()

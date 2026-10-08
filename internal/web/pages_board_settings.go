@@ -148,7 +148,7 @@ func (h *handlers) managedBoardFor(ctx context.Context, rc *collage.RenderContex
 
 func (h *handlers) boardSettingsPage() *collage.Page {
 	content := collage.NewFragment("board-settings-content", "pages/board_settings.html").
-		WithDataHandler(collage.Load(h.loadBoardSettings)).
+		WithData(collage.Load(h.loadBoardSettings)).
 		Required().
 		Build()
 	return paths(h.privatePage("board-settings", content), "/boards/{id}/settings").
@@ -158,7 +158,7 @@ func (h *handlers) boardSettingsPage() *collage.Page {
 }
 
 // draftKey holds a refused column table for the page to show again.
-const draftKey = "columns_draft"
+var draftKey = collage.NewKey[columnsDraft]("columns_draft")
 
 type columnsDraft struct {
 	Rows    []columnRowView
@@ -187,7 +187,7 @@ func (h *handlers) loadBoardSettings(ctx context.Context, rc *collage.RenderCont
 	if len(view.AllCols) > 0 {
 		view.CreatableCols = creatableColumns(view.AllCols)
 	}
-	if draft, ok := collage.Get[columnsDraft](rc, draftKey); ok {
+	if draft, ok := draftKey.Get(rc); ok {
 		view.Columns, view.ColumnsProblem, view.Tab = draft.Rows, draft.Problem, "columns"
 	} else {
 		cards, err := h.store.BoardCards(ctx, bc.Board.ID)
@@ -437,9 +437,6 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 				return collage.NoContent(http.StatusBadRequest), nil // the table names each column once
 			}
 			seen[view.ID] = true
-			if err != nil {
-				return collage.NoContent(http.StatusBadRequest), nil
-			}
 			row.ID = id
 		}
 		if !view.Delete {
@@ -497,7 +494,7 @@ func (h *handlers) saveColumns(ctx context.Context, rc *collage.RenderContext, v
 			return h.settingsDone(rc, bc, "columns", flash.Success, i18n.T(rc, "settings.saved"))
 		}
 	}
-	rc.Set(draftKey, draft)
+	draftKey.Set(rc, draft)
 	res := collage.RenderPage(rc.Page)
 	res.Status = http.StatusUnprocessableEntity
 	return res, nil

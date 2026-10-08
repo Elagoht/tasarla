@@ -34,7 +34,7 @@ type confirmField struct {
 	Value string
 }
 
-const confirmKey = "confirm"
+var confirmKey = collage.NewKey[confirmView]("confirm")
 
 // confirmFirst answers a destructive operation posted without confirm=1 with
 // a page asking for it; confirm.js adds confirm=1 after its own dialog, so
@@ -66,7 +66,7 @@ func (h *handlers) confirmFirst(rc *collage.RenderContext, v *validate.Validator
 			view.Fields = append(view.Fields, confirmField{Name: k, Value: val})
 		}
 	}
-	rc.Set(confirmKey, view)
+	confirmKey.Set(rc, view)
 	return collage.RenderPage(h.confirm)
 }
 
@@ -83,8 +83,8 @@ func sameOrigin(r *http.Request, ref string) bool {
 // confirmPage has no path: actions answer with it.
 func (h *handlers) confirmPage() *collage.Page {
 	content := collage.NewFragment("confirm-content", "pages/confirm.html").
-		WithDataHandler(collage.Load(func(_ context.Context, rc *collage.RenderContext) (confirmView, error) {
-			v, _ := collage.Get[confirmView](rc, confirmKey)
+		WithData(collage.Load(func(_ context.Context, rc *collage.RenderContext) (confirmView, error) {
+			v, _ := confirmKey.Get(rc)
 			rc.HoistTitle(i18n.T(rc, "confirm.title"))
 			return v, nil
 		})).

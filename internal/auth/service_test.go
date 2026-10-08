@@ -121,7 +121,7 @@ func newFixture(t *testing.T, opts authtest.Options) *fixture {
 	}
 	private := collage.NewFragment("private-content", "private.html").
 		WithGuard(session.RequireUser("/login")).
-		WithDataHandler(collage.Load(func(ctx context.Context, _ *collage.RenderContext) (store.User, error) {
+		WithData(collage.Load(func(ctx context.Context, _ *collage.RenderContext) (store.User, error) {
 			u, _ := auth.UserFrom(ctx)
 			return u, nil
 		})).

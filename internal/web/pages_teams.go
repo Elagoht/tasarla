@@ -35,7 +35,7 @@ type teamView struct {
 
 func (h *handlers) teamsPage() *collage.Page {
 	content := collage.NewFragment("teams-content", "pages/teams.html").
-		WithDataHandler(collage.Load(h.loadTeams)).
+		WithData(collage.Load(h.loadTeams)).
 		Required().
 		Build()
 	return paths(h.privatePage("teams", content), "/teams").
@@ -91,7 +91,7 @@ func (h *handlers) redirectToTeam(rc *collage.RenderContext, id int64) (*collage
 
 func (h *handlers) teamPage() *collage.Page {
 	content := collage.NewFragment("team-content", "pages/team.html").
-		WithDataHandler(collage.Load(h.loadTeam)).
+		WithData(collage.Load(h.loadTeam)).
 		Required().
 		Build()
 	return paths(h.privatePage("team", content), "/teams/{id}").

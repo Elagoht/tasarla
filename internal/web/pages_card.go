@@ -125,9 +125,9 @@ func (v panelView) TopNotices() []string {
 }
 
 // Keys for the field a panel answer is about (spec §2.2).
-const (
-	noticeFieldKey = "notice_field"
-	savedFieldKey  = "saved_field"
+var (
+	noticeFieldKey = collage.NewKey[string]("notice_field")
+	savedFieldKey  = collage.NewKey[string]("saved_field")
 )
 
 type commentView struct {
@@ -157,11 +157,11 @@ type panelLabel struct {
 
 func (h *handlers) cardPage() *collage.Page {
 	h.panel = collage.NewFragment("card-panel", "fragments/card_panel.html").
-		WithDataHandler(collage.DataHandler(h.loadPanel)).
+		WithData(collage.DataHandler(h.loadPanel)).
 		Required().
 		Build()
 	content := collage.NewFragment("card-content", "pages/card.html").
-		WithDataHandler(collage.Load(h.loadCardPage)).
+		WithData(collage.Load(h.loadCardPage)).
 		WithSlotFragment("panel", h.panel).
 		Required().
 		Build()
@@ -198,9 +198,9 @@ func (h *handlers) loadPanel(ctx context.Context, rc *collage.RenderContext) (pa
 		Board: cc.Board, Card: card, Access: cc.Access, Archived: card.ArchivedAt != nil,
 		Priorities: []string{"1", "2", "3", "4"},
 	}
-	v.Notices, _ = collage.Get[[]string](rc, noticeKey)
-	v.NoticeField, _ = collage.Get[string](rc, noticeFieldKey)
-	v.SavedField, _ = collage.Get[string](rc, savedFieldKey)
+	v.Notices, _ = noticeKey.Get(rc)
+	v.NoticeField, _ = noticeFieldKey.Get(rc)
+	v.SavedField, _ = savedFieldKey.Get(rc)
 	if card.Estimate != nil {
 		v.Estimate = strconv.FormatFloat(*card.Estimate, 'f', -1, 64)
 	}
@@ -450,7 +450,7 @@ func (h *handlers) cardChanged(rc *collage.RenderContext, cc cardContext, err er
 // fieldSaved answers a saved field: the panel marking it saved for a script,
 // back to the card with a message otherwise.
 func (h *handlers) fieldSaved(rc *collage.RenderContext, cc cardContext, field string) (*collage.ActionResult, error) {
-	rc.Set(savedFieldKey, field)
+	savedFieldKey.Set(rc, field)
 	var msgs []string
 	if !isFetch(rc) {
 		msgs = append(msgs, i18n.T(rc, "card.saved"))
@@ -466,7 +466,7 @@ func (h *handlers) fieldSaved(rc *collage.RenderContext, cc cardContext, field s
 // with notice as a flash message.
 func (h *handlers) cardNotice(rc *collage.RenderContext, cc cardContext, status int, notices ...string) (*collage.ActionResult, error) {
 	if isFetch(rc) {
-		rc.Set(noticeKey, notices)
+		noticeKey.Set(rc, notices)
 		res := collage.RenderFragment(h.panel)
 		res.Status = status
 		return res, nil
@@ -690,7 +690,7 @@ func (h *handlers) setField(ctx context.Context, rc *collage.RenderContext, v *v
 	default:
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
-	rc.Set(noticeFieldKey, string(field))
+	noticeFieldKey.Set(rc, string(field))
 	if problem != "" {
 		return h.cardNotice(rc, cc, http.StatusUnprocessableEntity, problem)
 	}
@@ -722,7 +722,7 @@ func (h *handlers) moveFromPanel(ctx context.Context, rc *collage.RenderContext,
 	if !ok1 || !ok2 || !ok3 {
 		return collage.NoContent(http.StatusBadRequest), nil
 	}
-	rc.Set(noticeFieldKey, "column")
+	noticeFieldKey.Set(rc, "column")
 	moved, err := h.store.MoveCard(ctx, store.Move{
 		BoardID: cc.Board.ID, CardID: cc.Card.ID, ToColumnID: to, ToIndex: 1 << 30,
 		ExpectedFrom: from, ExpectedVersion: int(version), Actor: cc.actor(),
@@ -749,7 +749,7 @@ func (h *handlers) moveFromPanel(ctx context.Context, rc *collage.RenderContext,
 // does when a bar is dragged. It answers 204 — the chart follows the board's
 // push — 409 when the card changed meanwhile and 422 when the start would
 // come after the due date.
-func (h *handlers) setDates(ctx context.Context, rc *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
+func (h *handlers) setDates(ctx context.Context, _ *collage.RenderContext, v *validate.Validator, cc cardContext) (*collage.ActionResult, error) {
 	version, ok := formInt64(v, "expected_version")
 	if !ok {
 		return collage.NoContent(http.StatusBadRequest), nil

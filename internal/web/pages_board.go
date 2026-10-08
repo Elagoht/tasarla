@@ -33,8 +33,8 @@ type boardContext struct {
 
 // boardFor loads the board in the URL. A board the user may not see, or an
 // archived one, is reported as not found (spec §6).
-func (h *handlers) boardFor(ctx context.Context, rc *collage.RenderContext) (boardContext, error) {
-	return collage.Once(rc, "board:"+rc.Param("id"), func(ctx context.Context) (boardContext, error) {
+func (h *handlers) boardFor(_ context.Context, rc *collage.RenderContext) (boardContext, error) {
+	return collage.Once(rc, boardKey.With(rc.Param("id")), func(ctx context.Context) (boardContext, error) {
 		user, err := currentUser(ctx)
 		if err != nil {
 			return boardContext{}, err
@@ -72,9 +72,16 @@ func cardTag(id int64) string  { return "card:" + strconv.FormatInt(id, 10) }
 // isFetch reports whether a script sent the request (board.js, collage-live).
 func isFetch(rc *collage.RenderContext) bool { return rc.Request.Header.Get(collage.FetchHeader) != "" }
 
-// noticeKey holds the messages ([]string) for the fragment or page an action
-// answers with.
-const noticeKey = "notices"
+// noticeKey holds the messages for the fragment or page an action answers
+// with.
+var noticeKey = collage.NewKey[[]string]("notices")
+
+// boardKey and filterKey hold, per board id, what boardFor and boardFilterFor
+// load once in a render.
+var (
+	boardKey  = collage.NewKey[boardContext]("board")
+	filterKey = collage.NewKey[filterView]("filter")
+)
 
 type boardView struct {
 	Notices []string
@@ -116,8 +123,8 @@ type filterView struct {
 // boardFilterFor is the board's filter for this render — the page's and its
 // columns' — read from the request's own URL, so a fragment pushed or answered
 // to an action keeps the filter its URL carries.
-func (h *handlers) boardFilterFor(ctx context.Context, rc *collage.RenderContext, bc boardContext) (filterView, error) {
-	return collage.Once(rc, "filter:"+rc.Param("id"), func(ctx context.Context) (filterView, error) {
+func (h *handlers) boardFilterFor(_ context.Context, rc *collage.RenderContext, bc boardContext) (filterView, error) {
+	return collage.Once(rc, filterKey.With(rc.Param("id")), func(ctx context.Context) (filterView, error) {
 		members, err := h.store.Members(ctx, bc.Team.ID)
 		if err != nil {
 			return filterView{}, err
@@ -161,11 +168,11 @@ type cardView struct {
 
 func (h *handlers) boardPage() *collage.Page {
 	h.columns = collage.NewFragment("board-columns", "fragments/columns.html").
-		WithDataHandler(collage.DataHandler(h.loadColumns)).
+		WithData(collage.DataHandler(h.loadColumns)).
 		Required().
 		Build()
 	content := collage.NewFragment("board-content", "pages/board.html").
-		WithDataHandler(collage.Load(h.loadBoard)).
+		WithData(collage.Load(h.loadBoard)).
 		WithSlotFragment("columns", h.columns).
 		Required().
 		Build()
@@ -182,7 +189,7 @@ func (h *handlers) loadBoard(ctx context.Context, rc *collage.RenderContext) (bo
 		return boardView{}, err
 	}
 	rc.HoistTitle(bc.Board.Name)
-	notices, _ := collage.Get[[]string](rc, noticeKey)
+	notices, _ := noticeKey.Get(rc)
 	fv, err := h.boardFilterFor(ctx, rc, bc)
 	if err != nil {
 		return boardView{}, err
@@ -221,7 +228,7 @@ func (h *handlers) loadColumns(ctx context.Context, rc *collage.RenderContext) (
 			return columnsView{}, tags, err
 		}
 	}
-	view.Notices, _ = collage.Get[[]string](rc, noticeKey)
+	view.Notices, _ = noticeKey.Get(rc)
 	byColumn := map[int64]int{}
 	creatable := map[int64]bool{}
 	if len(cols) > 0 {
@@ -374,7 +381,7 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 		_, err = h.store.CreateCard(ctx, bc.Board.ID, target.ID, title, bc.User.ID)
 	}
 	if msgs := violationMessages(rc, err); msgs != nil {
-		rc.Set(noticeKey, msgs)
+		noticeKey.Set(rc, msgs)
 		res := collage.RenderPage(rc.Page)
 		if isFetch(rc) {
 			res = collage.RenderFragment(h.columns)
@@ -392,7 +399,7 @@ func (h *handlers) createCard(ctx context.Context, rc *collage.RenderContext, v 
 	dropped := made.AssigneeDropped
 	if isFetch(rc) {
 		if dropped {
-			rc.Set(noticeKey, []string{i18n.T(rc, "board.template_assignee_dropped")})
+			noticeKey.Set(rc, []string{i18n.T(rc, "board.template_assignee_dropped")})
 		}
 		res := collage.RenderFragment(h.columns)
 		res.InvalidateTags = []string{boardTag(bc.Board.ID)}
@@ -488,7 +495,7 @@ func (h *handlers) moveCard(ctx context.Context, rc *collage.RenderContext, v *v
 		h.notifyUnblocked(ctx, bc, moved.ID)
 	}
 	if isFetch(rc) {
-		rc.Set(noticeKey, notices)
+		noticeKey.Set(rc, notices)
 		res := collage.RenderFragment(h.columns)
 		res.Status = status
 		if status == http.StatusOK {

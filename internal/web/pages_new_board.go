@@ -25,7 +25,7 @@ type newBoardView struct {
 
 func (h *handlers) newBoardPage() *collage.Page {
 	content := collage.NewFragment("new-board-content", "pages/new_board.html").
-		WithDataHandler(collage.Load(h.loadNewBoard)).
+		WithData(collage.Load(h.loadNewBoard)).
 		Required().
 		Build()
 	return paths(h.privatePage("team-new-board", content), "/teams/{id}/boards/new").

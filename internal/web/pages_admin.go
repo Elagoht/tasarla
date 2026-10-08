@@ -22,7 +22,7 @@ type adminUsersView struct {
 
 func (h *handlers) adminUsersPage() *collage.Page {
 	content := collage.NewFragment("admin-users-content", "pages/admin_users.html").
-		WithDataHandler(collage.Load(h.loadAdminUsers)).
+		WithData(collage.Load(h.loadAdminUsers)).
 		Required().
 		Build()
 	return paths(h.privatePage("admin-users", content), "/admin/users").

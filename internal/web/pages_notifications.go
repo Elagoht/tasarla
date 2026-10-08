@@ -58,7 +58,7 @@ func translateIn(rc *collage.RenderContext) notify.Translate {
 
 func (h *handlers) notificationsPage() *collage.Page {
 	content := collage.NewFragment("notifications-content", "pages/notifications.html").
-		WithDataHandler(collage.Load(h.loadNotifications)).
+		WithData(collage.Load(h.loadNotifications)).
 		Required().
 		Build()
 	b := paths(h.privatePage("notifications", content), "/notifications")
@@ -141,7 +141,7 @@ type meSettingsView struct {
 	CalendarBoards []calendarBoardLink
 }
 
-const calendarKey = "calendar"
+var calendarKey = collage.NewKey[*calendarLinks]("calendar")
 
 type calendarLinks struct {
 	Me     string
@@ -195,7 +195,7 @@ type prefView struct {
 
 func (h *handlers) meSettingsPage() *collage.Page {
 	content := collage.NewFragment("me-settings-content", "pages/me_settings.html").
-		WithDataHandler(collage.Load(h.loadMeSettings)).
+		WithData(collage.Load(h.loadMeSettings)).
 		Required().
 		Build()
 	return paths(h.privatePage("me-settings", content), "/me/settings").
@@ -230,7 +230,7 @@ func (h *handlers) loadMeSettings(ctx context.Context, rc *collage.RenderContext
 			view.CalendarBoards = append(view.CalendarBoards, calendarBoardLink{Name: b.Name, URL: boardFeedEnding(b.ID)})
 		}
 	}
-	if l, ok := collage.Get[*calendarLinks](rc, calendarKey); ok {
+	if l, ok := calendarKey.Get(rc); ok {
 		view.Calendar = l
 	}
 	return view, nil
@@ -255,7 +255,7 @@ func (h *handlers) meSettingsPost(ctx context.Context, rc *collage.RenderContext
 		if err != nil {
 			return nil, err
 		}
-		rc.Set(calendarKey, links)
+		calendarKey.Set(rc, links)
 		return collage.RenderPage(rc.Page), nil
 	case "calendar_clear":
 		if err := h.store.ClearCalendarToken(ctx, user.ID); err != nil {

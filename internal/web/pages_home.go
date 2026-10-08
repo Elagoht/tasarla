@@ -20,7 +20,7 @@ type homeTeam struct {
 
 func (h *handlers) homePage() *collage.Page {
 	content := collage.NewFragment("home-content", "pages/home.html").
-		WithDataHandler(collage.Load(h.loadHome)).
+		WithData(collage.Load(h.loadHome)).
 		Required().
 		Build()
 	return paths(h.privatePage("home", content), "/").Dynamic().Build()

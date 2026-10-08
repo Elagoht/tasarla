@@ -32,11 +32,11 @@ type calendarPageView struct {
 
 func (h *handlers) boardCalendarPage() *collage.Page {
 	h.calendarGrid = collage.NewFragment("board-calendar-grid", "fragments/calendar.html").
-		WithDataHandler(collage.DataHandler(h.loadCalendar)).
+		WithData(collage.DataHandler(h.loadCalendar)).
 		Required().
 		Build()
 	content := collage.NewFragment("board-calendar-content", "pages/board_calendar.html").
-		WithDataHandler(collage.Load(h.loadCalendarPage)).
+		WithData(collage.Load(h.loadCalendarPage)).
 		WithSlotFragment("grid", h.calendarGrid).
 		Required().
 		Build()
@@ -123,7 +123,7 @@ func (h *handlers) loadCalendar(ctx context.Context, rc *collage.RenderContext) 
 	}
 	// The form posts back to the month and filter it was drawn with.
 	v.Action = withQuery(v.Action, rc.Request.URL.RawQuery)
-	v.Notices, _ = collage.Get[[]string](rc, noticeKey)
+	v.Notices, _ = noticeKey.Get(rc)
 	return v, tags, nil
 }
 
@@ -183,7 +183,7 @@ func (h *handlers) createCalendarCard(ctx context.Context, rc *collage.RenderCon
 	}
 	card, err := h.store.CreateCardDue(ctx, bc.Board.ID, creatableColumns(cols)[0].ID, strings.TrimSpace(v.Value("title")), due, bc.User.ID)
 	if msgs := violationMessages(rc, err); msgs != nil {
-		rc.Set(noticeKey, msgs)
+		noticeKey.Set(rc, msgs)
 		res := collage.RenderPage(rc.Page)
 		if isFetch(rc) {
 			res = collage.RenderFragment(h.calendarGrid)

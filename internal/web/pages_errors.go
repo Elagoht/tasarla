@@ -11,7 +11,7 @@ import (
 // error pages and the sign-in failure.
 func publicPage(name, template, titleKey string) *collage.Page {
 	content := collage.NewFragment(name+"-content", template).
-		WithDataHandler(collage.Effect(func(_ context.Context, rc *collage.RenderContext) error {
+		WithData(collage.Effect(func(_ context.Context, rc *collage.RenderContext) error {
 			rc.HoistTitle(i18n.T(rc, titleKey))
 			return nil
 		})).

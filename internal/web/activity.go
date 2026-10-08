@@ -87,7 +87,7 @@ type boardActivityView struct {
 
 func (h *handlers) boardActivityPage() *collage.Page {
 	content := collage.NewFragment("board-activity-content", "pages/board_activity.html").
-		WithDataHandler(collage.Load(h.loadBoardActivity)).
+		WithData(collage.Load(h.loadBoardActivity)).
 		Required().
 		Build()
 	return paths(h.privatePage("board-activity", content), "/boards/{id}/activity").Dynamic().Build()
